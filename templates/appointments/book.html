@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}門診掛號（櫃台）{% endblock %}
+
+{% block content %}
+<h1>門診掛號（櫃台）</h1>
+
+{% if messages %}
+  <ul style="color: red;">
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <table>
+    <tr>
+      <th>{{ form.chart_no.label_tag }}</th>
+      <td>{{ form.chart_no }}</td>
+    </tr>
+    <tr>
+      <th>{{ form.doctor.label_tag }}</th>
+      <td>{{ form.doctor }}</td>
+    </tr>
+    <tr>
+      <th>{{ form.appt_date.label_tag }}</th>
+      <td>{{ form.appt_date }}</td>
+    </tr>
+    <tr>
+      <th>{{ form.appt_time.label_tag }}</th>
+      <td>
+        {{ form.appt_time }}
+        {% if not slots %}
+          <div style="font-size: 0.9em; color: #666;">
+            請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間。
+          </div>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <button type="submit" name="action" value="load_slots">
+    載入可約時段
+  </button>
+
+  <button type="submit" name="action" value="confirm">
+    確認掛號
+  </button>
+</form>
+
+{% if slots %}
+  <h3>本次載入的可掛號時段</h3>
+  <ul>
+    {% for t in slots %}
+      <li>{{ t|time:"H:i" }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

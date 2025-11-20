@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>櫃台叫號畫面</h1>
+<p>今天日期：{{ today }}</p>
+{% if messages %}
+  <ul style="color:red;">
+    {% for msg in messages %}
+      <li>{{ msg }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<form method="get" style="margin-bottom: 1rem;">
+  <label for="doctor">選擇醫師：</label>
+  <select name="doctor" id="doctor" onchange="this.form.submit()">
+    <option value="">-- 請選擇醫師 --</option>
+    {% for d in doctors %}
+      <option value="{{ d.id }}" {% if selected_doctor and d.id == selected_doctor.id %}selected{% endif %}>
+        {{ d }}
+      </option>
+    {% endfor %}
+  </select>
+  <noscript><button type="submit">載入</button></noscript>
+</form>
+
+{% if selected_doctor %}
+  <h2>目前選擇：{{ selected_doctor }} </h2>
+
+  <form method="post" style="margin: 1rem 0;">
+    {% csrf_token %}
+    <input type="hidden" name="doctor" value="{{ selected_doctor.id }}">
+    <button type="submit" name="action" value="next">叫下一號</button>
+  </form>
+
+  {% if current_ticket %}
+    <div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem;">
+      <h3>目前叫號中</h3>
+      <p>號碼：{{ current_ticket.number }}</p>
+      <p>病患：{{ current_ticket.patient }}</p>
+      <p>門診時間：{{ current_ticket.appointment.time }}</p>
+      <p>叫號時間：{{ current_ticket.called_at }}</p>
+      <p>狀態：{{ current_ticket.get_status_display }}</p>
+    </div>
+  {% else %}
+    <p>目前還沒有被叫出的號碼。</p>
+  {% endif %}
+
+  <h3>今天掛號列表（{{ selected_doctor }}）</h3>
+  <table border="1" cellpadding="4" cellspacing="0">
+    <tr>
+      <th>號碼</th>
+      <th>病患</th>
+      <th>預約時間</th>
+      <th>狀態</th>
+      <th>叫號時間</th>
+      <th>結束時間</th>
+    </tr>
+    {% for t in tickets %}
+    <tr>
+      <td>{{ t.number }}</td>
+      <td>{{ t.patient }}</td>
+      <td>{{ t.appointment.time }}</td>
+      <td>{{ t.get_status_display }}</td>
+      <td>{{ t.called_at }}</td>
+      <td>{{ t.finished_at }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">今天沒有掛號。</td></tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p>請先選擇一位醫師。</p>
+{% endif %}
+{% endblock %}

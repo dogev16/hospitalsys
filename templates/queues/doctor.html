@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+{% block title %}醫師叫號面板{% endblock %}
+
+{% block content %}
+<h1>醫師叫號面板</h1>
+
+{% if doctor %}
+  <p>
+    醫師：<strong>{{ doctor.full_name }}</strong>
+    （{{ doctor.department }} / {{ doctor.room_no|default:"未設定診間" }}）
+  </p>
+{% else %}
+  <p style="color: red;">
+    這個帳號尚未綁定 Doctor 資料，請管理員到後台設定。
+  </p>
+  <p><a href="{% url 'index' %}">回首頁</a></p>
+  {% endblock %}
+  {% comment %} 沒有 doctor 就不用顯示下面的表格 {% endcomment %}
+{% endif %}
+
+<table border="1" cellpadding="6" cellspacing="0">
+  <thead>
+    <tr>
+      <th>號碼</th>
+      <th>病人</th>
+      <th>狀態</th>
+      <th>建立時間</th>
+      <th>叫號時間</th>
+      <th>完成時間</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if items %}
+      {% for t in items %}
+        <tr>
+          <td>{{ t.number }}</td>
+          <td>{{ t.patient }}</td>
+          <td>{{ t.get_status_display }}</td>
+          <td>{{ t.created_at|date:"H:i" }}</td>
+          <td>
+            {% if t.called_at %}
+              {{ t.called_at|date:"H:i" }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            {% if t.finished_at %}
+              {{ t.finished_at|date:"H:i" }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            {# 依狀態顯示不同按鈕 #}
+            {% if t.status == "WAITING" %}
+              <a href="{% url 'queues:doctor_action' pk=t.pk act='call' %}">叫號</a>
+            {% elif t.status == "CALLING" %}
+              <a href="{% url 'queues:doctor_action' pk=t.pk act='start' %}">開始看診</a>
+            {% elif t.status == "IN_ROOM" %}
+              <a href="{% url 'queues:doctor_action' pk=t.pk act='done' %}">完成</a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <td colspan="7">今天還沒有排到病人。</td>
+      </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+<p style="margin-top: 1rem;">
+  <a href="{% url 'index' %}">回首頁</a>
+</p>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}叫號看板{% endblock %}
+
+{% block content %}
+<h1>叫號看板</h1>
+<p>這個畫面可以放在候診區的大螢幕，讓病人看到目前叫到哪一號。</p>
+
+<table border="1" cellpadding="6" cellspacing="0">
+  <thead>
+    <tr>
+      <th>醫師</th>
+      <th>號碼</th>
+      <th>病人</th>
+      <th>狀態</th>
+      <th>叫號時間</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if tickets %}
+      {% for t in tickets %}
+        <tr>
+          <td>{{ t.doctor.full_name }} / {{ t.doctor.department }}</td>
+          <td>{{ t.number }}</td>
+          <td>{{ t.patient }}</td>
+          <td>{{ t.get_status_display }}</td>
+          <td>
+            {% if t.called_at %}
+              {{ t.called_at|date:"H:i" }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <td colspan="5">今天還沒有掛號資料。</td>
+      </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+<p style="margin-top: 1rem;">
+  <a href="{% url 'index' %}">回首頁</a>
+</p>
+{% endblock %}

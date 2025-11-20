@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load roles %}
+
+{% block title %}門診系統首頁{% endblock %}
+{% block content %}
+  <h1>門診系統首頁</h1>
+
+  <h3>功能入口</h3>
+  <ul>
+    <li><a href="{% url 'appointments:book' %}">我要掛號（櫃台使用）</a></li>
+    <li><a href="/queues/board/">叫號看板</a></li>
+  </ul>
+
+  <h3>角色面板</h3>
+  <ul>
+    {% if user|has_group:"RECEPTION" %}
+      <li><a href="{% url 'queues:reception_panel' %}">櫃台面板</a></li>
+      <li><a href="{% url 'queues:reception_call' %}">櫃台叫號畫面</a></li>
+    {% endif %}
+
+    {% if user|has_group:"DOCTOR" %}
+      <li><a href="{% url 'queues:doctor_panel' %}">醫師面板</a></li>
+    {% endif %}
+
+    {% if user|has_group:"PHARMACY" %}
+      <li><a href="{% url 'prescriptions:pharmacy_panel' %}">藥局面板</a></li>
+      <li><a href="{% url 'inventory:dashboard' %}">藥品庫存</a></li>
+    {% endif %}
+  </ul>
+
+
+  <h3>最新訊息</h3>
+  <p>目前沒有公告</p>
+{% endblock %}
