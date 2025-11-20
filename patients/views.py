@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from .models import Patient
 from .forms import PatientForm
 from django.db.models import Q 
+from appointments.models import Appointment
+
 
 @login_required
 def patient_list(request):

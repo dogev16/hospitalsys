@@ -30,16 +30,16 @@
       <th>動作</th>
     </tr>
   </thead>
-  <tbody>
+   <tbody>
     {% for p in patients %}
       <tr>
-        <td>{{ p.medical_record_number }}</td>
-        <td>{{ p.name }}</td>
-        <td>{{ p.id_number }}</td>
+        <td>{{ p.chart_no }}</td>
+        <td>{{ p.full_name }}</td>
+        <td>{{ p.national_id }}</td>
         <td>{{ p.phone }}</td>
         <td>{{ p.birth_date }}</td>
         <td>
-          <!-- 這裡一樣把 'patient_edit' 換成你自己的 URL 名稱喵 -->
+          <a href="{% url 'patients:patient_detail' p.id %}">查看</a> |
           <a href="{% url 'patients:patient_update' p.id %}">編輯</a>
         </td>
       </tr>

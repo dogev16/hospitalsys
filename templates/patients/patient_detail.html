@@ -1,22 +1,40 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h1>病人詳細資料</h1>
+{% block title %}病人詳細資料{% endblock %}
 
-<table class="table">
-  <tr><th>ID</th><td>{{ patient.id }}</td></tr>
-  <tr><th>姓名</th><td>{{ patient.full_name }}</td></tr>
-  <tr><th>病歷號</th><td>{{ patient.chart_no }}</td></tr>
-  <tr><th>身分證</th><td>{{ patient.national_id }}</td></tr>
-  <tr><th>健保卡號</th><td>{{ patient.nhi_no }}</td></tr>
-  <tr><th>生日</th><td>{{ patient.birth_date }}</td></tr>
-  <tr><th>電話</th><td>{{ patient.phone }}</td></tr>
-  <tr><th>地址</th><td>{{ patient.address }}</td></tr>
-</table>
+{% block content %}
+<h1>病人詳細資料喵</h1>
 
 <p>
-  <a href="{% url 'patients:patient_update' patient.pk %}" class="btn btn-secondary">編輯</a>
-  <a href="{% url 'patients:patient_list' %}" class="btn btn-link">回列表</a>
+  <a href="{% url 'patients:patient_list' %}">← 回病人列表</a>
+  |
+  <a href="{% url 'patients:patient_update' patient.id %}">編輯此病人</a>
 </p>
 
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>病歷號</th>
+    <td>{{ patient.chart_no }}</td>
+  </tr>
+  <tr>
+    <th>姓名</th>
+    <td>{{ patient.full_name }}</td>
+  </tr>
+  <tr>
+    <th>身分證</th>
+    <td>{{ patient.national_id }}</td>
+  </tr>
+  <tr>
+    <th>電話</th>
+    <td>{{ patient.phone }}</td>
+  </tr>
+  <tr>
+    <th>生日</th>
+    <td>{{ patient.birth_date }}</td>
+  </tr>
+  <tr>
+    <th>過敏</th>
+    <td>尚未記錄（之後資料表加欄位再補）</td>
+  </tr>
+</table>
 {% endblock %}
