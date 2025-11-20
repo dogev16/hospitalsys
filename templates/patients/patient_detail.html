@@ -11,6 +11,8 @@
   <a href="{% url 'patients:patient_update' patient.id %}">編輯此病人</a>
 </p>
 
+<!-- 病人基本資料區塊 -->
+<h2 style="margin-top: 1.5rem;">基本資料喵</h2>
 <table border="1" cellpadding="5" cellspacing="0">
   <tr>
     <th>病歷號</th>
@@ -37,4 +39,44 @@
     <td>尚未記錄（之後資料表加欄位再補）</td>
   </tr>
 </table>
+
+<!-- 掛號 / 看診紀錄區塊 -->
+<h2 style="margin-top: 1.5rem;">掛號 / 看診紀錄喵</h2>
+
+<p>
+  <!-- 這裡用 appointments:book，是你首頁 index.html 已經在用的掛號 URL 喵 -->
+  <a href="{% url 'appointments:book' %}?patient_id={{ patient.id }}">
+    ＋ 為此病人新增掛號喵
+  </a>
+</p>
+
+{% if appointments %}
+  <p>共有 {{ appointments|length }} 筆掛號 / 看診紀錄喵</p>
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>時間</th>
+        <th>醫師</th>
+        <th>狀態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appt in appointments %}
+        <tr>
+          <td>{{ appt.date }}</td>
+          <td>{{ appt.time|time:"H:i" }}</td>
+          <td>
+            {# 這裡依照你的 Appointment 模型來選：如果是 doctor.full_name 就改成 full_name 喵 #}
+            {{ appt.doctor.full_name|default:appt.doctor }}
+          </td>
+          <td>{{ appt.get_status_display }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>目前沒有掛號或看診紀錄喵～</p>
+{% endif %}
+
 {% endblock %}
