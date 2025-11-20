@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>
+  {% if mode == "create" %}
+    新增病人
+  {% else %}
+    編輯病人：{{ patient }}
+  {% endif %}
+</h1>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">儲存</button>
+  <a href="{% url 'patients:patient_list' %}" class="btn btn-link">取消</a>
+</form>
+{% endblock %}

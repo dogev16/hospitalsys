@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>病人列表喵</h1>
+
+<form method="get" style="margin-bottom: 1rem;">
+  <label>
+    關鍵字搜尋：
+    <input type="text" name="q" value="{{ query }}" placeholder="姓名 / 身分證 / 電話 / 病歷號">
+  </label>
+  <button type="submit">搜尋</button>
+  {% if query %}
+    <a href="{% url 'patients:patient_list' %}">清除搜尋</a>
+  {% endif %}
+</form>
+
+<p>
+  <!-- 這裡的 URL 名稱請換成你實際的「新增病人」路由喵 -->
+  <a href="{% url 'patients:patient_create' %}">＋ 新增病人</a>
+</p>
+
+<table border="1" cellpadding="5" cellspacing="0">
+  <thead>
+    <tr>
+      <th>病歷號</th>
+      <th>姓名</th>
+      <th>身分證</th>
+      <th>電話</th>
+      <th>生日</th>
+      <th>動作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in patients %}
+      <tr>
+        <td>{{ p.medical_record_number }}</td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.id_number }}</td>
+        <td>{{ p.phone }}</td>
+        <td>{{ p.birth_date }}</td>
+        <td>
+          <!-- 這裡一樣把 'patient_edit' 換成你自己的 URL 名稱喵 -->
+          <a href="{% url 'patients:patient_update' p.id %}">編輯</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="6">目前沒有資料喵～</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

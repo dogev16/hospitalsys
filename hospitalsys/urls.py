@@ -24,9 +24,13 @@ urlpatterns = [
     path("prescriptions/", include("prescriptions.urls")),
     path("inventory/", include("inventory.urls")),
     path("appointments/", include("appointments.urls")),
+    path("patients/", include(("patients.urls", "patients"), namespace="patients")),
 
+    
     path("reception/", views.reception_panel, name="reception_panel"),
     path("doctor/", views.doctor_panel, name="doctor_panel"),
     path("doctor/<int:pk>/<str:act>/", views.doctor_action, name="doctor_action"),
     path("board/", views.board, name="board"),
+
+
 ]
