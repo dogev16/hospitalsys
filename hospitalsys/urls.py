@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from core.views import home
+from core.views import index
 from queues import views
 
 
@@ -13,7 +13,7 @@ def logout_view(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", home, name="index"),
+    path("", index, name="index"),
 
     path("login/", auth_views.LoginView.as_view(
         template_name="registration/login.html"
