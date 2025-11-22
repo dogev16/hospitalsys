@@ -9,6 +9,10 @@
   <a href="{% url 'patients:patient_list' %}">← 回病人列表</a>
   |
   <a href="{% url 'patients:patient_update' patient.id %}">編輯此病人</a>
+  |
+  <a href="{% url 'appointments:patient_history' patient.chart_no %}">
+    查看此病人完整看診紀錄喵
+  </a>
 </p>
 
 <!-- 病人基本資料區塊 -->

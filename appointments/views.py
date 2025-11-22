@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, time
 
 from django import forms
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
 from common.utils import group_required
@@ -254,3 +254,26 @@ def book(request):
         form = AppointmentForm()
 
     return render(request, "appointments/book.html", {"form": form, "slots": slots})
+
+@group_required("RECEPTION")
+def patient_history(request, chart_no):
+    """
+    根據病歷號顯示該病人的所有看診紀錄喵
+    """
+    # 先找到這個病人（用 chart_no）
+    patient = get_object_or_404(Patient, chart_no=chart_no)
+
+    # 抓這個病人的所有 Appointment，照日期 / 時間由新到舊排
+    appointments = (
+        Appointment.objects
+        .filter(patient=patient)
+        .select_related("doctor")
+        .order_by("-date", "-time")
+    )
+
+    context = {
+        "patient": patient,
+        "appointments": appointments,
+    }
+    return render(request, "appointments/patient_history.html", context)
+
