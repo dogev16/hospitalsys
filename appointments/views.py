@@ -15,6 +15,7 @@ from queues.models import VisitTicket
 
 from django.db import transaction
 
+from django.contrib.auth.decorators import login_required
 
 
 # --- 掛號表單（櫃台用） ---
