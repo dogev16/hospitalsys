@@ -277,3 +277,9 @@ def patient_history(request, chart_no):
     }
     return render(request, "appointments/patient_history.html", context)
 
+@login_required
+def appointment_detail(request, pk):
+    appt = get_object_or_404(Appointment, pk=pk)
+    return render(request, "appointments/appointment_detail.html", {"appt": appt})
+
+

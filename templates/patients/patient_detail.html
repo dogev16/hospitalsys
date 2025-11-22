@@ -68,7 +68,12 @@
     <tbody>
       {% for appt in appointments %}
         <tr>
-          <td>{{ appt.date }}</td>
+          <tr>
+            <td><a href="{% url 'appointments:appointment_detail' appt.id %}">{{ appt.date }}</a></td>
+            <td>{{ appt.time|time:"H:i" }}</td>
+            <td>{{ appt.doctor.name }}</td>
+            <td>{{ appt.get_status_display }}</td>
+          </tr>
           <td>{{ appt.time|time:"H:i" }}</td>
           <td>
             {# 這裡依照你的 Appointment 模型來選：如果是 doctor.full_name 就改成 full_name 喵 #}

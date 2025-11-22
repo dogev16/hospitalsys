@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>看診紀錄詳細喵</h1>
+
+<p>
+  <a href="{% url 'patients:patient_detail' appt.patient.id %}">← 回病人頁面</a>
+</p>
+
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>日期</th>
+    <td>{{ appt.date }}</td>
+  </tr>
+  <tr>
+    <th>時間</th>
+    <td>{{ appt.time }}</td>
+  </tr>
+  <tr>
+    <th>醫師</th>
+    <td>{{ appt.doctor.name }}</td>
+  </tr>
+  <tr>
+    <th>狀態</th>
+    <td>{{ appt.get_status_display }}</td>
+  </tr>
+  <tr>
+    <th>主訴（病人說的症狀）</th>
+    <td>{{ appt.complaint|default:"未填寫" }}</td>
+  </tr>
+  <tr>
+    <th>醫師診斷</th>
+    <td>{{ appt.diagnosis|default:"未填寫" }}</td>
+  </tr>
+  <tr>
+    <th>處方</th>
+    <td>{{ appt.prescription|default:"未開立" }}</td>
+  </tr>
+  <tr>
+    <th>備註</th>
+    <td>{{ appt.notes|default:"無" }}</td>
+  </tr>
+</table>
+
+{% endblock %}
