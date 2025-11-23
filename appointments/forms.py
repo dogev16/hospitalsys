@@ -18,3 +18,4 @@ class AppointmentForm(forms.ModelForm):
 
         if patient_initial:
             self.fields["patient"].initial = patient_initial
+        self.fields["patient"].widget = forms.HiddenInput()

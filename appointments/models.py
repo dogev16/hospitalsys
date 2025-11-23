@@ -12,39 +12,80 @@ from django.db import models  # 你原本就有的應該不用再加，如果沒
 class AppointmentManager(models.Manager):
     def get_available_slots(self, doctor, date_):
         """
-        傳回某個醫師在某一天可預約的時段列表喵
+        根據 DoctorSchedule + 已存在的 Appointment
+        計算某位醫師在某一天可預約的時段列表喵
         doctor : Doctor instance
         date_  : date object 或 'YYYY-MM-DD' 字串都可以
         回傳   : list[datetime.time]
         """
-        # 如果是字串就轉成 date 物件喵
+        # 字串轉 date 物件
         if isinstance(date_, str):
             date_ = datetime.strptime(date_, "%Y-%m-%d").date()
 
-        # 這裡先用簡單版本：09:00–17:00 每 30 分鐘一個時段喵
-        start_hour = 9
-        end_hour = 17
-        step_minutes = 30
+        weekday = date_.weekday()  # Monday = 0
 
-        all_slots = []
-        current_dt = datetime.combine(date_, time(hour=start_hour, minute=0))
-        end_dt = datetime.combine(date_, time(hour=end_hour, minute=0))
-
-        while current_dt <= end_dt:
-            all_slots.append(current_dt.time())
-            current_dt += timedelta(minutes=step_minutes)
-
-        # 找出這一天這個醫師已經被預約的時間喵
-        booked_times = (
-            self.filter(doctor=doctor, date=date_)
-            .exclude(status="cancelled")  # 如果你的狀態不是這幾個可以自己調喵
-            .values_list("time", flat=True)
+        # 一次抓出該日所有排班（可能早上 + 下午）喵
+        schedules = (
+            DoctorSchedule.objects
+            .filter(
+                doctor=doctor,
+                weekday=weekday,
+                is_active=True,
+            )
+            .order_by("start_time")
         )
-        booked_set = set(booked_times)
+        if not schedules:
+            return []
 
-        # 剩下的就是可用時段喵
-        available_slots = [t for t in all_slots if t not in booked_set]
-        return available_slots
+        # 已經被掛走的時段喵
+        taken_times = set(
+            self.filter(
+                doctor=doctor,
+                date=date_,
+            ).values_list("time", flat=True)
+        )
+
+        now = timezone.localtime()
+        tz = timezone.get_current_timezone()
+
+        slots = []
+
+        # 逐一處理每一段排班（早上、下午各跑一次）喵
+        for schedule in schedules:
+            start_dt = datetime.combine(date_, schedule.start_time)
+            end_dt = datetime.combine(date_, schedule.end_time)
+
+            # 避免 naive / aware 混用
+            if timezone.is_naive(start_dt):
+                start_dt = timezone.make_aware(start_dt, tz)
+            if timezone.is_naive(end_dt):
+                end_dt = timezone.make_aware(end_dt, tz)
+
+            cursor = start_dt
+            count_for_this_schedule = 0  # 每一段自己有 max_patients 限制喵
+
+            while cursor <= end_dt:
+                t = cursor.time()
+
+                # 如果是今天，就略過太接近現在的時段（例如 30 分鐘內）喵
+                if date_ == now.date():
+                    if cursor <= now + timedelta(minutes=30):
+                        cursor += timedelta(minutes=schedule.slot_minutes)
+                        continue
+
+                # 沒被掛走的才算可選喵
+                if t not in taken_times:
+                    slots.append(t)
+                    count_for_this_schedule += 1
+
+                # 這一段排班最多只開到 max_patients 個喵
+                if count_for_this_schedule >= schedule.max_patients:
+                    break
+
+                cursor += timedelta(minutes=schedule.slot_minutes)
+
+        # 已經依 start_time + 時間順序排好，直接回傳喵
+        return slots
 
 class Appointment(models.Model):
     STATUS_CHOICES = [

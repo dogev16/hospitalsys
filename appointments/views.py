@@ -18,6 +18,7 @@ from django.db import transaction
 
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
+from django.views.decorators.http import require_POST
 
 
 # --- 掛號表單（櫃台用） ---
@@ -301,62 +302,73 @@ def appointment_new_for_patient(request, patient_id):
     """
     patient = get_object_or_404(Patient, pk=patient_id)
 
-    slots = None   # 可約時段列表，先給預設值喵
+    slots = []    # 可約時段列表，改成 [] 比較直覺喵
     doctor = None
 
     if request.method == "POST":
-        action = request.POST.get("action")       # "load_slots" 或 None
-        doctor_id = request.POST.get("doctor")
-        appt_date_str = request.POST.get("appt_date")
-
-        # 用同一個表單物件把畫面值帶回去
+        action = request.POST.get("action")       # "load_slots" 或 "confirm"
         form = AppointmentForm(request.POST)
 
-        # 如果有選醫師和日期，就算出可用時段喵
-        if doctor_id and appt_date_str:
-            doctor = get_object_or_404(Doctor, pk=doctor_id)
-            # 這裡用你原本算可約時段的函式 / manager
-            # 假設你有 Appointment.get_available_slots(...) 之類的
-            slots = Appointment.objects.get_available_slots(doctor, appt_date_str)
-
-        # 👉 只按「載入可約時段」的情況：不要存資料，只回畫面喵
-        if action == "load_slots":
-            return render(
-                request,
-                "appointments/book_for_patient.html",
-                {
-                    "form": form,
-                    "slots": slots,
-                    "patient": patient,
-                    "doctor": doctor,
-                },
-            )
-
-        # 👉 下面才是「確認掛號」的流程喵
         if form.is_valid():
+            doctor = form.cleaned_data["doctor"]
+            appt_date = form.cleaned_data["appt_date"]
+
+            # 有選醫師 + 日期才算可用時段喵
+            if doctor and appt_date:
+                # ✅ 改成用跟櫃台一樣的排班邏輯
+                slots = _get_available_slots(doctor, appt_date)
+                # ✅ 把時段塞進 appt_time 下拉選單（跟 book() 一樣）
+                _set_time_choices(form, slots)
+
+            # 👉 只按「載入可約時段」：不存資料，只回畫面喵
+            if action == "load_slots":
+                if doctor and appt_date and not slots:
+                    messages.warning(
+                        request,
+                        "此日期沒有可掛號時段，可能門診未開或額滿喵。"
+                    )
+                return render(
+                    request,
+                    "appointments/book_for_patient.html",
+                    {
+                        "form": form,
+                        "slots": slots,
+                        "patient": patient,
+                        "doctor": doctor,
+                    },
+                )
+
+            # 👉 下面是「確認掛號」流程喵
             appt_time_str = request.POST.get("appt_time")
 
-            # 沒選時段就加錯誤訊息喵
+            # 沒選時段就加錯誤訊息（欄位名稱是 appt_time）喵
             if not appt_time_str:
-                form.add_error("time", "請先選擇可約時段喵")
+                form.add_error("appt_time", "請先選擇可約時段喵")
             else:
-                # 解析日期 + 時間
-                appt_date = datetime.strptime(appt_date_str, "%Y-%m-%d").date()
-                appt_time = datetime.strptime(appt_time_str, "%H:%M").time()
+                # 解析時間
+                try:
+                    appt_time = datetime.strptime(appt_time_str, "%H:%M").time()
+                except ValueError:
+                    form.add_error("appt_time", "時間格式錯誤喵")
+                else:
+                    # 再確認一次這個時段還是可用（避免 race condition）喵
+                    latest_slots = _get_available_slots(doctor, appt_date)
+                    if appt_time not in latest_slots:
+                        form.add_error("appt_time", "這個時段已經無法掛號，請重新載入喵")
+                    else:
+                        # ✅ 直接建立 Appointment（不用 form.save，因為這不是 ModelForm）喵
+                        Appointment.objects.create(
+                            patient=patient,
+                            doctor=doctor,
+                            date=appt_date,
+                            time=appt_time,
+                            status="booked",   # 跟上面櫃台 book() 用的一樣小寫喵
+                        )
 
-                appt = form.save(commit=False)
-                appt.patient = patient
-                appt.date = appt_date
-                appt.time = appt_time
-                # 看你原本 status 預設是什麼，沒有就先給 pending / booked
-                if not appt.status:
-                    appt.status = "pending"
-                appt.save()
+                        messages.success(request, "掛號已建立喵！")
+                        return redirect("patients:patient_detail", pk=patient.pk)
 
-                messages.success(request, "掛號已建立喵！")
-                return redirect("patients:patient_detail", pk=patient.pk)
-
-        # 表單驗證失敗（或沒選時間）就再渲染一次畫面喵
+        # 表單驗證失敗或上面加了錯誤，就再渲染一次畫面喵
         return render(
             request,
             "appointments/book_for_patient.html",
@@ -381,3 +393,27 @@ def appointment_new_for_patient(request, patient_id):
                 "doctor": None,
             },
         )
+@login_required
+@require_POST
+def appointment_update_status(request, pk):
+    """
+    將某一筆掛號的狀態改成 BOOKED / DONE / CANCELLED 喵
+    通常給櫃檯或醫師用，在掛號列表那邊按按鈕就可以改狀態喵
+    """
+    appt = get_object_or_404(Appointment, pk=pk)
+
+    new_status = request.POST.get("status")
+
+    # 合法狀態值清單（從 model 的 STATUS_CHOICES 裡抓）喵
+    valid_status_values = {value for value, _ in Appointment.STATUS_CHOICES}
+
+    if new_status not in valid_status_values:
+        messages.error(request, "不合法的狀態值喵")
+    else:
+        appt.status = new_status
+        appt.save()
+        messages.success(request, "掛號狀態已更新喵！")
+
+    # 更新完之後回到原來的頁面（patient 詳細 or 醫師清單）喵
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/"
+    return redirect(next_url)

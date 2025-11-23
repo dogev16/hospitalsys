@@ -14,4 +14,9 @@ urlpatterns = [
         views.appointment_new_for_patient,
         name="new_for_patient",
     ),
+    path(
+        "<int:pk>/status/",
+        views.appointment_update_status,
+        name="appointment_update_status",
+    ),
 ]

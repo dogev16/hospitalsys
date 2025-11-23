@@ -51,16 +51,40 @@
         <th>時間</th>
         <th>醫師</th>
         <th>狀態</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody>
       {% for appt in appointments %}
-        <tr>
-          <td>{{ appt.date }}</td>
-          <td>{{ appt.time|time:"H:i" }}</td>
-          <td>{{ appt.doctor.name }}</td>
-          <td>{{ appt.get_status_display }}</td>
-        </tr>
+    <tr>
+      <td>{{ appt.date }}</td>
+      <td>{{ appt.time|time:"H:i" }}</td>
+      <td>{{ appt.doctor.name }}</td>
+      <td>{{ appt.get_status_display }}</td>
+    
+      <!-- ⭐ 狀態操作按鈕喵 ⭐ -->
+      <td>
+        <!-- 標記為已完成 -->
+        <form method="post"
+              action="{% url 'appointments:appointment_update_status' appt.pk %}"
+              style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="status" value="DONE">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit">完成</button>
+        </form>
+
+        <!-- 取消掛號 -->
+        <form method="post"
+              action="{% url 'appointments:appointment_update_status' appt.pk %}"
+              style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="status" value="CANCELLED">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit">取消</button>
+        </form>
+      </td>
+    </tr>
       {% endfor %}
     </tbody>
   </table>
