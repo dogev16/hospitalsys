@@ -24,7 +24,7 @@
       {% for t in tickets %}
         <tr>
           <td>{{ t.date }}</td>
-          <td>{{ t.doctor.full_name }} / {{ t.doctor.department }}</td>
+          <td>{{ t.doctor.name }} / {{ t.doctor.department }}</td>
           <td>{{ t.number }}</td>
           <td>{{ t.patient }}</td>
           <td>{{ t.get_status_display }}</td>

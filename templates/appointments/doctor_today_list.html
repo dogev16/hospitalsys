@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ doctor.name }} 今日門診喵{% endblock %}
+
+{% block content %}
+<h1>{{ doctor.name }} 今日門診喵</h1>
+
+<p>
+  <a href="{% url 'patients:patient_list' %}">← 回病人列表</a>
+</p>
+
+<p>
+  日期：{{ today }}<br>
+  醫師：{{ doctor.name }}
+</p>
+
+<h2 style="margin-top: 1.5rem;">今日掛號列表喵</h2>
+
+{% if appointments %}
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>時間</th>
+        <th>病歷號</th>
+        <th>病人姓名</th>
+        <th>狀態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appt in appointments %}
+        <tr>
+          <td>{{ appt.time|time:"H:i" }}</td>
+          <td>{{ appt.patient.chart_no }}</td>
+          <td>{{ appt.patient.full_name }}</td>
+          <td>{{ appt.get_status_display }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>這位醫師今天目前沒有掛號喵～</p>
+{% endif %}
+
+{% endblock %}

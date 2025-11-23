@@ -11,6 +11,7 @@ from django.contrib import messages
 from datetime import datetime
 from django.urls import reverse
 from django.contrib import messages
+from appointments.models import Appointment
 
 
 @group_required("RECEPTION")
@@ -127,20 +128,13 @@ def board(request):
 
 @group_required("DOCTOR")
 def doctor_panel(request):
-    """
-    醫師叫號畫面：
-    - 只看到自己今天的號碼
-    - 狀態統一使用 waiting / calling / done
-    """
-    # 1. 找出這個登入帳號對應的 doctor
     doctor = Doctor.objects.filter(user=request.user).first()
     if not doctor:
         messages.error(request, "目前帳號沒有綁定醫師資料，請請管理員確認。")
-        return redirect("index")  # 這裡用你的首頁 url name，如果不同再改
+        return redirect("index")
 
     today = timezone.localdate()
 
-    # 2. 抓今天這位醫師所有號碼牌（依預約時間 + 號碼排序）
     tickets_qs = (
         VisitTicket.objects
         .filter(date=today, doctor=doctor)
@@ -148,7 +142,6 @@ def doctor_panel(request):
         .order_by("appointment__time", "number")
     )
 
-    # 目前正在叫號的那一位（如果有）
     current_ticket = (
         tickets_qs
         .filter(status="calling")
@@ -156,12 +149,21 @@ def doctor_panel(request):
         .first()
     )
 
-    # 3. 處理按鈕動作（POST）
+    # ⭐ 新增：等待中 & 已完成
+    waiting_tickets = tickets_qs.filter(status="waiting")
+    done_tickets = tickets_qs.filter(status="done")
+
+    today_appointments = (
+        Appointment.objects
+        .filter(doctor=doctor, date=today)
+        .select_related("patient")
+        .order_by("time")
+    )
+
     if request.method == "POST":
         action = request.POST.get("action")
         ticket_id = request.POST.get("ticket_id")
 
-        # 叫下一位：找第一個 waiting 的
         if action == "call_next":
             next_ticket = (
                 tickets_qs
@@ -173,7 +175,6 @@ def doctor_panel(request):
                 messages.warning(request, "今天沒有候診中的病人了喵。")
                 return redirect("queues:doctor_panel")
 
-            # 把其他 calling 清回 waiting（保險，避免同時兩個 calling）
             tickets_qs.filter(status="calling").update(status="waiting")
 
             next_ticket.status = "calling"
@@ -182,7 +183,6 @@ def doctor_panel(request):
             messages.success(request, f"已叫號：第 {next_ticket.number} 號喵。")
             return redirect("queues:doctor_panel")
 
-        # 看診完成
         if action == "finish":
             ticket = get_object_or_404(tickets_qs, pk=ticket_id)
             ticket.status = "done"
@@ -191,14 +191,22 @@ def doctor_panel(request):
             messages.success(request, f"{ticket.number} 號看診完成喵。")
             return redirect("queues:doctor_panel")
 
-    # 4. 首次進入或 GET 重新整理
+    # 👉 回傳所有資料給 template
     context = {
         "doctor": doctor,
         "today": today,
+
+        # VisitTicket
         "tickets": tickets_qs,
         "current_ticket": current_ticket,
+        "waiting_tickets": waiting_tickets,   # ⭐ 加這
+        "done_tickets": done_tickets,         # ⭐ 加這
+
+        # Appointment
+        "today_appointments": today_appointments,
     }
     return render(request, "queues/doctor_panel.html", context)
+
 
 @group_required("DOCTOR")
 def doctor_action(request, pk, act):

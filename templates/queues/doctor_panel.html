@@ -15,15 +15,25 @@
 
 <h2>目前叫號中喵</h2>
 {% if current_ticket %}
-  <p>
-    號碼：{{ current_ticket.number }} 號<br>
-    病人：{{ current_ticket.appointment.patient.full_name }}<br>
-    時間：{{ current_ticket.appointment.time }}<br>
-    狀態：{{ current_ticket.get_status_display }}
-  </p>
+    <p>目前：#{{ current_ticket.number }} — {{ current_ticket.patient.full_name }} 喵</p>
+
+    <form method="post" style="margin-top:10px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="finish">
+        <input type="hidden" name="ticket_id" value="{{ current_ticket.id }}">
+        <button type="submit">此病人看診完成喵</button>
+    </form>
+
 {% else %}
-  <p>目前沒有正在看診的號碼喵。</p>
+    <p>目前沒有正在看診的號碼喵。</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="call_next">
+        <button type="submit">叫下一位喵！</button>
+    </form>
 {% endif %}
+
 
 <hr>
 
@@ -51,26 +61,28 @@
 
 <hr>
 
-<h2>已看診病人喵</h2>
-{% if done_tickets %}
+<h2>今日全部掛號病人喵（Appointment）</h2>
+
+{% if today_appointments %}
   <table border="1" cellpadding="4">
     <tr>
-      <th>號碼</th>
       <th>時間</th>
-      <th>病人</th>
-      <th>完成時間</th>
+      <th>病歷號</th>
+      <th>病人姓名</th>
+      <th>狀態</th>
     </tr>
-    {% for t in done_tickets %}
-      <tr>
-        <td>{{ t.number }}</td>
-        <td>{{ t.appointment.time }}</td>
-        <td>{{ t.appointment.patient.full_name }}</td>
-        <td>{{ t.finished_at|default:"-" }}</td>
+    {% for appt in today_appointments %}
+      <tr {% if forloop.first %}style="background-color: #d0ffd0;"{% endif %}>
+        <td>{{ appt.time|time:"H:i" }}</td>
+        <td>{{ appt.patient.chart_no }}</td>
+        <td>{{ appt.patient.full_name }}</td>
+        <td>{{ appt.get_status_display }}</td>
       </tr>
     {% endfor %}
   </table>
 {% else %}
-  <p>今天還沒有完成看診的病人喵。</p>
+  <p>今天沒有掛號資料喵。</p>
 {% endif %}
+
 
 {% endblock %}

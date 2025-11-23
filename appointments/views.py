@@ -17,7 +17,6 @@ from queues.models import VisitTicket
 from django.db import transaction
 
 from django.contrib.auth.decorators import login_required
-from datetime import datetime
 from django.views.decorators.http import require_POST
 
 
@@ -356,14 +355,39 @@ def appointment_new_for_patient(request, patient_id):
                     if appt_time not in latest_slots:
                         form.add_error("appt_time", "這個時段已經無法掛號，請重新載入喵")
                     else:
-                        # ✅ 直接建立 Appointment（不用 form.save，因為這不是 ModelForm）喵
-                        Appointment.objects.create(
+                        # ✅ 先建立 Appointment（掛號紀錄）喵
+                        appt = Appointment.objects.create(
                             patient=patient,
                             doctor=doctor,
                             date=appt_date,
                             time=appt_time,
-                            status="booked",   # 跟上面櫃台 book() 用的一樣小寫喵
+                            status="booked",   # 跟櫃檯 book() 一樣用小寫 booked 喵
                         )
+
+                        # ⭐ 從 Appointment 自動產生 VisitTicket（號碼牌）喵 ⭐
+
+                        # 1. 同一位醫師 + 同一天，找目前最大號碼，再 +1
+                        next_no = (
+                            VisitTicket.objects
+                            .filter(doctor=doctor, date=appt_date)
+                            .aggregate(Max("number"))["number__max"]
+                            or 0
+                        ) + 1
+
+                        # 2. 建立新的號碼牌，預設狀態 waiting 喵
+                        VisitTicket.objects.create(
+                            appointment=appt,
+                            date=appt_date,
+                            doctor=doctor,
+                            patient=patient,
+                            number=next_no,
+                            status="waiting",
+                        )
+
+                        # 3. 重新整理這位醫師當天的叫號順序喵
+                        _renumber_visit_tickets(doctor, appt_date)
+
+                        # ⭐ 到這裡為止，病人自己線上掛號也會直接進入叫號隊列喵 ⭐
 
                         messages.success(request, "掛號已建立喵！")
                         return redirect("patients:patient_detail", pk=patient.pk)
@@ -417,3 +441,34 @@ def appointment_update_status(request, pk):
     # 更新完之後回到原來的頁面（patient 詳細 or 醫師清單）喵
     next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/"
     return redirect(next_url)
+
+@login_required
+def doctor_today_appointments(request, doctor_id):
+    """
+    醫師今日門診列表喵
+    URL: /appointments/doctor/<doctor_id>/today/
+    會列出該醫師「今天」所有掛號，依時間排序喵
+    """
+    doctor = get_object_or_404(Doctor, pk=doctor_id)
+
+    # 今天日期（有吃 Django 時區設定）喵
+    today = timezone.localdate()
+
+    # 撈出這位醫師今天的所有掛號，照時間排序喵
+    appointments = (
+        Appointment.objects
+        .filter(doctor=doctor, date=today)
+        .select_related("patient")   # 預先 join 病人，template 用起來比較快喵
+        .order_by("time")
+    )
+
+    return render(
+        request,
+        "appointments/doctor_today_list.html",
+        {
+            "doctor": doctor,
+            "appointments": appointments,
+            "today": today,
+        },
+    )
+
