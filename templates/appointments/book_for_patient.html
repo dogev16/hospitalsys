@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}門診掛號（櫃台）{% endblock %}
+{% block title %}替病人掛號喵{% endblock %}
 
 {% block content %}
-<h1>門診掛號（櫃台）</h1>
+<h1>替 {{ patient.full_name }} 掛號喵</h1>
+
+<p>
+  病歷號：{{ patient.chart_no }}　
+  身分證：{{ patient.national_id }}
+</p>
 
 {% if messages %}
   <ul style="color: red;">
@@ -13,26 +18,12 @@
   </ul>
 {% endif %}
 
-{% if form.errors %}
-  <div style="color: red; margin-bottom: 1rem;">
-    <p>表單有點小問題喵：</p>
-    <ul>
-      {% for field_name, errors in form.errors.items %}
-        <li>
-          {{ field_name }}：
-          {{ errors|striptags }}
-        </li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
-
 <form method="post">
   {% csrf_token %}
   <table>
     <tr>
-      <th>{{ form.chart_no.label_tag }}</th>
-      <td>{{ form.chart_no }}</td>
+      <th>病歷號</th>
+      <td>{{ patient.chart_no }}</td>
     </tr>
     <tr>
       <th>{{ form.doctor.label_tag }}</th>
@@ -48,7 +39,7 @@
         {{ form.appt_time }}
         {% if not slots %}
           <div style="font-size: 0.9em; color: #666;">
-            請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間。
+            請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間喵。
           </div>
         {% endif %}
       </td>
@@ -60,16 +51,20 @@
   </button>
 
   <button type="submit" name="action" value="confirm">
-    確認掛號
+    確認掛號喵
   </button>
 </form>
 
 {% if slots %}
-  <h3>本次載入的可掛號時段</h3>
+  <h3>本次載入的可掛號時段喵</h3>
   <ul>
     {% for t in slots %}
       <li>{{ t|time:"H:i" }}</li>
     {% endfor %}
   </ul>
 {% endif %}
+
+<p>
+  <a href="{% url 'patients:patient_detail' patient.id %}">← 回病人詳細資料喵</a>
+</p>
 {% endblock %}
