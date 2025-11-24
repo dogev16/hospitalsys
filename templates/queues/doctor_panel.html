@@ -3,86 +3,164 @@
 {% block title %}醫師面板{% endblock %}
 
 {% block content %}
+
+<style>
+    .panel-box {
+        background: #f9f9ff;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        color: #444;
+    }
+
+    table {
+        width: 60%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 6px 10px;
+        text-align: center;
+    }
+
+    th {
+        background: #f0f0f0;
+    }
+
+    .btn-call {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .btn-call:hover {
+        background: #45a049;
+    }
+
+    .btn-finish {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .btn-finish:hover {
+        background: #c0392b;
+    }
+
+    .highlight-current {
+        background-color: #fff2cc !important;
+        font-weight: bold;
+    }
+</style>
+
 <h1>醫師面板喵</h1>
 
-{% if doctor %}
-  <p>醫師：{{ doctor.name }}　日期：{{ today }}</p>
-{% else %}
-  <p style="color:red;">沒有對應的醫師資料喵。</p>
-{% endif %}
+<div class="panel-box">
+    {% if doctor %}
+      <p><strong>醫師：</strong>{{ doctor.name }}　
+         <strong>日期：</strong>{{ today }}</p>
+    {% else %}
+      <p style="color:red;">沒有對應的醫師資料喵。</p>
+    {% endif %}
+</div>
 
-<hr>
+<div class="panel-box">
+    <div class="section-title">目前叫號中喵</div>
 
-<h2>目前叫號中喵</h2>
-{% if current_ticket %}
-    <p>目前：#{{ current_ticket.number }} — {{ current_ticket.patient.full_name }} 喵</p>
+    {% if current_ticket %}
+        <p class="highlight-current">
+            ▶ 現在看診： #{{ current_ticket.number }} — {{ current_ticket.patient.full_name }} 喵
+        </p>
 
-    <form method="post" style="margin-top:10px;">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="finish">
-        <input type="hidden" name="ticket_id" value="{{ current_ticket.id }}">
-        <button type="submit">此病人看診完成喵</button>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="finish">
+            <input type="hidden" name="ticket_id" value="{{ current_ticket.id }}">
+            <button type="submit" class="btn-finish">此病人看診完成喵</button>
+        </form>
 
-{% else %}
-    <p>目前沒有正在看診的號碼喵。</p>
+    {% else %}
+        <p>目前沒有正在看診的號碼喵。</p>
 
-    <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="call_next">
-        <button type="submit">叫下一位喵！</button>
-    </form>
-{% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="call_next">
+            <button type="submit" class="btn-call">叫下一位喵！</button>
+        </form>
+    {% endif %}
+</div>
 
 
-<hr>
+<div class="panel-box">
+    <div class="section-title">等待中病人喵</div>
 
-<h2>等待中病人喵</h2>
-{% if waiting_tickets %}
-  <table border="1" cellpadding="4">
-    <tr>
-      <th>號碼</th>
-      <th>時間</th>
-      <th>病人</th>
-      <th>狀態</th>
-    </tr>
-    {% for t in waiting_tickets %}
-      <tr>
-        <td>{{ t.number }}</td>
-        <td>{{ t.appointment.time }}</td>
-        <td>{{ t.appointment.patient.full_name }}</td>
-        <td>{{ t.get_status_display }}</td>
-      </tr>
-    {% endfor %}
-  </table>
-{% else %}
-  <p>目前沒有等待中的病人喵。</p>
-{% endif %}
+    {% if waiting_tickets %}
+      <table>
+        <tr>
+          <th>號碼</th>
+          <th>時間</th>
+          <th>病人</th>
+          <th>狀態</th>
+        </tr>
+        {% for t in waiting_tickets %}
+          <tr>
+            <td>{{ t.number }}</td>
+            <td>{{ t.appointment.time }}</td>
+            <td>{{ t.appointment.patient.full_name }}</td>
+            <td>{{ t.get_status_display }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>目前沒有等待中的病人喵。</p>
+    {% endif %}
+</div>
 
-<hr>
 
-<h2>今日全部掛號病人喵（Appointment）</h2>
+<div class="panel-box">
+    <div class="section-title">今日全部掛號病人喵（Appointment）</div>
 
-{% if today_appointments %}
-  <table border="1" cellpadding="4">
-    <tr>
-      <th>時間</th>
-      <th>病歷號</th>
-      <th>病人姓名</th>
-      <th>狀態</th>
-    </tr>
-    {% for appt in today_appointments %}
-      <tr {% if forloop.first %}style="background-color: #d0ffd0;"{% endif %}>
-        <td>{{ appt.time|time:"H:i" }}</td>
-        <td>{{ appt.patient.chart_no }}</td>
-        <td>{{ appt.patient.full_name }}</td>
-        <td>{{ appt.get_status_display }}</td>
-      </tr>
-    {% endfor %}
-  </table>
-{% else %}
-  <p>今天沒有掛號資料喵。</p>
-{% endif %}
+    {% if today_appointments %}
+      <table>
+        <tr>
+          <th>時間</th>
+          <th>病歷號</th>
+          <th>病人姓名</th>
+          <th>狀態</th>
+        </tr>
 
+        {% for appt in today_appointments %}
+          <tr {% if forloop.first %}class="highlight-current"{% endif %}>
+            <td>{{ appt.time|time:"H:i" }}</td>
+            <td>{{ appt.patient.chart_no }}</td>
+            <td>{{ appt.patient.full_name }}</td>
+            <td>{{ appt.get_status_display }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>今天沒有掛號資料喵。</p>
+    {% endif %}
+</div>
 
 {% endblock %}

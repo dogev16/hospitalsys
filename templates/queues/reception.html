@@ -1,59 +1,160 @@
 {% extends "base.html" %}
-{% block title %}櫃台叫號面板{% endblock %}
+{% block title %}櫃台叫號面板喵{% endblock %}
 
 {% block content %}
-<h1>櫃台叫號面板</h1>
 
-<p>顯示今天所有門診的叫號狀況，讓櫃台可以一眼看到目前進度。</p>
+<style>
+    .reception-container {
+        width: 95%;
+        margin: 0 auto;
+        margin-top: 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
 
-<table border="1" cellpadding="6" cellspacing="0">
-  <thead>
-    <tr>
-      <th>日期</th>
-      <th>醫師</th>
-      <th>號碼</th>
-      <th>病人</th>
-      <th>狀態</th>
-      <th>建立時間</th>
-      <th>叫號時間</th>
-      <th>完成時間</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% if tickets %}
-      {% for t in tickets %}
+    .reception-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 10px;
+    }
+
+    .reception-header h1 {
+        font-size: 26px;
+        margin: 0;
+        color: #333;
+    }
+
+    .reception-header .sub {
+        font-size: 14px;
+        color: #777;
+    }
+
+    .reception-summary {
+        margin-top: 5px;
+        margin-bottom: 15px;
+        font-size: 15px;
+        color: #555;
+    }
+
+    table.reception-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 15px;
+    }
+
+    table.reception-table th,
+    table.reception-table td {
+        border: 1px solid #ddd;
+        padding: 8px 10px;
+        text-align: center;
+    }
+
+    table.reception-table th {
+        background: #f2f5ff;
+        font-weight: bold;
+    }
+
+    /* 依狀態顏色區分喵 */
+    tr.status-waiting {
+        background: #fdfdfd;
+    }
+
+    tr.status-calling {
+        background: #fff4c2;  /* 黃色：正在叫號 */
+        font-weight: bold;
+    }
+
+    tr.status-done {
+        background: #f5f5f5;
+        color: #666;
+    }
+
+    .time-cell {
+        white-space: nowrap;
+        font-family: Consolas, "Courier New", monospace;
+    }
+</style>
+
+<div class="reception-container">
+    <div class="reception-header">
+        <h1>櫃台叫號面板喵</h1>
+        <div class="sub">
+            今天日期：
+            {% if tickets %}
+                {{ tickets.0.date|date:"Y-m-d" }}
+            {% else %}
+                -
+            {% endif %}
+        </div>
+    </div>
+
+
+
+    <div class="reception-summary">
+        顯示今天所有門診的叫號狀況，讓櫃台可以一眼看到目前進度喵。<br>
+        狀態顏色：<strong>黃色＝目前叫號中</strong>、<strong>灰色＝已完成</strong>。
+    </div>
+
+    <table class="reception-table">
+      <thead>
         <tr>
-          <td>{{ t.date }}</td>
-          <td>{{ t.doctor.name }} / {{ t.doctor.department }}</td>
-          <td>{{ t.number }}</td>
-          <td>{{ t.patient }}</td>
-          <td>{{ t.get_status_display }}</td>
-          <td>{{ t.created_at|date:"H:i" }}</td>
-          <td>
-            {% if t.called_at %}
-              {{ t.called_at|date:"H:i" }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td>
-            {% if t.finished_at %}
-              {{ t.finished_at|date:"H:i" }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
+          <th>日期</th>
+          <th>醫師</th>
+          <th>號碼</th>
+          <th>病人</th>
+          <th>狀態</th>
+          <th>建立時間</th>
+          <th>叫號時間</th>
+          <th>完成時間</th>
         </tr>
-      {% endfor %}
-    {% else %}
-      <tr>
-        <td colspan="8">今天還沒有任何叫號資料。</td>
-      </tr>
-    {% endif %}
-  </tbody>
-</table>
+      </thead>
+      <tbody>
+        {% if tickets %}
+          {% for t in tickets %}
+            <tr class="status-{{ t.status }}">
+              <td>{{ t.date }}</td>
+              <td>
+                {{ t.doctor.name }}
+                {% if t.doctor.department %}
+                  <br><span style="font-size: 13px; color:#666;">{{ t.doctor.department }}</span>
+                {% endif %}
+              </td>
+              <td>{{ t.number }}</td>
+              <td>{{ t.patient }}</td>
+              <td>{{ t.get_status_display }}</td>
+              <td class="time-cell">
+                {{ t.created_at|date:"H:i" }}
+              </td>
+              <td class="time-cell">
+                {% if t.called_at %}
+                  {{ t.called_at|date:"H:i" }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="time-cell">
+                {% if t.finished_at %}
+                  {{ t.finished_at|date:"H:i" }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8">今天還沒有任何叫號資料喵。</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
 
-<p style="margin-top: 1rem;">
-  <a href="{% url 'index' %}">回首頁</a>
-</p>
+    <p style="margin-top: 1rem;">
+      <a href="{% url 'index' %}">回首頁</a>
+    </p>
+</div>
+
 {% endblock %}

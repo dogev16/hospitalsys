@@ -1,47 +1,128 @@
 {% extends "base.html" %}
 <meta http-equiv="refresh" content="5">
-{% block title %}叫號看板{% endblock %}
+
+{% block title %}叫號看板喵{% endblock %}
 
 {% block content %}
-<h1>叫號看板</h1>
-<p>這個畫面可以放在候診區的大螢幕，讓病人看到目前叫到哪一號。</p>
 
-<table border="1" cellpadding="6" cellspacing="0">
-  <thead>
-    <tr>
-      <th>醫師</th>
-      <th>號碼</th>
-      <th>病人</th>
-      <th>狀態</th>
-      <th>叫號時間</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% if tickets %}
-      {% for t in tickets %}
-        <tr>
-          <td>{{ t.doctor.name }}{% if t.doctor.department %} / {{ t.doctor.department }}{% endif %}</td>
-          <td>{{ t.number }}</td>
-          <td>{{ t.patient.full_name }}</td>
-          <td>{{ t.get_status_display }}</td>
-          <td>
-            {% if t.called_at %}
-              {{ t.called_at|date:"H:i" }}
+<style>
+    body {
+        background: #f4f8ff;
+    }
+
+    .board-container {
+        width: 95%;
+        margin: 0 auto;
+        margin-top: 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 32px;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 20px;
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 12px;
+        text-align: center;
+    }
+
+    th {
+        background: #eaf0ff;
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .calling {
+        background: #fff4c2 !important; /* 黃色，代表正在看診 */
+        font-weight: bold;
+    }
+
+    .next {
+        background: #e7ffe7 !important; /* 綠色，代表下一位 */
+        font-weight: bold;
+    }
+
+    .done {
+        color: #666;
+        font-size: 18px;
+    }
+</style>
+
+<div class="board-container">
+    <h1>候診叫號看板喵</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>醫師</th>
+                <th>正在看診</th>
+                <th>下一位</th>
+                <th>已看診（最近幾位）</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% if board_data %}
+                {% for row in board_data %}
+                    <tr>
+                        <!-- 醫師 -->
+                        <td>
+                            {{ row.doctor.name }}
+                            {% if row.doctor.department %}
+                                <br><span style="font-size:16px;">{{ row.doctor.department }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 正在看診 -->
+                        <td class="{% if row.current %}calling{% endif %}">
+                            {% if row.current %}
+                                #{{ row.current.number }} — {{ row.current.patient.full_name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <!-- 下一位 -->
+                        <td class="{% if row.next %}next{% endif %}">
+                            {% if row.next %}
+                                #{{ row.next.number }} — {{ row.next.patient.full_name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <!-- 已看診 -->
+                        <td class="done">
+                            {% if row.done %}
+                                {% for t in row.done %}
+                                    #{{ t.number }} — {{ t.patient.full_name }}<br>
+                                {% endfor %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
             {% else %}
-              -
+                <tr>
+                    <td colspan="4">今天沒有資料喵。</td>
+                </tr>
             {% endif %}
-          </td>
-        </tr>
-      {% endfor %}
-    {% else %}
-      <tr>
-        <td colspan="5">今天還沒有掛號資料。</td>
-      </tr>
-    {% endif %}
-  </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
 
-<p style="margin-top: 1rem;">
-  <a href="{% url 'index' %}">回首頁</a>
-</p>
 {% endblock %}
