@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+<meta http-equiv="refresh" content="5">
 {% block title %}叫號看板{% endblock %}
 
 {% block content %}
@@ -19,9 +20,9 @@
     {% if tickets %}
       {% for t in tickets %}
         <tr>
-          <td>{{ t.doctor.full_name }} / {{ t.doctor.department }}</td>
+          <td>{{ t.doctor.name }}{% if t.doctor.department %} / {{ t.doctor.department }}{% endif %}</td>
           <td>{{ t.number }}</td>
-          <td>{{ t.patient }}</td>
+          <td>{{ t.patient.full_name }}</td>
           <td>{{ t.get_status_display }}</td>
           <td>
             {% if t.called_at %}

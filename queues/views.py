@@ -117,12 +117,33 @@ def reception_call(request):
 
 def board(request):
     today = timezone.localdate()
-    tickets = (
-        VisitTicket.objects
-        .filter(date=today)
-        .order_by("doctor__name", "number")  # 這裡改成 name 
-    )
-    return render(request, "queues/board.html", {"tickets": tickets})
+
+    # 全院所有醫師
+    doctors = Doctor.objects.all()
+
+    board_data = []
+
+    for doc in doctors:
+        doctor_tickets = VisitTicket.objects.filter(
+            doctor=doc,
+            date=today
+        ).select_related("patient", "appointment").order_by("number")
+
+        current = doctor_tickets.filter(status="calling").first()
+        waiting = doctor_tickets.filter(status="waiting").first()
+        done = doctor_tickets.filter(status="done")[:5]  # 顯示前 5 位已完成
+
+        board_data.append({
+            "doctor": doc,
+            "current": current,
+            "next": waiting,
+            "done": done,
+        })
+
+    return render(request, "queues/board.html", {
+        "board_data": board_data,
+    })
+
 
 
 
