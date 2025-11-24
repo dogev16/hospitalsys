@@ -5,7 +5,6 @@ from common.utils import group_required
 from .models import VisitTicket
 from doctors.models import Doctor, DoctorSchedule
 
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from datetime import datetime
@@ -20,7 +19,7 @@ def reception_panel(request):
     tickets = VisitTicket.objects.filter(date=today).order_by("doctor__name", "number")
     return render(request, "queues/reception.html", {"tickets": tickets})
 
-@group_required("STAFF_RECEPTION")
+@group_required("RECEPTION")
 def reception_call(request):
     today = timezone.localdate()
     doctor_id = request.GET.get("doctor")
@@ -58,7 +57,6 @@ def reception_call(request):
 
     if request.method == "POST" and selected_doctor:
         action = request.POST.get("action")
-        tickets = list(tickets)
 
         if action == "next":
             # 1. 把目前 calling 的改成 done

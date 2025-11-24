@@ -1,75 +1,123 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h1>櫃台叫號畫面</h1>
-<p>今天日期：{{ today }}</p>
-{% if messages %}
-  <ul style="color:red;">
-    {% for msg in messages %}
-      <li>{{ msg }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+{% block title %}櫃台叫號畫面喵{% endblock %}
 
-<form method="get" style="margin-bottom: 1rem;">
-  <label for="doctor">選擇醫師：</label>
-  <select name="doctor" id="doctor" onchange="this.form.submit()">
-    <option value="">-- 請選擇醫師 --</option>
+{% block content %}
+<style>
+    .panel {
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .current {
+        background: #fff4c2;
+        padding: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .small-btn {
+        padding: 6px 14px;
+        margin-right: 8px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+    }
+    th {
+        background: #f2f5ff;
+    }
+    tr.done {
+        background: #eee;
+        color: #666;
+    }
+</style>
+
+<h2>櫃台叫號畫面喵</h2>
+
+<div class="panel">
+  今天日期：{{ today }}
+</div>
+
+<form method="get" class="panel">
+  <label>選擇醫師：</label>
+  <select name="doctor" onchange="this.form.submit()">
     {% for d in doctors %}
-      <option value="{{ d.id }}" {% if selected_doctor and d.id == selected_doctor.id %}selected{% endif %}>
-        {{ d }}
+      <option value="{{ d.pk }}" {% if selected_doctor and d.pk == selected_doctor.pk %}selected{% endif %}>
+        {{ d.name }}（{{ d.department }}）
       </option>
     {% endfor %}
   </select>
-  <noscript><button type="submit">載入</button></noscript>
 </form>
 
 {% if selected_doctor %}
-  <h2>目前選擇：{{ selected_doctor }} </h2>
-
-  <form method="post" style="margin: 1rem 0;">
-    {% csrf_token %}
-    <input type="hidden" name="doctor" value="{{ selected_doctor.id }}">
-    <button type="submit" name="action" value="next">叫下一號</button>
-  </form>
 
   {% if current_ticket %}
-    <div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem;">
-      <h3>目前叫號中</h3>
-      <p>號碼：{{ current_ticket.number }}</p>
-      <p>病患：{{ current_ticket.patient }}</p>
-      <p>門診時間：{{ current_ticket.appointment.time }}</p>
-      <p>叫號時間：{{ current_ticket.called_at }}</p>
-      <p>狀態：{{ current_ticket.get_status_display }}</p>
+    <div class="current">
+      <div>🚨 目前叫號：第 <strong>{{ current_ticket.number }}</strong> 號</div>
+      <div>病人：{{ current_ticket.patient }}</div>
+      <div>門診時間：{{ current_ticket.appointment.time }}</div>
+      <div>叫號時間：{{ current_ticket.called_at|date:"H:i" }}</div>
+
+      <form method="post" style="margin-top: 10px;">
+        {% csrf_token %}
+        <button type="submit" name="action" value="recall" class="small-btn">🔊 重叫</button>
+        <button type="submit" name="action" value="next"  class="small-btn">➡ 下一號</button>
+      </form>
     </div>
   {% else %}
-    <p>目前還沒有被叫出的號碼。</p>
+    <div class="panel">
+      目前沒有叫號中的病患喵。
+      <form method="post" style="margin-top: 10px;">
+        {% csrf_token %}
+        <button type="submit" name="action" value="next" class="small-btn">開始叫號</button>
+      </form>
+    </div>
   {% endif %}
 
-  <h3>今天掛號列表（{{ selected_doctor }}）</h3>
-  <table border="1" cellpadding="4" cellspacing="0">
-    <tr>
-      <th>號碼</th>
-      <th>病患</th>
-      <th>預約時間</th>
-      <th>狀態</th>
-      <th>叫號時間</th>
-      <th>結束時間</th>
-    </tr>
-    {% for t in tickets %}
-    <tr>
-      <td>{{ t.number }}</td>
-      <td>{{ t.patient }}</td>
-      <td>{{ t.appointment.time }}</td>
-      <td>{{ t.get_status_display }}</td>
-      <td>{{ t.called_at }}</td>
-      <td>{{ t.finished_at }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="6">今天沒有掛號。</td></tr>
-    {% endfor %}
-  </table>
+  <div class="panel">
+    <h3>今日所有掛號（{{ selected_doctor.name }}）</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>號碼</th>
+          <th>病人</th>
+          <th>預約時間</th>
+          <th>狀態</th>
+          <th>叫號時間</th>
+          <th>完成時間</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for t in tickets %}
+        <tr class="{{ t.status }}">
+          <td>{{ t.number }}</td>
+          <td>{{ t.patient }}</td>
+          <td>{{ t.appointment.time }}</td>
+          <td>{{ t.get_status_display }}</td>
+          <td>{{ t.called_at|date:"H:i" }}</td>
+          <td>{{ t.finished_at|date:"H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">今天沒有掛號資料喵。</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
 {% else %}
-  <p>請先選擇一位醫師。</p>
+  <div class="panel">請先選擇醫師喵。</div>
 {% endif %}
+
 {% endblock %}
