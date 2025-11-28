@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>我的處方歷史</h2>
+
+<p>病人：{{ patient.full_name }}（編號：{{ patient.chart_no }}）</p>
+
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+        <tr>
+            <th>開立日期</th>
+            <th>醫師</th>
+            <th>狀態</th>
+            <th>項目數</th>
+            <th>查看</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rx in prescriptions %}
+            <tr>
+                <td>{{ rx.date }}</td>
+                <td>{{ rx.doctor.user.get_full_name }}</td>
+                <td>{{ rx.status }}</td>
+                <td>{{ rx.items.count }}</td>
+                <td>
+                    <a href="{% url 'prescriptions:patient_detail' rx.id %}">明細</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5">目前沒有處方紀錄喵</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

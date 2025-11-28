@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>處方明細</h2>
+
+<p>
+    病人：{{ prescription.patient.chart_no|default:prescription.patient.id }}
+    {{ prescription.patient.full_name }}<br>
+    開立日期：{{ prescription.date }}<br>
+    醫師：{{ prescription.doctor.user.get_full_name }} / {{ prescription.doctor.department }}<br>
+    狀態：{{ prescription.status }}
+</p>
+
+<h4>醫師備註</h4>
+<p>
+    {{ prescription.notes|default:"（無備註）" }}
+</p>
+
+<h4>用藥項目</h4>
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+        <tr>
+            <th>藥品</th>
+            <th>數量</th>
+            <th>用法</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in prescription.items.all %}
+            <tr>
+                <td>{{ item.drug.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.usage|linebreaksbr }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="3">尚未填寫用藥項目喵</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p style="margin-top:20px;">
+    {% if request.user.doctor %}
+        <a href="{% url 'prescriptions:doctor_history' %}">回醫師處方歷史</a>
+    {% elif request.user.patient %}
+        <a href="{% url 'prescriptions:patient_history' %}">回我的處方歷史</a>
+    {% endif %}
+</p>
+{% endblock %}

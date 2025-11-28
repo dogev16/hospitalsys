@@ -46,6 +46,8 @@
         border-radius: 6px;
         cursor: pointer;
         margin-top: 10px;
+        text-decoration: none;
+        display: inline-block;
     }
 
     .btn-call:hover {
@@ -71,19 +73,39 @@
         background-color: #fff2cc !important;
         font-weight: bold;
     }
+
+    .btn-secondary-link {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #888;
+        text-decoration: none;
+        color: #333;
+        background: #f7f7f7;
+        font-size: 14px;
+    }
+
+    .btn-secondary-link:hover {
+        background: #ececec;
+    }
 </style>
 
 <h1>醫師面板喵</h1>
 
+{# 1. 醫師資訊喵 #}
 <div class="panel-box">
     {% if doctor %}
-      <p><strong>醫師：</strong>{{ doctor.name }}　
-         <strong>日期：</strong>{{ today }}</p>
+      <p>
+        <strong>醫師：</strong>{{ doctor.name }}　
+        <strong>日期：</strong>{{ today }}
+      </p>
     {% else %}
       <p style="color:red;">沒有對應的醫師資料喵。</p>
     {% endif %}
 </div>
 
+{# 2. 目前叫號中喵 #}
 <div class="panel-box">
     <div class="section-title">目前叫號中喵</div>
 
@@ -99,6 +121,20 @@
             <button type="submit" class="btn-finish">此病人看診完成喵</button>
         </form>
 
+        {# 開 / 編輯處方按鈕喵 #}
+        <div style="margin-top: 15px;">
+            <a href="{% url 'prescriptions:edit_for_ticket' current_ticket.id %}"
+               class="btn-call">
+              📝 開立 / 編輯處方喵
+            </a>
+
+            {% if current_ticket.prescription %}
+              <span style="margin-left: 10px; font-size: 14px; color: #555;">
+                （已有處方，點上面可修改喵）
+              </span>
+            {% endif %}
+        </div>
+
     {% else %}
         <p>目前沒有正在看診的號碼喵。</p>
 
@@ -110,7 +146,7 @@
     {% endif %}
 </div>
 
-
+{# 3. 等待中病人喵 #}
 <div class="panel-box">
     <div class="section-title">等待中病人喵</div>
 
@@ -136,7 +172,7 @@
     {% endif %}
 </div>
 
-
+{# 4. 今日全部掛號病人喵 #}
 <div class="panel-box">
     <div class="section-title">今日全部掛號病人喵（Appointment）</div>
 
@@ -161,6 +197,18 @@
     {% else %}
       <p>今天沒有掛號資料喵。</p>
     {% endif %}
+</div>
+
+{# 5. 醫師處方相關功能喵 #}
+<div class="panel-box">
+    <div class="section-title">處方相關功能喵</div>
+
+    <p>查看你過去為病人開立的處方紀錄喵，可以用來追蹤長期用藥或寫醫囑喵。</p>
+
+    <a href="{% url 'prescriptions:doctor_prescription_list' %}"
+       class="btn-secondary-link">
+        📜 查看處方歷史喵
+    </a>
 </div>
 
 {% endblock %}

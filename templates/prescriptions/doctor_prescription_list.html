@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}我的處方歷史{% endblock %}
+
+{% block content %}
+<h1>我的處方歷史喵</h1>
+
+<p>
+    醫師：{{ doctor.name }}<br>
+    最近開立的處方如下喵：
+</p>
+
+{% if prescriptions %}
+<table border="1" cellspacing="0" cellpadding="6">
+    <thead>
+        <tr>
+            <th>日期</th>
+            <th>病歷號</th>
+            <th>病人姓名</th>
+            <th>狀態</th>
+            <th>用藥摘要</th>
+            <th>動作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rx in prescriptions %}
+            <tr>
+                <td>{{ rx.date }}</td>
+                <td>{{ rx.patient.chart_no }}</td>
+                <td>{{ rx.patient.full_name }}</td>
+                <td>{{ rx.get_status_display }}</td>
+                <td>
+                    {% with first_item=rx.items.all|first %}
+                        {% if first_item %}
+                            {{ first_item.drug.name }} x {{ first_item.quantity }}
+                            {% if rx.items.count > 1 %}
+                                （+{{ rx.items.count|add:"-1" }} 項）
+                            {% endif %}
+                        {% else %}
+                            （尚未填寫用藥）
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    <a href="{% url 'prescriptions:edit_prescription' rx.id %}">
+                        查看 / 編輯
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>目前尚無處方紀錄喵。</p>
+{% endif %}
+
+<p style="margin-top:20px;">
+    <a href="{% url 'queues:doctor_panel' %}">回醫師面板喵</a>
+</p>
+{% endblock %}

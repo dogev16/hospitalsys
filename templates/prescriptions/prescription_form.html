@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>處方開立</h2>
+
+<p>
+    病人：
+    {{ prescription.patient.chart_no }} 
+    {{ prescription.patient.full_name }}
+</p>
+<p>看診日期：{{ prescription.date }}</p>
+<p>醫師：{{ prescription.doctor.user.get_full_name }} / {{ prescription.doctor.department }}</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div style="margin-bottom: 20px;">
+        <label for="{{ form.notes.id_for_label }}">醫師備註</label><br>
+        {{ form.notes }}
+        {% if form.notes.errors %}
+            <div style="color:red;">
+                {{ form.notes.errors }}
+            </div>
+        {% endif %}
+    </div>
+
+    <h4>用藥項目</h4>
+
+    {{ items.management_form }}
+
+    <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+            <tr>
+                <th>藥品</th>
+                <th>數量</th>
+                <th>用法</th>
+                <th>刪除</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_form in items %}
+                <tr>
+                    <td>
+                        {{ item_form.drug }}
+                        {% if item_form.drug.errors %}
+                            <div style="color:red;">{{ item_form.drug.errors }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ item_form.quantity }}
+                        {% if item_form.quantity.errors %}
+                            <div style="color:red;">{{ item_form.quantity.errors }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ item_form.usage }}
+                        {% if item_form.usage.errors %}
+                            <div style="color:red;">{{ item_form.usage.errors }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {% if item_form.instance.pk %}
+                            {{ item_form.DELETE }}
+                        {% else %}
+                            <!-- 新行還沒存過，可以留著讓醫師寫 -->
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+        <button type="submit">儲存處方</button>
+        <a href="{% url 'queues:doctor_panel' %}">回診列表</a>
+    </div>
+
+</form>
+{% endblock %}

@@ -3,28 +3,49 @@ from django.utils import timezone
 from patients.models import Patient
 from doctors.models import Doctor
 from inventory.models import Drug
+from queues.models import VisitTicket
 
 class Prescription(models.Model):
-    STATUS_CHOICES = [
-        ("NEW", "開立"),
-        ("READY", "待發藥"),
-        ("DISPENSED", "已領藥"),
-    ]
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="prescriptions",
+    )
+    doctor = models.ForeignKey(
+        Doctor,
+        on_delete=models.CASCADE,
+        related_name="prescriptions",
+    )
     date = models.DateField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="NEW")
-    created_at = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        default="draft",
+        choices=[
+            ("draft", "草稿"),
+            ("final", "已確認"),
+        ],
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date", "-created_at"]
 
     def __str__(self):
-        return f"{self.date} {self.patient} {self.doctor}"
+        return f"{self.date} {self.patient} / {self.doctor}"
 
 class PrescriptionItem(models.Model):
-    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name="items")
-    drug = models.ForeignKey(Drug, on_delete=models.PROTECT)
-    dose = models.CharField("用法", max_length=100)
-    days = models.IntegerField("天數")
-    qty = models.IntegerField("數量")
+    prescription = models.ForeignKey(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    drug = models.ForeignKey(
+        Drug,
+        on_delete=models.PROTECT,
+    )
+    quantity = models.PositiveIntegerField()
+    usage = models.TextField(blank=True)
 
     def __str__(self):
-        return f"{self.drug} x{self.qty}"
+        return f"{self.drug} x {self.quantity}"

@@ -1,10 +1,100 @@
 {% extends "base.html" %}
 {% block title %}登入{% endblock %}
+
 {% block content %}
-<h1>登入</h1>
-<form method="post">
+<h1>登入喵</h1>
+
+<!-- 錯誤訊息美化喵 -->
+{% if form.errors %}
+<div style="
+    background:#ffe5e5;
+    border-left:5px solid #ff4d4d;
+    padding:10px 15px;
+    margin-bottom:15px;
+    border-radius:5px;
+    color:#b30000;
+">
+    <strong>登入失敗喵！</strong><br>
+    帳號或密碼可能輸入錯誤喵。
+</div>
+{% endif %}
+
+<form method="post" style="max-width: 350px;">
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">登入</button>
+
+  <!-- Username -->
+  <div style="margin-bottom: 15px;">
+    <label for="id_username">帳號喵</label><br>
+    {{ form.username }}
+  </div>
+
+  <!-- Password with toggle + CapsLock -->
+  <div style="margin-bottom: 15px;">
+    <label for="id_password">密碼喵</label><br>
+
+    <div style="position: relative;">
+      {{ form.password }}
+
+      <!-- 👁️ toggle -->
+      <span
+        id="togglePassword"
+        style="
+          position:absolute;
+          right:10px;
+          top:50%;
+          transform:translateY(-50%);
+          cursor:pointer;
+          user-select:none;
+          color:#555;
+        "
+      >👁️</span>
+    </div>
+
+    <!-- CapsLock 提醒喵 -->
+    <small id="capsWarning" style="color:red; display:none;">
+      ⚠️ 你開著 CapsLock 喵！
+    </small>
+  </div>
+
+  <button type="submit">登入喵</button>
 </form>
+
+<!-- JS for toggle + CapsLock warning -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ===== 顯示 / 隱藏密碼喵 =====
+    const pwd = document.getElementById("id_password");
+    const toggle = document.getElementById("togglePassword");
+
+    toggle.onclick = function () {
+        if (pwd.type === "password") {
+            pwd.type = "text";
+            toggle.textContent = "🙈";
+        } else {
+            pwd.type = "password";
+            toggle.textContent = "👁️";
+        }
+    };
+
+    // ===== CapsLock 檢測喵 =====
+    const capsWarning = document.getElementById("capsWarning");
+
+    pwd.addEventListener("keyup", function (event) {
+        if (event.getModifierState("CapsLock")) {
+            capsWarning.style.display = "block";
+        } else {
+            capsWarning.style.display = "none";
+        }
+    });
+
+    pwd.addEventListener("keydown", function (event) {
+        if (event.getModifierState("CapsLock")) {
+            capsWarning.style.display = "block";
+        } else {
+            capsWarning.style.display = "none";
+        }
+    });
+});
+</script>
 {% endblock %}

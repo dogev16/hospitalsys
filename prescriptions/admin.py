@@ -14,5 +14,5 @@ class PrescriptionAdmin(admin.ModelAdmin):
 
 @admin.register(PrescriptionItem)
 class PrescriptionItemAdmin(admin.ModelAdmin):
-    list_display = ("prescription", "drug", "dose", "days", "qty")
+    list_display = ("prescription", "drug", "quantity", "usage")
     search_fields = ("prescription__patient__full_name", "drug__name")
