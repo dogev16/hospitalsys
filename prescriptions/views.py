@@ -9,6 +9,7 @@ from .models import Prescription, PrescriptionItem
 from .forms import PrescriptionForm, PrescriptionItemFormSet
 
 from inventory.utils import use_drug
+from inventory.models import Drug, StockTransaction
 from queues.models import VisitTicket
 from doctors.models import Doctor
 from django.http import HttpResponseForbidden
@@ -20,29 +21,77 @@ from django.db.models import Count
 @group_required("PHARMACY")
 def pharmacy_panel(request):
     today = timezone.localdate()
-    items = Prescription.objects.filter(
-        date=today,
-        status__in=["READY", "DISPENSED"]
+
+    prescriptions = (
+        Prescription.objects
+        .filter(date=today, status="READY")     # 只顯示待領藥的
+        .select_related("patient", "doctor")
+        .prefetch_related("items__drug")
+        .order_by("-date")
     )
-    return render(request, "prescriptions/pharmacy.html", {"items": items})
+
+    context = {
+        "prescriptions": prescriptions,
+    }
+    return render(request, "prescriptions/pharmacy_panel.html", context)
+
+
 
 
 @group_required("PHARMACY")
 def dispense(request, pk):
-    rx = get_object_or_404(Prescription, pk=pk)
+    """
+    領藥動作：
+    - 檢查庫存是否足夠
+    - 扣庫存 & 建立 StockTransaction
+    - 將處方狀態改為 dispensed
+    """
+    prescription = get_object_or_404(
+        Prescription.objects.select_related("patient", "doctor").prefetch_related("items__drug"),
+        pk=pk,
+    )
 
-    if rx.status == "DISPENSED":
+    if request.method == "POST":
+        # 1. 先檢查全部項目庫存是否足夠喵
+        insufficient = []
+        for item in prescription.items.all():
+            drug = item.drug
+            if drug.stock_quantity < item.quantity:
+                insufficient.append((drug, drug.stock_quantity, item.quantity))
+
+        if insufficient:
+            msg_lines = []
+            for drug, stock, need in insufficient:
+                msg_lines.append(f"{drug.name} 庫存不足（現有 {stock}，需要 {need}）")
+            messages.error(request, "無法完成領藥喵：\n" + "\n".join(msg_lines))
+            return redirect("prescriptions:pharmacy_panel")
+
+        # 2. 扣庫存 + 寫入異動紀錄喵
+        for item in prescription.items.all():
+            drug = item.drug
+            drug.stock_quantity -= item.quantity
+            drug.save()
+
+            StockTransaction.objects.create(
+                drug=drug,
+                change=-item.quantity,
+                reason="dispense",
+                prescription=prescription,
+                note=f"處方 #{prescription.id} 領藥",
+            )
+
+        # 3. 更新處方狀態喵
+        prescription.status = "dispensed"
+        prescription.save()
+
+        messages.success(request, f"處方 #{prescription.id} 已完成領藥喵！")
         return redirect("prescriptions:pharmacy_panel")
 
-    # 簡單扣庫存喵
-    for item in rx.items.all():
-        # PrescriptionItem 有 qty 欄位喵（不是 quantity）
-        use_drug(item.drug.code, item.quantity, ref=f"RX#{rx.pk}")
-
-    rx.status = "DISPENSED"
-    rx.save()
-    return redirect("prescriptions:pharmacy_panel")
-
+    # GET：顯示確認頁面喵
+    context = {
+        "prescription": prescription,
+    }
+    return render(request, "prescriptions/pharmacy_dispense_confirm.html", context)
 
 @group_required("DOCTOR")
 def edit_for_ticket(request, ticket_id):
@@ -112,20 +161,17 @@ def edit_prescription(request, pk):
 
 @group_required("DOCTOR")
 def doctor_prescription_list(request):
-    """
-    醫師自己的處方歷史列表喵
-    """
-    # 1. 找出目前登入的醫師喵
-    doctor = get_object_or_404(Doctor, user=request.user)
+    doctor = Doctor.objects.filter(user=request.user).first()
+    if not doctor:
+        messages.error(request, "找不到對應的醫師資料，請聯絡系統管理員喵。")
+        return redirect("index")  # 或你想回去的頁面
 
-    # 2. 把這位醫師開過的處方抓出來喵
     prescriptions = (
         Prescription.objects
         .filter(doctor=doctor)
-        .select_related("patient")           # 會用到病人資料喵
-        .prefetch_related("items__drug")     # 預先抓用藥項目 + 藥品喵
-        .annotate(item_count=Count("items")) # 每張處方有幾個項目喵
-        .order_by("-date", "-created_at")    # 最近的排前面喵
+        .select_related("patient")
+        .prefetch_related("items__drug")
+        .order_by("-date", "-created_at")
     )
 
     context = {
@@ -134,14 +180,14 @@ def doctor_prescription_list(request):
     }
     return render(request, "prescriptions/doctor_prescription_list.html", context)
 
-
+@login_required
 @group_required("PATIENT")
 def patient_prescription_list(request):
     """
     病人自己的處方歷史列表喵
     """
     # 1. 找出目前登入的病人喵
-    patient = get_object_or_404(Patient, user=request.user)
+    patient = get_object_or_404(Patient, chart_no=request.user.username)
 
     # 2. 抓這個病人的所有處方
     prescriptions = (
@@ -162,7 +208,7 @@ def patient_prescription_list(request):
         context,
     )
 
-
+@login_required
 @group_required("PATIENT")
 def patient_prescription_detail(request, pk):
     """
@@ -242,3 +288,6 @@ def prescription_detail(request, pk):
         "prescription": prescription,
     }
     return render(request, "prescriptions/prescription_detail.html", context)
+
+
+

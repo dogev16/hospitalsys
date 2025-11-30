@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}藥局面板喵{% endblock %}
+
+{% block content %}
+
+<style>
+    .pharmacy-page {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: 26px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .rx-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        background: #fff;
+    }
+
+    .rx-table th, .rx-table td {
+        border: 1px solid #ddd;
+        padding: 8px 10px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .rx-table th {
+        background: #f5f5f5;
+    }
+
+    .rx-table tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+    .badge-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: #fff;
+        background: #4a90e2;
+    }
+
+    .btn-main {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: #28a745;
+        color: #fff;
+        text-decoration: none;
+        font-size: 13px;
+    }
+
+    .btn-main:hover {
+        background: #218838;
+    }
+
+    .empty-text {
+        margin-top: 20px;
+        color: #777;
+    }
+</style>
+
+<div class="pharmacy-page">
+    <h2 class="page-title">藥局面板喵</h2>
+    <div class="page-subtitle">以下為待領藥的處方喵</div>
+
+    {% if prescriptions %}
+        <table class="rx-table">
+            <thead>
+                <tr>
+                    <th>處方編號</th>
+                    <th>日期</th>
+                    <th>病歷號</th>
+                    <th>病人姓名</th>
+                    <th>主治醫師</th>
+                    <th>狀態</th>
+                    <th>摘要</th>
+                    <th>動作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rx in prescriptions %}
+                    <tr>
+                        <td>#{{ rx.id }}</td>
+                        <td>{{ rx.date }}</td>
+                        <td>{{ rx.patient.chart_no }}</td>
+                        <td>{{ rx.patient.full_name }}</td>
+                        <td>{{ rx.doctor.user.get_full_name }}</td>
+                        <td>
+                            <span class="badge-status">
+                                {{ rx.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if rx.items.all %}
+                                {% with first_item=rx.items.all.0 %}
+                                    {{ first_item.drug.name }} x {{ first_item.quantity }}
+                                    {% if rx.items.count > 1 %}
+                                        （+{{ rx.items.count|add:"-1" }} 項）
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                （尚未填寫用藥）
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a class="btn-main" href="{% url 'prescriptions:dispense' rx.id %}">
+                                領藥 / 檢視
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty-text">目前沒有待領藥的處方喵～</p>
+    {% endif %}
+</div>
+
+{% endblock %}

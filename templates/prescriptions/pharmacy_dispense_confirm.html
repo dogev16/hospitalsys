@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}處方領藥確認喵{% endblock %}
+
+{% block content %}
+
+<style>
+    .rx-detail-box {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        padding: 20px;
+    }
+
+    .rx-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .rx-header .left, .rx-header .right {
+        font-size: 14px;
+        color: #444;
+    }
+
+    .rx-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .rx-items-table th, .rx-items-table td {
+        border: 1px solid #ddd;
+        padding: 6px 10px;
+        text-align: center;
+        font-size: 13px;
+    }
+
+    .rx-items-table th {
+        background: #f5f5f5;
+    }
+
+    .btn-area {
+        margin-top: 20px;
+        text-align: right;
+    }
+
+    .btn-confirm {
+        padding: 6px 14px;
+        background: #28a745;
+        border-radius: 6px;
+        color: #fff;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-cancel {
+        margin-right: 10px;
+        padding: 6px 14px;
+        background: #ccc;
+        border-radius: 6px;
+        color: #333;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+</style>
+
+<div class="rx-detail-box">
+    <h2>處方領藥確認喵</h2>
+
+    <div class="rx-header">
+        <div class="left">
+            <div>處方編號：#{{ prescription.id }}</div>
+            <div>日期：{{ prescription.date }}</div>
+            <div>醫師：{{ prescription.doctor.user.get_full_name }}</div>
+        </div>
+        <div class="right">
+            <div>病歷號：{{ prescription.patient.chart_no }}</div>
+            <div>病人姓名：{{ prescription.patient.full_name }}</div>
+            {% if prescription.notes %}
+                <div>醫師備註：{{ prescription.notes }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <table class="rx-items-table">
+        <thead>
+            <tr>
+                <th>藥品</th>
+                <th>規格</th>
+                <th>數量</th>
+                <th>用法</th>
+                <th>目前庫存</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in prescription.items.all %}
+                <tr>
+                    <td>{{ item.drug.name }}</td>
+                    <td>{{ item.drug.strength }} {{ item.drug.form }}</td>
+                    <td>{{ item.quantity }} {{ item.drug.unit }}</td>
+                    <td>{{ item.usage }}</td>
+                    <td>{{ item.drug.stock_quantity }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post" class="btn-area">
+        {% csrf_token %}
+        <a href="{% url 'prescriptions:pharmacy_panel' %}" class="btn-cancel">返回藥局面板喵</a>
+        <button type="submit" class="btn-confirm">
+            確認領藥並扣庫存喵
+        </button>
+    </form>
+</div>
+
+{% endblock %}

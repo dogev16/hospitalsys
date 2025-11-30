@@ -6,7 +6,6 @@ app_name = "prescriptions"
 urlpatterns = [
     # 1. 藥局端面板 + 領藥喵
     path("pharmacy/", views.pharmacy_panel, name="pharmacy_panel"),
-    path("<int:pk>/dispense/", views.dispense, name="dispense"),
 
     # 2. 醫師在「候診列表」點進去開 / 編輯處方喵
     path("ticket/<int:ticket_id>/", views.edit_for_ticket, name="edit_for_ticket"),
@@ -17,4 +16,6 @@ urlpatterns = [
     # 4. 病人端：處方歷史列表 + 詳細內容喵
     path("patient/history/", views.patient_prescription_list, name="patient_history"),
     path("patient/<int:pk>/", views.patient_prescription_detail, name="patient_detail"),
+    path("pharmacy/<int:pk>/dispense/", views.dispense, name="dispense"),
+    path("doctor/edit/<int:pk>/", views.edit_prescription, name="edit_prescription"),
 ]

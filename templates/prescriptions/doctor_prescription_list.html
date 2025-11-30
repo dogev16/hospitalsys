@@ -1,17 +1,84 @@
 {% extends "base.html" %}
 
-{% block title %}我的處方歷史{% endblock %}
+{% block title %}我的處方歷史喵{% endblock %}
 
 {% block content %}
-<h1>我的處方歷史喵</h1>
 
-<p>
-    醫師：{{ doctor.name }}<br>
-    最近開立的處方如下喵：
-</p>
+<style>
+    .page-title {
+        font-size: 26px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .info-box {
+        margin-bottom: 20px;
+        padding: 12px;
+        background: #f9f9ff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 60%;
+    }
+
+    .history-table {
+        width: 90%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .history-table th, .history-table td {
+        border: 1px solid #ccc;
+        padding: 10px 14px;
+        text-align: center;
+    }
+
+    .history-table th {
+        background: #efefef;
+        font-size: 15px;
+    }
+
+    .history-table tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+    .btn-link {
+        background: #4a90e2;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .btn-link:hover {
+        background: #357ABD;
+    }
+
+    .back-link {
+        margin-top: 20px;
+        display: inline-block;
+        text-decoration: none;
+        color: #444;
+    }
+
+    .back-link:hover {
+        color: #000;
+        text-decoration: underline;
+    }
+</style>
+
+<h2 class="page-title">我的處方歷史喵</h2>
+
+<div class="info-box">
+    <p>
+        <strong>醫師：</strong>{{ doctor.name }}<br>
+        <span style="color:#555;">最近開立的處方如下喵：</span>
+    </p>
+</div>
 
 {% if prescriptions %}
-<table border="1" cellspacing="0" cellpadding="6">
+<table class="history-table">
     <thead>
         <tr>
             <th>日期</th>
@@ -23,38 +90,42 @@
         </tr>
     </thead>
     <tbody>
+
         {% for rx in prescriptions %}
-            <tr>
-                <td>{{ rx.date }}</td>
-                <td>{{ rx.patient.chart_no }}</td>
-                <td>{{ rx.patient.full_name }}</td>
-                <td>{{ rx.get_status_display }}</td>
-                <td>
-                    {% with first_item=rx.items.all|first %}
-                        {% if first_item %}
-                            {{ first_item.drug.name }} x {{ first_item.quantity }}
-                            {% if rx.items.count > 1 %}
-                                （+{{ rx.items.count|add:"-1" }} 項）
-                            {% endif %}
-                        {% else %}
-                            （尚未填寫用藥）
+        <tr>
+            <td>{{ rx.date }}</td>
+            <td>{{ rx.patient.chart_no }}</td>
+            <td>{{ rx.patient.full_name }}</td>
+            <td>{{ rx.status }}</td>
+
+            <td>
+                {% if rx.items.all %}
+                    {% with first_item=rx.items.all.0 %}
+                        {{ first_item.drug.name }} x {{ first_item.quantity }}
+                        {% if rx.items.count > 1 %}
+                            （+{{ rx.items.count|add:"-1" }} 項）
                         {% endif %}
                     {% endwith %}
-                </td>
-                <td>
-                    <a href="{% url 'prescriptions:edit_prescription' rx.id %}">
-                        查看 / 編輯
-                    </a>
-                </td>
-            </tr>
+                {% else %}
+                    （尚未填寫用藥）
+                {% endif %}
+            </td>
+
+            <td>
+                <a class="btn-link" href="{% url 'prescriptions:edit_prescription' rx.id %}">
+                    查看 / 編輯
+                </a>
+            </td>
+        </tr>
         {% endfor %}
+
     </tbody>
 </table>
+
 {% else %}
 <p>目前尚無處方紀錄喵。</p>
 {% endif %}
 
-<p style="margin-top:20px;">
-    <a href="{% url 'queues:doctor_panel' %}">回醫師面板喵</a>
-</p>
+<a href="{% url 'queues:doctor_panel' %}" class="back-link">⬅ 回醫師面板喵</a>
+
 {% endblock %}

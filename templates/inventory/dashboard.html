@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .card {
+            background: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            min-width: 180px;
+        }
+        .card-title {
+            font-size: 14px;
+            color: #555;
+        }
+        .card-value {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+        th {
+            background: #f0f2f7;
+        }
+        .low {
+            color: #c97a00;
+            font-weight: bold;
+        }
+        .out {
+            color: #c62828;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Inventory Dashboard</h1>
+
+    <div class="stats">
+        <div class="card">
+            <div class="card-title">Total Drugs</div>
+            <div class="card-value">{{ total_drugs }}</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Low Stock (≤ Reorder Level)</div>
+            <div class="card-value">{{ low_stock_count }}</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Out of Stock (≤ 0)</div>
+            <div class="card-value">{{ out_of_stock_count }}</div>
+        </div>
+    </div>
+
+    <h2>All Drugs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Stock Qty</th>
+                <th>Reorder Level</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for drug in drugs %}
+                <tr>
+                    <td>{{ drug.name }}</td>
+                    <td
+                      class="
+                        {% if drug.stock_quantity <= 0 %}out
+                        {% elif drug.stock_quantity <= drug.reorder_level %}low
+                        {% endif %}
+                      "
+                    >
+                        {{ drug.stock_quantity }}
+                    </td>
+                    <td>{{ drug.reorder_level }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">No drugs found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

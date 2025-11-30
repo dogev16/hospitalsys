@@ -43,6 +43,7 @@ class PrescriptionItem(models.Model):
     drug = models.ForeignKey(
         Drug,
         on_delete=models.PROTECT,
+        related_name="prescription_items",
     )
     quantity = models.PositiveIntegerField()
     usage = models.TextField(blank=True)
