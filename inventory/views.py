@@ -1,81 +1,84 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 from django import forms
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import F, Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required, permission_required
 
-from common.utils import group_required   # ✅ 統一從 common.utils 拿 decorator
+from .forms import DrugForm, StockAdjustForm
+from common.utils import group_required
 from .models import Drug, StockTransaction
-from .utils import adjust_stock
-from django.db.models import F
 
 
 # ------------------------------
-# 內部用的簡單 ModelForm
-# ------------------------------
-class DrugForm(forms.ModelForm):
-    class Meta:
-        model = Drug
-        fields = [
-            "code",
-            "name",
-            "generic_name",
-            "form",
-            "strength",
-            "unit",
-            "stock_quantity",
-            "reorder_level",
-            "is_active",
-        ]
-
-
-# ------------------------------
-# 儀表板（簡單版本）
+# 儀表板
 # ------------------------------
 @group_required("PHARMACY")
 def dashboard(request):
-    """
-    藥局儀表板：
-    - 顯示所有藥品
-    - 顯示低庫存清單
-    """
     drugs = Drug.objects.all().order_by("name")
-    low_stock = drugs.filter(stock_quantity__lte=F("reorder_level"))
+    low_stock = drugs.filter(
+        is_active=True,
+        stock_quantity__lte=F("reorder_level"),
+    )
 
-
-    context = {
+    return render(request, "inventory/dashboard.html", {
         "drugs": drugs,
         "low_stock": low_stock,
-    }
-    return render(request, "inventory/dashboard.html", context)
+    })
 
 
 # ------------------------------
 # 藥品列表
 # ------------------------------
-@group_required("PHARMACY")
+@login_required
 def drug_list(request):
-    drugs = Drug.objects.all().order_by("name")
-    return render(request, "inventory/drug_list.html", {"drugs": drugs})
+    query = request.GET.get("q", "")
+    drugs = Drug.objects.all()
+
+    if query:
+        drugs = drugs.filter(
+            Q(name__icontains=query) |
+            Q(generic_name__icontains=query) |
+            Q(form__icontains=query)
+        )
+
+    return render(request, "inventory/drug_list.html", {
+        "drugs": drugs,
+        "query": query,
+    })
 
 
 # ------------------------------
-# 新增藥品
+# 新增藥品（使用 drug_create.html）
 # ------------------------------
-@group_required("PHARMACY")
-def new_drug(request):
+@login_required
+@permission_required("inventory.add_drug", raise_exception=True)
+def drug_create(request):
     if request.method == "POST":
         form = DrugForm(request.POST)
         if form.is_valid():
             drug = form.save()
-            messages.success(request, f"已新增藥品：{drug.name} 喵")
+
+            # 如果有初始庫存 → 建立異動紀錄
+            if drug.stock_quantity > 0:
+                StockTransaction.objects.create(
+                    drug=drug,
+                    change=drug.stock_quantity,
+                    reason="initial",
+                    note="新增藥品初始庫存",
+                )
+
+            messages.success(request, "藥品新增成功喵！")
             return redirect("inventory:drug_list")
+
     else:
         form = DrugForm()
 
-    return render(request, "inventory/drug_form.html", {"form": form, "mode": "new"})
+    return render(request, "inventory/drug_create.html", {"form": form})
 
 
 # ------------------------------
-# 編輯藥品
+# 編輯藥品（使用 drug_edit.html）
 # ------------------------------
 @group_required("PHARMACY")
 def edit_drug(request, pk):
@@ -85,71 +88,99 @@ def edit_drug(request, pk):
         form = DrugForm(request.POST, instance=drug)
         if form.is_valid():
             form.save()
-            messages.success(request, f"已更新藥品：{drug.name} 喵")
+            messages.success(request, f"已成功更新 {drug.name} 喵！")
             return redirect("inventory:drug_list")
     else:
         form = DrugForm(instance=drug)
 
-    return render(
-        request,
-        "inventory/drug_form.html",
-        {
-            "form": form,
-            "mode": "edit",
-            "drug": drug,
-        },
-    )
+    return render(request, "inventory/drug_edit.html", {
+        "form": form,
+        "drug": drug,
+    })
 
 
 # ------------------------------
-# 調整庫存（入庫 / 出庫 / 調整）
+# 庫存異動：入庫 / 出庫 / 調整
 # ------------------------------
-class StockAdjustForm(forms.Form):
-    TYPE_CHOICES = [
-        ("IN", "入庫 / 採購"),
-        ("OUT", "出庫 / 調劑"),
-        ("ADJ", "庫存調整"),
-    ]
-
-    ttype = forms.ChoiceField(label="異動類型", choices=TYPE_CHOICES)
-    quantity = forms.IntegerField(label="異動數量")
-    reason = forms.CharField(label="原因 / 備註", max_length=200, required=False)
-
-
 @group_required("PHARMACY")
-def adjust_stock_view(request, drug_id):
-    drug = get_object_or_404(Drug, pk=drug_id)
+@transaction.atomic
+def stock_adjust(request, pk):
+    drug = get_object_or_404(Drug, pk=pk)
 
     if request.method == "POST":
         form = StockAdjustForm(request.POST)
         if form.is_valid():
-            ttype = form.cleaned_data["ttype"]
-            qty = form.cleaned_data["quantity"]
-            reason = form.cleaned_data["reason"]
+            reason = form.cleaned_data["reason"]   # purchase / dispense / adjust
+            qty = form.cleaned_data["quantity"]    # ✅ 名字跟 forms.StockAdjustForm 一致
+            note = form.cleaned_data["note"]
 
-            # IN / OUT / ADJ：統一走 adjust_stock
-            try:
-                adjust_stock(drug, qty if ttype != "OUT" else -abs(qty), ttype, reason)
-            except ValueError as e:
-                messages.error(request, f"庫存調整失敗：{e} 喵")
+            # 依照原因決定是加還是減
+            change = qty
+            if reason in ("dispense", "adjust") and qty > 0:
+                # 發藥或調整（扣庫存）：變成負數
+                change = -qty
+
+            new_stock = drug.stock_quantity + change
+            if new_stock < 0:
+                messages.error(request, "庫存不足，無法扣除這麼多喵")
             else:
+                # 更新藥品庫存
+                drug.stock_quantity = new_stock
+                drug.save()
+
+                # 建立異動紀錄
+                StockTransaction.objects.create(
+                    drug=drug,
+                    change=change,
+                    reason=reason,
+                    note=note,
+                )
+
                 messages.success(
                     request,
-                    f"已調整 {drug.name} 庫存（{ttype}：{qty}）喵",
+                    f"已調整 {drug.name} 庫存（變動 {change}，目前庫存 {new_stock}）喵",
                 )
                 return redirect("inventory:drug_list")
+        else:
+            # 先印出錯誤，方便你看 console 除錯喵
+            print("StockAdjustForm errors:", form.errors)
     else:
         form = StockAdjustForm()
 
-    # 顯示最近幾筆異動紀錄
-    recent_logs = StockTransaction.objects.filter(drug=drug).order_by("-created_at")[:20]
+    # 最近 20 筆該藥品的異動紀錄
+    logs = (
+        StockTransaction.objects.filter(drug=drug)
+        .order_by("-created_at")[:20]
+    )
 
     return render(
         request,
-        "inventory/adjust_stock.html",
+        "inventory/stock_adjust.html",
         {
             "drug": drug,
             "form": form,
-            "logs": recent_logs,
+            "logs": logs,
         },
     )
+
+# ------------------------------
+# 全部異動紀錄
+# ------------------------------
+@group_required("PHARMACY")
+def stock_history(request):
+    transactions = StockTransaction.objects.select_related("drug").order_by("-created_at")
+    return render(request, "inventory/stock_history.html", {"transactions": transactions})
+
+
+# ------------------------------
+# 單一藥品異動紀錄
+# ------------------------------
+@login_required
+def stock_history_drug(request, drug_id):
+    drug = get_object_or_404(Drug, pk=drug_id)
+    transactions = StockTransaction.objects.filter(drug=drug).order_by("-created_at")
+
+    return render(request, "inventory/stock_history_drug.html", {
+        "drug": drug,
+        "transactions": transactions,
+    })

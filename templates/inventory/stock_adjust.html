@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Adjust Stock{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- 標題列喵 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Adjust Stock - {{ drug.name }}</h1>
+        <div>
+            <a href="{% url 'inventory:drug_list' %}" class="btn btn-outline-secondary btn-sm">
+                Back to List
+            </a>
+            <a href="{% url 'inventory:stock_history_drug' drug.id %}" class="btn btn-outline-secondary btn-sm">
+                View History
+            </a>
+        </div>
+    </div>
+
+    <!-- 藥品資訊小卡片喵 -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <p class="mb-1"><strong>Current Stock:</strong> {{ drug.stock_quantity }}</p>
+            <p class="mb-0"><strong>Reorder Level:</strong> {{ drug.reorder_level }}</p>
+        </div>
+    </div>
+
+    <!-- 如果 view 傳 error 就顯示喵 -->
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- 庫存調整表單喵 -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            New Stock Adjustment
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- 類型 + 數量 -->
+                <div class="row mb-3">
+
+                    <!-- reason 喵 -->
+                    <div class="col-md-4">
+                        <label class="form-label">Reason</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="purchase">Purchase (IN)</option>
+                            <option value="dispense">Dispense (OUT)</option>
+                            <option value="adjust">Adjust</option>
+                        </select>
+                    </div>
+
+                    <!-- quantity 喵 -->
+                    <div class="col-md-4">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" name="quantity" class="form-control" min="1" required>
+                    </div>
+                </div>
+                <p class="mt-2">
+                    <strong>After Adjustment:</strong>
+                    <span id="afterStock">{{ drug.stock_quantity }}</span>
+                </p>
+
+                <!-- 備註 -->
+                <div class="mb-3">
+                    <label class="form-label">Note (optional)</label>
+                    <textarea name="note" class="form-control" rows="3"
+                              placeholder="Any additional details..."></textarea>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        Save Adjustment
+                    </button>
+                </div>
+            </form>
+            <script>
+                const qtyInput = document.querySelector("input[name='quantity']");
+                const reasonSelect = document.querySelector("select[name='reason']");
+                const afterStock = document.getElementById("afterStock");
+                const current = Number("{{ drug.stock_quantity }}");
+            
+                function updateStock() {
+                    let qty = parseInt(qtyInput.value || 0);
+                    let reason = reasonSelect.value;
+                    let result = current;
+            
+                    if (reason === "purchase") {
+                        result = current + qty;
+                    } else {
+                        result = current - qty;
+                    }
+            
+                    afterStock.textContent = result;
+                }
+
+                qtyInput.addEventListener("input", updateStock);
+                reasonSelect.addEventListener("change", updateStock);
+            </script>
+        </div>
+    </div>
+</div>
+{% endblock %}

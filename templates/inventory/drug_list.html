@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Drug List{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Drug Inventory</h1>
+        <a href="{% url 'inventory:drug_create' %}" class="btn btn-primary btn-sm">
+            + Add New Drug
+        </a>
+        <form method="get" class="mb-3 d-flex" style="max-width: 400px;">
+            <input type="text" name="q" class="form-control me-2"
+                placeholder="Search drugs..." value="{{ query }}">
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+        </form>
+    </div>
+
+    {% if drugs %}
+        <div class="table-responsive card shadow-sm">
+            <table class="table table-striped mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Generic</th>
+                        <th>Form</th>
+                        <th>Strength</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Stock</th>
+                        <th class="text-end">Reorder Level</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drug in drugs %}
+                        <tr>
+                            <td>{{ drug.name }}</td>
+                            <td>{{ drug.generic_name }}</td>
+                            <td>{{ drug.form }}</td>
+                            <td>{{ drug.strength }}</td>
+                            <td class="text-end">
+                                {% if drug.unit_price %}{{ drug.unit_price }}{% else %}-{% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if drug.stock_quantity <= drug.reorder_level %}
+                                    <span class="text-danger fw-bold">{{ drug.stock_quantity }}</span>
+                                    <span class="badge bg-danger ms-1">Low</span>
+                                {% else %}
+                                    {{ drug.stock_quantity }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ drug.reorder_level }}</td>
+                            <td>
+                                {% if drug.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'inventory:edit_drug' drug.id %}" class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
+                                <a href="{% url 'inventory:adjust_stock' drug.id %}" class="btn btn-sm btn-outline-success">
+                                    Adjust Stock
+                                </a>
+                                <a href="{% url 'inventory:stock_history_drug' drug.id %}" class="btn btn-sm btn-outline-secondary">
+                                    History
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No drugs found. Click <strong>"Add New Drug"</strong> to create one.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

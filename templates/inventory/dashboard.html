@@ -1,113 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Inventory Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fb;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            margin-bottom: 10px;
-        }
-        .stats {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-        .card {
-            background: #fff;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            min-width: 180px;
-        }
-        .card-title {
-            font-size: 14px;
-            color: #555;
-        }
-        .card-value {
-            font-size: 22px;
-            font-weight: bold;
-            margin-top: 4px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e0e0e0;
-            text-align: left;
-        }
-        th {
-            background: #f0f2f7;
-        }
-        .low {
-            color: #c97a00;
-            font-weight: bold;
-        }
-        .out {
-            color: #c62828;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <h1>Inventory Dashboard</h1>
+{% extends "base.html" %}
+{% load static %}
 
-    <div class="stats">
-        <div class="card">
-            <div class="card-title">Total Drugs</div>
-            <div class="card-value">{{ total_drugs }}</div>
-        </div>
-        <div class="card">
-            <div class="card-title">Low Stock (≤ Reorder Level)</div>
-            <div class="card-value">{{ low_stock_count }}</div>
-        </div>
-        <div class="card">
-            <div class="card-title">Out of Stock (≤ 0)</div>
-            <div class="card-value">{{ out_of_stock_count }}</div>
+{% block title %}Inventory Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Inventory Dashboard</h1>
+        <div>
+            <a href="{% url 'inventory:drug_list' %}" class="btn btn-primary btn-sm">Manage Drugs</a>
+            <a href="{% url 'inventory:stock_history' %}" class="btn btn-outline-secondary btn-sm">Stock History</a>
         </div>
     </div>
 
-    <h2>All Drugs</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Stock Qty</th>
-                <th>Reorder Level</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for drug in drugs %}
-                <tr>
-                    <td>{{ drug.name }}</td>
-                    <td
-                      class="
-                        {% if drug.stock_quantity <= 0 %}out
-                        {% elif drug.stock_quantity <= drug.reorder_level %}low
-                        {% endif %}
-                      "
-                    >
-                        {{ drug.stock_quantity }}
-                    </td>
-                    <td>{{ drug.reorder_level }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3">No drugs found.</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+    <!-- Summary cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-1">Total Drugs</h6>
+                    <h2 class="card-title">{{ total_drugs|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-1">Total Stock Quantity</h6>
+                    <h2 class="card-title">{{ total_stock|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-warning">
+                <div class="card-body">
+                    <h6 class="card-subtitle text-muted mb-1">Low Stock Drugs</h6>
+                    <h2 class="card-title text-warning">
+                        {% if low_stock %}{{ low_stock|length }}{% else %}0{% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Low stock table -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Low Stock / Near Reorder Level</span>
+                    <a href="{% url 'inventory:drug_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if low_stock %}
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Current Stock</th>
+                                        <th>Reorder Level</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for drug in low_stock %}
+                                        <tr>
+                                            <td>{{ drug.name }}</td>
+                                            <td>{{ drug.stock_quantity }}</td>
+                                            <td>{{ drug.reorder_level }}</td>
+                                            <td class="text-end">
+                                                <a href="{% url 'inventory:adjust_stock' drug.id %}" class="btn btn-sm btn-outline-success">
+                                                    Adjust
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="m-3 text-muted">No low-stock drugs right now.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent transactions -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Recent Stock Transactions
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_tx %}
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date/Time</th>
+                                        <th>Drug</th>
+                                        <th>Type</th>
+                                        <th>Qty</th>
+                                        <th>By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tx in recent_tx %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if tx.change >= 0 %}
+                                                        bg-success
+                                                    {% else %}
+                                                        bg-danger
+                                                    {% endif %}
+                                                ">
+                                                    {{ tx.get_reason_display }}
+                                                </span>
+                                            </td>
+                                            
+                                            <td>{{ tx.change }}</td>
+                                            <td>-</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="m-3 text-muted">No transactions yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
