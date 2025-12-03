@@ -88,17 +88,27 @@ class AppointmentManager(models.Manager):
         return slots
 
 class Appointment(models.Model):
+    STATUS_BOOKED   = "BOOKED"
+    STATUS_CANCELLED = "CANCELLED"
+    STATUS_DONE     = "DONE"
+    STATUS_NO_SHOW  = "NO_SHOW"  # 🆕 預留給「未到 / 過號」
+
     STATUS_CHOICES = [
-        ("BOOKED", "已掛號"),
-        ("CANCELLED", "已取消"),
-        ("DONE", "已完成"),
+        (STATUS_BOOKED, "已掛號"),
+        (STATUS_CANCELLED, "已取消"),
+        (STATUS_DONE, "已完成"),
+        (STATUS_NO_SHOW, "未到 / 過號"),
     ]
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     date = models.DateField()
     time = models.TimeField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="BOOKED")
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=STATUS_BOOKED,
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     objects = AppointmentManager()

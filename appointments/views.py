@@ -223,8 +223,9 @@ def book(request):
                     doctor=doctor,
                     date=appt_date,
                     time=appt_time,
-                    status="booked",
+                    status=Appointment.STATUS_BOOKED,
                 )
+
 
                 # 正確取得叫號序號（限定同醫師＋同日）
                 next_no = (
@@ -242,7 +243,7 @@ def book(request):
                     doctor=doctor,
                     patient=patient,
                     number=next_no,      # 原本的 queue_no 改成 number
-                    status="waiting",    # 或用你 model 的預設值也可以
+                    status="WAITING",    # 或用你 model 的預設值也可以
                 )
                 
                 # ★ 每次新增完 ticket 就重排一次號碼
@@ -361,7 +362,7 @@ def appointment_new_for_patient(request, patient_id):
                             doctor=doctor,
                             date=appt_date,
                             time=appt_time,
-                            status="booked",   # 跟櫃檯 book() 一樣用小寫 booked 喵
+                            status=Appointment.STATUS_BOOKED, 
                         )
 
                         # ⭐ 從 Appointment 自動產生 VisitTicket（號碼牌）喵 ⭐

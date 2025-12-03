@@ -93,41 +93,86 @@ def dispense(request, pk):
     }
     return render(request, "prescriptions/pharmacy_dispense_confirm.html", context)
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.http import HttpResponse
+
+from common.utils import group_required
+from queues.models import VisitTicket
+from doctors.models import Doctor
+from .models import Prescription
+from .forms import PrescriptionForm, PrescriptionItemFormSet
+
+
 @group_required("DOCTOR")
 def edit_for_ticket(request, ticket_id):
     """
-    醫師針對某一張掛號票(VisitTicket) 開 / 編輯 處方籤
-    URL 例子：/prescriptions/ticket/117/
+    醫師針對某一張掛號票(VisitTicket) 開 / 編輯 處方籤喵
+    URL 例如：/prescriptions/ticket/11/
     """
+
+    print("=== [DEBUG] edit_for_ticket 進來了喵，method =", request.method)
+
     ticket = get_object_or_404(VisitTicket, id=ticket_id)
 
+    # 確保登入的醫師就是這張 ticket 的醫師喵
+    doctor = get_object_or_404(Doctor, user=request.user)
+    if ticket.doctor != doctor:
+        messages.error(request, "你不是這張掛號票的醫師喵，不能開處方。")
+        return redirect("queues:doctor_panel")
+
+    # 以「病人 + 醫師 + 日期」找或建立處方
     prescription, created = Prescription.objects.get_or_create(
         patient=ticket.patient,
         doctor=ticket.doctor,
         date=ticket.date,
-        defaults={"status": "draft"},
+        defaults={"status": Prescription.STATUS_DRAFT},
     )
 
     if request.method == "POST":
+        print("=== [DEBUG] 收到 POST 了喵！POST 內容：", request.POST)
+
         form = PrescriptionForm(request.POST, instance=prescription)
         items = PrescriptionItemFormSet(request.POST, instance=prescription)
 
+        print("=== [DEBUG] form.is_valid():", form.is_valid())
+        print("=== [DEBUG] form.errors:", form.errors)
+        print("=== [DEBUG] items.is_valid():", items.is_valid())
+        print("=== [DEBUG] items.errors:", items.errors)
+        print("=== [DEBUG] items.non_form_errors():", items.non_form_errors())
+
         if form.is_valid() and items.is_valid():
-            form.save()
+            # 先存主檔喵
+            prescription = form.save(commit=False)
+            prescription.patient = ticket.patient
+            prescription.doctor = ticket.doctor
+            prescription.date = ticket.date
+            prescription.save()
+
+            # 再存明細喵
+            items.instance = prescription
             items.save()
-            messages.success(request, "處方已儲存")
+
+            print("=== [DEBUG] 處方已成功儲存喵，準備 redirect ===")
+            messages.success(request, "處方已儲存喵！")
             return redirect("queues:doctor_panel")
+
+        else:
+            print("=== [DEBUG] 表單驗證沒過喵，會回到同一頁並顯示錯誤 ===")
+            messages.error(request, "表單有錯誤喵，請檢查紅色欄位。")
     else:
+        # GET：第一次進來畫面喵
         form = PrescriptionForm(instance=prescription)
         items = PrescriptionItemFormSet(instance=prescription)
 
     context = {
-        "ticket": ticket,          # 雖然 template 現在沒用到，但留著沒關係
-        "prescription": prescription,  # 👈 重要：給 template 用
+        "ticket": ticket,
+        "prescription": prescription,
         "form": form,
         "items": items,
     }
     return render(request, "prescriptions/prescription_form.html", context)
+    
 
 @group_required("DOCTOR")
 def edit_prescription(request, pk):

@@ -14,14 +14,8 @@
         max-width: 900px;
     }
 
-    .rx-header {
-        margin-bottom: 15px;
-    }
-
-    .rx-header h2 {
-        margin-top: 0;
-        margin-bottom: 10px;
-    }
+    .rx-header { margin-bottom: 15px; }
+    .rx-header h2 { margin-top: 0; margin-bottom: 10px; }
 
     .rx-info {
         font-size: 14px;
@@ -54,13 +48,9 @@
         text-align: center;
     }
 
-    .rx-table th {
-        background: #efefef;
-    }
+    .rx-table th { background: #efefef; }
 
-    .rx-actions {
-        margin-top: 18px;
-    }
+    .rx-actions { margin-top: 18px; }
 
     .btn-primary {
         background: #4a90e2;
@@ -72,10 +62,7 @@
         text-decoration: none;
         font-size: 14px;
     }
-
-    .btn-primary:hover {
-        background: #357ABD;
-    }
+    .btn-primary:hover { background: #357ABD; }
 
     .btn-secondary {
         display: inline-block;
@@ -88,15 +75,29 @@
         color: #333;
         background: #f5f5f5;
     }
-
-    .btn-secondary:hover {
-        background: #e0e0e0;
-    }
+    .btn-secondary:hover { background: #e0e0e0; }
 
     .error-text {
         color: red;
         font-size: 12px;
         margin-top: 3px;
+    }
+
+    .alert {
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .alert-success {
+        background: #dcfce7;
+        border: 1px solid #22c55e;
+        color: #166534;
+    }
+    .alert-danger {
+        background: #fee2e2;
+        border: 1px solid #ef4444;
+        color: #991b1b;
     }
 </style>
 
@@ -132,8 +133,32 @@
         </div>
     </div>
 
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for err in form.non_field_errors %}
+                    <div>{{ err }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if items.non_form_errors %}
+            <div class="alert alert-danger">
+                {% for err in items.non_form_errors %}
+                    <div>{{ err }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <!-- 醫師備註 -->
         <label class="rx-notes-label" for="{{ form.notes.id_for_label }}">醫師備註</label>
@@ -161,6 +186,10 @@
             <tbody>
                 {% for item_form in items %}
                     <tr>
+                        {% for hidden in item_form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+
                         <td>
                             {{ item_form.drug }}
                             {% if item_form.drug.errors %}
@@ -189,16 +218,14 @@
                     </tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table>  {# 🔚 記得關掉 table 喵！ #}
 
         <div class="rx-actions">
             <button type="submit" class="btn-primary">儲存處方喵</button>
 
             {% if ticket %}
-                <!-- 從候診列表進來：存檔後通常回醫師面板喵 -->
                 <a href="{% url 'queues:doctor_panel' %}" class="btn-secondary">回候診列表喵</a>
             {% else %}
-                <!-- 從處方歷史進來：回處方歷史喵 -->
                 <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn-secondary">回處方歷史喵</a>
             {% endif %}
         </div>

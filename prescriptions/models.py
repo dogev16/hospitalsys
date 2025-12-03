@@ -18,6 +18,9 @@ class Prescription(models.Model):
     )
     date = models.DateField()
     notes = models.TextField(blank=True)
+    STATUS_DRAFT = "draft"      # 醫師編輯中
+    STATUS_FINAL = "final"      # 醫師確認完成
+
     status = models.CharField(
         max_length=20,
         default="draft",

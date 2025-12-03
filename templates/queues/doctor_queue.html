@@ -1,0 +1,107 @@
+{# templates/queues/doctor_queue.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>叫號系統 - Dr. {{ doctor.name }} - {{ today }}</h2>
+
+  <hr>
+
+  <!-- 目前患者 -->
+  <div class="card mb-3">
+    <div class="card-header">
+      目前看診患者
+    </div>
+    <div class="card-body">
+      {% if current_ticket %}
+        <h4>
+          號碼：{{ current_ticket.number }}
+          ／ {{ current_ticket.patient.full_name }}
+        </h4>
+        <p>
+          狀態：{{ current_ticket.get_status_display }}
+          {% if current_ticket.call_count %}
+            （已呼叫 {{ current_ticket.call_count }} 次）
+          {% endif %}
+        </p>
+
+        <form method="post" action="{% url 'queues:finish_ticket' current_ticket.id %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">完成看診</button>
+        </form>
+
+        <form method="post" action="{% url 'queues:skip_ticket' current_ticket.id %}" class="d-inline ms-2">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">過號</button>
+        </form>
+      {% else %}
+        <p>目前沒有正在看診的患者喵。</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 叫下一位 -->
+  <div class="mb-3">
+    <form method="post" action="{% url 'queues:call_next_ticket' doctor.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">
+        叫下一位
+      </button>
+      {% if next_ticket %}
+        <span class="ms-2 text-muted">
+          下一位候選：號碼 {{ next_ticket.number }} ／ {{ next_ticket.patient.full_name }}
+        </span>
+      {% endif %}
+    </form>
+  </div>
+
+  <hr>
+
+  <!-- 全部隊列列表 -->
+  <h4>今日隊列</h4>
+  <table class="table table-sm table-striped align-middle">
+    <thead>
+      <tr>
+        <th>號碼</th>
+        <th>病人姓名</th>
+        <th>狀態</th>
+        <th>呼叫次數</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tickets %}
+        <tr
+          {% if t.is_skipped %}
+            class="table-secondary"
+          {% endif %}
+        >
+          <td>{{ t.number }}</td>
+          <td>{{ t.patient.full_name }}</td>
+          <td>
+            {{ t.get_status_display }}
+            {% if t.is_skipped %}
+              （已過號）
+            {% endif %}
+          </td>
+          <td>{{ t.call_count }}</td>
+          <td>
+            {% if not t.is_skipped and t.status != "DONE" %}
+              <form method="post" action="{% url 'queues:skip_ticket' t.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                  過號
+                </button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5">今天還沒有掛號喵。</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

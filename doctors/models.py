@@ -32,6 +32,7 @@ class DoctorSchedule(models.Model):
     SESSION_CHOICES = [
         ("AM", "上午門診（09:00–12:00）"),
         ("PM", "下午門診（14:00–17:00）"),
+        ("PM", "下午門診（18:00–23:00）"),
     ]
 
     doctor = models.ForeignKey(

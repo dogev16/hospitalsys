@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from .forms import DrugForm, StockAdjustForm
 from common.utils import group_required
 from .models import Drug, StockTransaction
-
+from django.core.paginator import Paginator 
 
 # ------------------------------
 # 儀表板
@@ -32,9 +32,13 @@ def dashboard(request):
 # ------------------------------
 @login_required
 def drug_list(request):
-    query = request.GET.get("q", "")
-    drugs = Drug.objects.all()
+    query = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")          # active / inactive / 空字串
+    stock_filter = request.GET.get("stock", "")     # low / ok / 空字串
 
+    drugs = Drug.objects.all().order_by("name")
+
+    # 關鍵字搜尋：名字 / 學名 / 劑型
     if query:
         drugs = drugs.filter(
             Q(name__icontains=query) |
@@ -42,10 +46,37 @@ def drug_list(request):
             Q(form__icontains=query)
         )
 
-    return render(request, "inventory/drug_list.html", {
-        "drugs": drugs,
-        "query": query,
-    })
+    # 狀態篩選
+    if status == "active":
+        drugs = drugs.filter(is_active=True)
+    elif status == "inactive":
+        drugs = drugs.filter(is_active=False)
+
+    # 庫存篩選
+    if stock_filter == "low":
+        # 只看低庫存（啟用 + 庫存 <= 安全存量）
+        drugs = drugs.filter(is_active=True, stock_quantity__lte=F("reorder_level"))
+    elif stock_filter == "ok":
+        # 排除低庫存
+        drugs = drugs.exclude(is_active=True, stock_quantity__lte=F("reorder_level"))
+
+    # 分頁：每頁 20 筆（你可以自己改）
+    paginator = Paginator(drugs, 20)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "inventory/drug_list.html",
+        {
+            "drugs": page_obj.object_list,
+            "page_obj": page_obj,
+            "query": query,
+            "status": status,
+            "stock_filter": stock_filter,
+        },
+    )
+
 
 
 # ------------------------------

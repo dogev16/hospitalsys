@@ -3,212 +3,451 @@
 {% block title %}醫師面板{% endblock %}
 
 {% block content %}
-
 <style>
-    .panel-box {
-        background: #f9f9ff;
-        border: 1px solid #ddd;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-    }
+  /* ==============================
+     醫師面板 - 統一樣式（可配合 Dark Mode）
+     ============================== */
 
-    .section-title {
-        font-size: 20px;
-        font-weight: bold;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        color: #444;
-    }
+  .queue-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 0 2rem;
+      color: var(--queue-text, #111827);
+  }
 
-    table {
-        width: 60%;
-        border-collapse: collapse;
-        margin-top: 10px;
-    }
+  .queue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+  }
 
-    th, td {
-        border: 1px solid #ccc;
-        padding: 6px 10px;
-        text-align: center;
-    }
+  .queue-header-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+  }
 
-    th {
-        background: #f0f0f0;
-    }
+  .queue-header-meta {
+      font-size: 0.95rem;
+      opacity: 0.85;
+  }
 
-    .btn-call {
-        background: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        font-size: 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        margin-top: 10px;
-        text-decoration: none;
-        display: inline-block;
-    }
+  .queue-card {
+      background: var(--queue-surface, #ffffff);
+      border-radius: 14px;
+      border: 1px solid var(--queue-border, #e5e7eb);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  }
 
-    .btn-call:hover {
-        background: #45a049;
-    }
+  .queue-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+  }
 
-    .btn-finish {
-        background: #e74c3c;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        font-size: 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
+  .queue-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+  }
 
-    .btn-finish:hover {
-        background: #c0392b;
-    }
+  .queue-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: var(--queue-badge-bg, #eff6ff);
+      color: var(--queue-badge-text, #1d4ed8);
+  }
 
-    .highlight-current {
-        background-color: #fff2cc !important;
-        font-weight: bold;
-    }
+  .queue-card-body p {
+      margin-bottom: 0.5rem;
+  }
 
-    .btn-secondary-link {
-        display: inline-block;
-        margin-top: 10px;
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: 1px solid #888;
-        text-decoration: none;
-        color: #333;
-        background: #f7f7f7;
-        font-size: 14px;
-    }
+  .queue-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 0.45rem 1.1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+      white-space: nowrap;
+  }
 
-    .btn-secondary-link:hover {
-        background: #ececec;
-    }
+  .queue-btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  }
+
+  .queue-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
+  }
+
+  .queue-btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+  }
+
+  .queue-btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(239, 68, 68, 0.45);
+  }
+
+  .queue-btn-ghost {
+      background: transparent;
+      border: 1px solid var(--queue-border, #d1d5db);
+      color: inherit;
+      box-shadow: none;
+      padding-inline: 0.9rem;
+  }
+
+  .queue-btn-ghost:hover {
+      background: rgba(148, 163, 184, 0.09);
+  }
+
+  .queue-btn + .queue-btn {
+      margin-left: 0.4rem;
+  }
+
+  .queue-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+  }
+
+  .queue-pill {
+      border-radius: 999px;
+      padding: 0.15rem 0.7rem;
+      font-size: 0.8rem;
+      background: rgba(148, 163, 184, 0.15);
+  }
+
+  .queue-table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 0.35rem;
+  }
+
+  .queue-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+  }
+
+  .queue-table th,
+  .queue-table td {
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--queue-border, #e5e7eb);
+      text-align: center;
+      white-space: nowrap;
+  }
+
+  .queue-table th {
+      font-weight: 600;
+      background: rgba(148, 163, 184, 0.12);
+  }
+
+  .queue-row-current {
+      background: rgba(250, 204, 21, 0.2);
+      font-weight: 600;
+  }
+
+  .queue-status-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 4.4rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+  }
+
+  .status-waiting {
+      background: rgba(59, 130, 246, 0.12);
+      color: #1d4ed8;
+  }
+
+  .status-calling {
+      background: rgba(234, 179, 8, 0.18);
+      color: #92400e;
+  }
+
+  .status-done {
+      background: rgba(34, 197, 94, 0.14);
+      color: #166534;
+  }
+
+  .status-no-show {
+      background: rgba(248, 113, 113, 0.18);
+      color: #991b1b;
+  }
+
+  .queue-section-footer {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      opacity: 0.8;
+  }
+
+  @media (max-width: 768px) {
+      .queue-page {
+          padding-inline: 0.5rem;
+      }
+      .queue-header {
+          flex-direction: column;
+          align-items: flex-start;
+      }
+  }
 </style>
 
-<h1>醫師面板喵</h1>
+<div class="queue-page">
 
-{# 1. 醫師資訊喵 #}
-<div class="panel-box">
-    {% if doctor %}
-      <p>
-        <strong>醫師：</strong>{{ doctor.name }}　
-        <strong>日期：</strong>{{ today }}
-      </p>
-    {% else %}
-      <p style="color:red;">沒有對應的醫師資料喵。</p>
-    {% endif %}
-</div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="margin-bottom: 10px;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+  
+  <!-- 頂部資訊喵 -->
+  <div class="queue-header">
+      <div>
+          <div class="queue-header-title">醫師面板喵</div>
+          {% if doctor %}
+              <div class="queue-header-meta">
+                  醫師：<strong>{{ doctor.name }}</strong>　|　
+                  日期：<strong>{{ today }}</strong>
+              </div>
+          {% else %}
+              <div class="queue-header-meta text-danger">
+                  沒有對應的醫師資料喵，請請管理員確認帳號綁定。
+              </div>
+          {% endif %}
+      </div>
 
-{# 2. 目前叫號中喵 #}
-<div class="panel-box">
-    <div class="section-title">目前叫號中喵</div>
+      <div class="queue-pills">
+          <span class="queue-pill">⏱ 掛號：{{ today_appointments|length }} 筆</span>
+          <span class="queue-pill">🧑‍⚕️ 候診：{{ waiting_tickets|length }} 人</span>
+          <span class="queue-pill">✅ 完成：{{ done_tickets|length }} 人</span>
+      </div>
+  </div>
 
-    {% if current_ticket %}
-        <p class="highlight-current">
-            ▶ 現在看診： #{{ current_ticket.number }} — {{ current_ticket.patient.full_name }} 喵
-        </p>
-
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="finish">
-            <input type="hidden" name="ticket_id" value="{{ current_ticket.id }}">
-            <button type="submit" class="btn-finish">此病人看診完成喵</button>
-        </form>
-
-        {# 開 / 編輯處方按鈕喵 #}
-        <div style="margin-top: 15px;">
-            <a href="{% url 'prescriptions:edit_for_ticket' current_ticket.id %}"
-               class="btn-call">
-              📝 開立 / 編輯處方喵
-            </a>
-
-            {% if current_ticket.prescription %}
-              <span style="margin-left: 10px; font-size: 14px; color: #555;">
-                （已有處方，點上面可修改喵）
+  <!-- 目前叫號中喵 -->
+  <div class="queue-card">
+      <div class="queue-card-header">
+          <div class="queue-card-title">目前叫號中喵</div>
+          {% if current_ticket %}
+              <span class="queue-badge">
+                  目前：#{{ current_ticket.number }}
               </span>
-            {% endif %}
-        </div>
+          {% endif %}
+      </div>
 
-    {% else %}
-        <p>目前沒有正在看診的號碼喵。</p>
+      <div class="queue-card-body">
+          {% if current_ticket %}
+              <p class="mb-2">
+                  ▶ 現在看診：
+                  <strong>#{{ current_ticket.number }}</strong>
+                  — {{ current_ticket.patient.full_name }} 喵
+              </p>
+              <p class="mb-2">
+                  預約時間：
+                  <strong>
+                      {{ current_ticket.appointment.time|time:"H:i" }}
+                  </strong>
+                  （狀態：{{ current_ticket.get_status_display }}）
+              </p>
+              <p class="mb-2">
+                  已呼叫次數：
+                  <strong>{{ current_ticket.call_count }}</strong> 次喵
+              </p>
 
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="call_next">
-            <button type="submit" class="btn-call">叫下一位喵！</button>
-        </form>
-    {% endif %}
+              <form method="post" class="mt-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="ticket_id" value="{{ current_ticket.id }}">
+              
+                  <button type="submit" name="action" value="finish" class="queue-btn queue-btn-danger">
+                      此病人看診完成喵
+                  </button>
+              
+                  <button type="submit" name="action" value="call_next" class="queue-btn queue-btn-primary">
+                      直接叫下一位喵
+                  </button>
+              
+                  <button type="submit" name="action" value="skip" class="queue-btn queue-btn-ghost">
+                      過號下一位喵
+                  </button>
+              </form>
+
+              <div style="margin-top: 0.9rem;">
+                  <a href="{% url 'prescriptions:edit_for_ticket' current_ticket.id %}"
+                     class="queue-btn queue-btn-ghost">
+                      📝 開立 / 編輯處方喵
+                  </a>
+                  {% if current_ticket.prescription %}
+                      <span style="margin-left: 0.5rem; font-size: 0.8rem; opacity: .8;">
+                          （已有處方，點上面可修改喵）
+                      </span>
+                  {% endif %}
+              </div>
+
+          {% else %}
+              <p>目前沒有正在看診的號碼喵。</p>
+              <form method="post" class="mt-2">
+                  {% csrf_token %}
+                  <button type="submit" name="action" value="call_next"
+                          class="queue-btn queue-btn-primary">
+                      開始叫號 / 叫下一位喵！
+                  </button>
+              </form>
+          {% endif %}
+      </div>
+  </div>
+
+  <!-- 等待中病人喵 -->
+  <div class="queue-card">
+      <div class="queue-card-header">
+          <div class="queue-card-title">等待中病人喵</div>
+      </div>
+      <div class="queue-card-body">
+          {% if waiting_tickets %}
+              <div class="queue-table-wrapper">
+                  <table class="queue-table">
+                      <thead>
+                          <tr>
+                              <th>號碼</th>
+                              <th>時間</th>
+                              <th>病人</th>
+                              <th>狀態</th>
+                              <th>呼叫次數</th>
+                              <th>操作</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for t in waiting_tickets %}
+                              <tr{% if t.is_skipped %} style="opacity: 0.6;"{% endif %}>
+                                  <td>#{{ t.number }}</td>
+                                  <td>{{ t.appointment.time|time:"H:i" }}</td>
+                                  <td>{{ t.appointment.patient.full_name }}</td>
+                                  <td>
+                                      {% if t.status == "WAITING" %}
+                                          <span class="queue-status-tag status-waiting">
+                                              {{ t.get_status_display }}
+                                          </span>
+                                      {% elif t.status == "CALLING" %}
+                                          <span class="queue-status-tag status-calling">
+                                              {{ t.get_status_display }}
+                                          </span>
+                                      {% elif t.status == "DONE" %}
+                                          <span class="queue-status-tag status-done">
+                                              {{ t.get_status_display }}
+                                          </span>
+                                      {% elif t.status == "NO_SHOW" %}
+                                          <span class="queue-status-tag status-no-show">
+                                              {{ t.get_status_display }}
+                                          </span>
+                                      {% else %}
+                                          <span class="queue-status-tag">
+                                              {{ t.get_status_display }}
+                                          </span>
+                                      {% endif %}
+
+                                      {% if t.is_skipped %}
+                                          （已過號）
+                                      {% endif %}
+                                  </td>
+                                  <td>{{ t.call_count }}</td>
+                                  <td>
+                                      {% if t.status == "WAITING" or t.status == "NO_SHOW" %}
+                                          <form method="post" style="display:inline;">
+                                              {% csrf_token %}
+                                              <input type="hidden" name="ticket_id" value="{{ t.id }}">
+                                              <button type="submit"
+                                                      name="action"
+                                                      value="recall"
+                                                      class="queue-btn queue-btn-primary"
+                                                      style="padding:0.2rem 0.7rem; font-size:0.8rem;">
+                                                  叫回喵
+                                              </button>
+                                          </form>
+                                      {% endif %}
+                                  </td>
+                              </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+          {% else %}
+              <p>目前沒有等待中的病人喵。</p>
+          {% endif %}
+      </div>
+  </div>
+
+  <!-- 今日全部掛號病人喵 -->
+  <div class="queue-card">
+      <div class="queue-card-header">
+          <div class="queue-card-title">今日全部掛號病人喵（Appointment）</div>
+      </div>
+      <div class="queue-card-body">
+          {% if today_appointments %}
+              <div class="queue-table-wrapper">
+                  <table class="queue-table">
+                      <thead>
+                          <tr>
+                              <th>時間</th>
+                              <th>病歷號</th>
+                              <th>病人姓名</th>
+                              <th>狀態</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for appt in today_appointments %}
+                              <tr {% if forloop.first %}class="queue-row-current"{% endif %}>
+                                  <td>{{ appt.time|time:"H:i" }}</td>
+                                  <td>{{ appt.patient.chart_no }}</td>
+                                  <td>{{ appt.patient.full_name }}</td>
+                                  <td>{{ appt.get_status_display }}</td>
+                              </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+          {% else %}
+              <p>今天沒有掛號資料喵。</p>
+          {% endif %}
+      </div>
+      <div class="queue-section-footer">
+          * 這區是直接讀 Appointment 的狀態喵，之後如果要同步「看診中 / 完成」一起改，我們可以在 view 再補邏輯喵。
+      </div>
+  </div>
+
+  <!-- 醫師處方相關功能喵 -->
+  <div class="queue-card">
+      <div class="queue-card-header">
+          <div class="queue-card-title">處方相關功能喵</div>
+      </div>
+      <div class="queue-card-body">
+          <p>查看你過去為病人開立的處方紀錄喵，可以用來追蹤長期用藥或寫醫囑喵。</p>
+          <a href="{% url 'prescriptions:doctor_prescription_list' %}"
+             class="queue-btn queue-btn-ghost">
+              📜 查看處方歷史喵
+          </a>
+      </div>
+  </div>
+
 </div>
-
-{# 3. 等待中病人喵 #}
-<div class="panel-box">
-    <div class="section-title">等待中病人喵</div>
-
-    {% if waiting_tickets %}
-      <table>
-        <tr>
-          <th>號碼</th>
-          <th>時間</th>
-          <th>病人</th>
-          <th>狀態</th>
-        </tr>
-        {% for t in waiting_tickets %}
-          <tr>
-            <td>{{ t.number }}</td>
-            <td>{{ t.appointment.time }}</td>
-            <td>{{ t.appointment.patient.full_name }}</td>
-            <td>{{ t.get_status_display }}</td>
-          </tr>
-        {% endfor %}
-      </table>
-    {% else %}
-      <p>目前沒有等待中的病人喵。</p>
-    {% endif %}
-</div>
-
-{# 4. 今日全部掛號病人喵 #}
-<div class="panel-box">
-    <div class="section-title">今日全部掛號病人喵（Appointment）</div>
-
-    {% if today_appointments %}
-      <table>
-        <tr>
-          <th>時間</th>
-          <th>病歷號</th>
-          <th>病人姓名</th>
-          <th>狀態</th>
-        </tr>
-
-        {% for appt in today_appointments %}
-          <tr {% if forloop.first %}class="highlight-current"{% endif %}>
-            <td>{{ appt.time|time:"H:i" }}</td>
-            <td>{{ appt.patient.chart_no }}</td>
-            <td>{{ appt.patient.full_name }}</td>
-            <td>{{ appt.get_status_display }}</td>
-          </tr>
-        {% endfor %}
-      </table>
-    {% else %}
-      <p>今天沒有掛號資料喵。</p>
-    {% endif %}
-</div>
-
-{# 5. 醫師處方相關功能喵 #}
-<div class="panel-box">
-    <div class="section-title">處方相關功能喵</div>
-
-    <p>查看你過去為病人開立的處方紀錄喵，可以用來追蹤長期用藥或寫醫囑喵。</p>
-
-    <a href="{% url 'prescriptions:doctor_prescription_list' %}"
-       class="btn-secondary-link">
-        📜 查看處方歷史喵
-    </a>
-</div>
-
 {% endblock %}
