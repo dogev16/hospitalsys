@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}處方開立 / 編輯喵{% endblock %}
+{% block title %}處方開立 / 編輯 {% endblock %}
 
 {% block content %}
 
@@ -103,7 +103,7 @@
 
 <div class="rx-container">
     <div class="rx-header">
-        <h2>處方開立 / 編輯喵</h2>
+        <h2>處方開立 / 編輯 </h2>
 
         <div class="rx-info">
             <p>
@@ -212,21 +212,21 @@
                             {% if item_form.instance.pk %}
                                 {{ item_form.DELETE }}
                             {% else %}
-                                <!-- 新增行還沒存檔，暫不顯示刪除勾選喵 -->
+                                <!-- 新增行還沒存檔，暫不顯示刪除勾選  -->
                             {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
             </tbody>
-        </table>  {# 🔚 記得關掉 table 喵！ #}
+        </table>  {# 🔚 記得關掉 table  ！ #}
 
         <div class="rx-actions">
-            <button type="submit" class="btn-primary">儲存處方喵</button>
+            <button type="submit" class="btn-primary">儲存處方 </button>
 
             {% if ticket %}
-                <a href="{% url 'queues:doctor_panel' %}" class="btn-secondary">回候診列表喵</a>
+                <a href="{% url 'queues:doctor_panel' %}" class="btn-secondary">回候診列表 </a>
             {% else %}
-                <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn-secondary">回處方歷史喵</a>
+                <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn-secondary">回處方歷史 </a>
             {% endif %}
         </div>
 

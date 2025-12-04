@@ -223,10 +223,10 @@
     {% endfor %}
   {% endif %}
   
-  <!-- 頂部資訊喵 -->
+  <!-- 頂部資訊  -->
   <div class="queue-header">
       <div>
-          <div class="queue-header-title">醫師面板喵</div>
+          <div class="queue-header-title">醫師面板 </div>
           {% if doctor %}
               <div class="queue-header-meta">
                   醫師：<strong>{{ doctor.name }}</strong>　|　
@@ -234,7 +234,7 @@
               </div>
           {% else %}
               <div class="queue-header-meta text-danger">
-                  沒有對應的醫師資料喵，請請管理員確認帳號綁定。
+                  沒有對應的醫師資料 ，請請管理員確認帳號綁定。
               </div>
           {% endif %}
       </div>
@@ -246,10 +246,10 @@
       </div>
   </div>
 
-  <!-- 目前叫號中喵 -->
+  <!-- 目前叫號中  -->
   <div class="queue-card">
       <div class="queue-card-header">
-          <div class="queue-card-title">目前叫號中喵</div>
+          <div class="queue-card-title">目前叫號中 </div>
           {% if current_ticket %}
               <span class="queue-badge">
                   目前：#{{ current_ticket.number }}
@@ -262,7 +262,7 @@
               <p class="mb-2">
                   ▶ 現在看診：
                   <strong>#{{ current_ticket.number }}</strong>
-                  — {{ current_ticket.patient.full_name }} 喵
+                  — {{ current_ticket.patient.full_name }}  
               </p>
               <p class="mb-2">
                   預約時間：
@@ -273,7 +273,7 @@
               </p>
               <p class="mb-2">
                   已呼叫次數：
-                  <strong>{{ current_ticket.call_count }}</strong> 次喵
+                  <strong>{{ current_ticket.call_count }}</strong> 次 
               </p>
 
               <form method="post" class="mt-2">
@@ -281,47 +281,47 @@
                   <input type="hidden" name="ticket_id" value="{{ current_ticket.id }}">
               
                   <button type="submit" name="action" value="finish" class="queue-btn queue-btn-danger">
-                      此病人看診完成喵
+                      此病人看診完成 
                   </button>
               
                   <button type="submit" name="action" value="call_next" class="queue-btn queue-btn-primary">
-                      直接叫下一位喵
+                      直接叫下一位 
                   </button>
               
                   <button type="submit" name="action" value="skip" class="queue-btn queue-btn-ghost">
-                      過號下一位喵
+                      過號下一位 
                   </button>
               </form>
 
               <div style="margin-top: 0.9rem;">
                   <a href="{% url 'prescriptions:edit_for_ticket' current_ticket.id %}"
                      class="queue-btn queue-btn-ghost">
-                      📝 開立 / 編輯處方喵
+                      📝 開立 / 編輯處方 
                   </a>
                   {% if current_ticket.prescription %}
                       <span style="margin-left: 0.5rem; font-size: 0.8rem; opacity: .8;">
-                          （已有處方，點上面可修改喵）
+                          （已有處方，點上面可修改 ）
                       </span>
                   {% endif %}
               </div>
 
           {% else %}
-              <p>目前沒有正在看診的號碼喵。</p>
+              <p>目前沒有正在看診的號碼 。</p>
               <form method="post" class="mt-2">
                   {% csrf_token %}
                   <button type="submit" name="action" value="call_next"
                           class="queue-btn queue-btn-primary">
-                      開始叫號 / 叫下一位喵！
+                      開始叫號 / 叫下一位 ！
                   </button>
               </form>
           {% endif %}
       </div>
   </div>
 
-  <!-- 等待中病人喵 -->
+  <!-- 等待中病人  -->
   <div class="queue-card">
       <div class="queue-card-header">
-          <div class="queue-card-title">等待中病人喵</div>
+          <div class="queue-card-title">等待中病人 </div>
       </div>
       <div class="queue-card-body">
           {% if waiting_tickets %}
@@ -381,7 +381,7 @@
                                                       value="recall"
                                                       class="queue-btn queue-btn-primary"
                                                       style="padding:0.2rem 0.7rem; font-size:0.8rem;">
-                                                  叫回喵
+                                                  叫回 
                                               </button>
                                           </form>
                                       {% endif %}
@@ -392,15 +392,15 @@
                   </table>
               </div>
           {% else %}
-              <p>目前沒有等待中的病人喵。</p>
+              <p>目前沒有等待中的病人 。</p>
           {% endif %}
       </div>
   </div>
 
-  <!-- 今日全部掛號病人喵 -->
+  <!-- 今日全部掛號病人  -->
   <div class="queue-card">
       <div class="queue-card-header">
-          <div class="queue-card-title">今日全部掛號病人喵（Appointment）</div>
+          <div class="queue-card-title">今日全部掛號病人 （Appointment）</div>
       </div>
       <div class="queue-card-body">
           {% if today_appointments %}
@@ -427,27 +427,57 @@
                   </table>
               </div>
           {% else %}
-              <p>今天沒有掛號資料喵。</p>
+              <p>今天沒有掛號資料 。</p>
           {% endif %}
       </div>
       <div class="queue-section-footer">
-          * 這區是直接讀 Appointment 的狀態喵，之後如果要同步「看診中 / 完成」一起改，我們可以在 view 再補邏輯喵。
+          * 這區是直接讀 Appointment 的狀態 ，之後如果要同步「看診中 / 完成」一起改，我們可以在 view 再補邏輯 。
       </div>
   </div>
 
-  <!-- 醫師處方相關功能喵 -->
+  <!-- 醫師處方相關功能  -->
   <div class="queue-card">
       <div class="queue-card-header">
-          <div class="queue-card-title">處方相關功能喵</div>
+          <div class="queue-card-title">處方相關功能 </div>
       </div>
       <div class="queue-card-body">
-          <p>查看你過去為病人開立的處方紀錄喵，可以用來追蹤長期用藥或寫醫囑喵。</p>
+          <p>查看你過去為病人開立的處方紀錄 ，可以用來追蹤長期用藥或寫醫囑 。</p>
           <a href="{% url 'prescriptions:doctor_prescription_list' %}"
              class="queue-btn queue-btn-ghost">
-              📜 查看處方歷史喵
+              📜 查看處方歷史 
           </a>
       </div>
   </div>
-
 </div>
+
+<script>
+  (function () {
+    const REFRESH_INTERVAL = 5000;  // 5 秒刷新一次，可自行調整
+
+    let timerId = null;
+
+    function startAutoRefresh() {
+      if (timerId !== null) return;
+      timerId = setInterval(function () {
+        if (!document.hidden) {   // 頁面在前景才更新
+          window.location.reload();
+        }
+      }, REFRESH_INTERVAL);
+    }
+
+    function stopAutoRefresh() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    // 預設啟動自動更新
+    startAutoRefresh();
+
+    // 如果你之後想加 checkbox 再綁事件即可
+    window.addEventListener("beforeunload", stopAutoRefresh);
+  })();
+</script>
+
 {% endblock %}

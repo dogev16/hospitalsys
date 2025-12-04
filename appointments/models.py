@@ -6,14 +6,14 @@ from doctors.models import Doctor, DoctorSchedule
 from django.core.exceptions import ValidationError
 
 from datetime import datetime, time, timedelta
-from django.db import models  # 你原本就有的應該不用再加，如果沒有就留著喵
+from django.db import models  # 你原本就有的應該不用再加，如果沒有就留著 
 
 
 class AppointmentManager(models.Manager):
     def get_available_slots(self, doctor, date_):
         """
         根據 DoctorSchedule + 已存在的 Appointment
-        計算某位醫師在某一天可預約的時段列表喵
+        計算某位醫師在某一天可預約的時段列表 
         doctor : Doctor instance
         date_  : date object 或 'YYYY-MM-DD' 字串都可以
         回傳   : list[datetime.time]
@@ -24,7 +24,7 @@ class AppointmentManager(models.Manager):
 
         weekday = date_.weekday()  # Monday = 0
 
-        # 一次抓出該日所有排班（可能早上 + 下午）喵
+        # 一次抓出該日所有排班（可能早上 + 下午） 
         schedules = (
             DoctorSchedule.objects
             .filter(
@@ -37,7 +37,7 @@ class AppointmentManager(models.Manager):
         if not schedules:
             return []
 
-        # 已經被掛走的時段喵
+        # 已經被掛走的時段 
         taken_times = set(
             self.filter(
                 doctor=doctor,
@@ -50,7 +50,7 @@ class AppointmentManager(models.Manager):
 
         slots = []
 
-        # 逐一處理每一段排班（早上、下午各跑一次）喵
+        # 逐一處理每一段排班（早上、下午各跑一次） 
         for schedule in schedules:
             start_dt = datetime.combine(date_, schedule.start_time)
             end_dt = datetime.combine(date_, schedule.end_time)
@@ -62,29 +62,29 @@ class AppointmentManager(models.Manager):
                 end_dt = timezone.make_aware(end_dt, tz)
 
             cursor = start_dt
-            count_for_this_schedule = 0  # 每一段自己有 max_patients 限制喵
+            count_for_this_schedule = 0  # 每一段自己有 max_patients 限制 
 
             while cursor <= end_dt:
                 t = cursor.time()
 
-                # 如果是今天，就略過太接近現在的時段（例如 30 分鐘內）喵
+                # 如果是今天，就略過太接近現在的時段（例如 30 分鐘內） 
                 if date_ == now.date():
                     if cursor <= now + timedelta(minutes=30):
                         cursor += timedelta(minutes=schedule.slot_minutes)
                         continue
 
-                # 沒被掛走的才算可選喵
+                # 沒被掛走的才算可選 
                 if t not in taken_times:
                     slots.append(t)
                     count_for_this_schedule += 1
 
-                # 這一段排班最多只開到 max_patients 個喵
+                # 這一段排班最多只開到 max_patients 個 
                 if count_for_this_schedule >= schedule.max_patients:
                     break
 
                 cursor += timedelta(minutes=schedule.slot_minutes)
 
-        # 已經依 start_time + 時間順序排好，直接回傳喵
+        # 已經依 start_time + 時間順序排好，直接回傳 
         return slots
 
 class Appointment(models.Model):

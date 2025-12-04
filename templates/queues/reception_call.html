@@ -32,7 +32,7 @@
                 狀態：{{ current_ticket.status }}
             </p>
         {% else %}
-            <p class="empty">目前沒有叫號中的病患喵。</p>
+            <p class="empty">目前沒有叫號中的病患 。</p>
         {% endif %}
     </div>
 
@@ -97,7 +97,7 @@
                                         name="action"
                                         value="recall_ticket"
                                        class="btn btn-small">
-                                    叫回喵
+                                    叫回 
                                 </button>
                             </form>
                         {% else %}
@@ -107,7 +107,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="empty">今天沒有掛號喵。</td>
+                    <td colspan="7" class="empty">今天沒有掛號 。</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -274,5 +274,29 @@
 }
 
 </style>
+<script>
+  (function () {
+    const REFRESH_INTERVAL = 5000; // 這裡我幫你設 5 秒一次
 
+    let timerId = null;
+
+    function startAutoRefresh() {
+      if (timerId !== null) return;
+      timerId = setInterval(function () {
+        if (document.hidden) return;
+        window.location.reload();
+      }, REFRESH_INTERVAL);
+    }
+
+    function stopAutoRefresh() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    startAutoRefresh();
+    window.addEventListener("beforeunload", stopAutoRefresh);
+  })();
+</script>
 {% endblock %}

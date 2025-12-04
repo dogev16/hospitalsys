@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}櫃台叫號面板喵{% endblock %}
+{% block title %}櫃台叫號面板 {% endblock %}
 
 {% block content %}
 
@@ -57,7 +57,7 @@
         font-weight: bold;
     }
 
-    /* 依狀態顏色區分喵 */
+    /* 依狀態顏色區分  */
     tr.status-waiting {
         background: #fdfdfd;
     }
@@ -80,7 +80,7 @@
 
 <div class="reception-container">
     <div class="reception-header">
-        <h1>櫃台叫號面板喵</h1>
+        <h1>櫃台叫號面板 </h1>
         <div class="sub">
             今天日期：
             {% if tickets %}
@@ -94,7 +94,7 @@
 
 
     <div class="reception-summary">
-        顯示今天所有門診的叫號狀況，讓櫃台可以一眼看到目前進度喵。<br>
+        顯示今天所有門診的叫號狀況，讓櫃台可以一眼看到目前進度 。<br>
         狀態顏色：<strong>黃色＝目前叫號中</strong>、<strong>灰色＝已完成</strong>。
     </div>
 
@@ -146,7 +146,7 @@
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="8">今天還沒有任何叫號資料喵。</td>
+            <td colspan="8">今天還沒有任何叫號資料 。</td>
           </tr>
         {% endif %}
       </tbody>
@@ -156,5 +156,36 @@
       <a href="{% url 'index' %}">回首頁</a>
     </p>
 </div>
+
+<script>
+  (function () {
+    // 每幾毫秒刷新一次：這裡 3000 = 3 秒
+    const REFRESH_INTERVAL = 3000;
+
+    let timerId = null;
+
+    function startAutoRefresh() {
+      if (timerId !== null) return;
+      timerId = setInterval(function () {
+        // 頁面在背景時就先不要 reload，減少干擾
+        if (document.hidden) return;
+        window.location.reload();
+      }, REFRESH_INTERVAL);
+    }
+
+    function stopAutoRefresh() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    // 預設啟動自動更新
+    startAutoRefresh();
+
+    // 離開頁面前清掉計時器
+    window.addEventListener("beforeunload", stopAutoRefresh);
+  })();
+</script>
 
 {% endblock %}

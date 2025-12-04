@@ -21,7 +21,7 @@ class DrugForm(forms.ModelForm):
         
 class StockAdjustForm(forms.Form):
     """
-    給庫存調整用的表單喵：
+    給庫存調整用的表單 ：
     - reason   : 進貨 / 發藥 / 手動調整
     - quantity : 數量（正整數）
     - note     : 備註

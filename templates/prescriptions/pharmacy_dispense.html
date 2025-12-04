@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}處方領藥 - #{{ prescription.id }}{% endblock %}
+
+{% block content %}
+<style>
+    .pharmacy-dispense-page {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .dispense-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    .dispense-header h2 {
+        margin: 0 0 5px 0;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 20px;
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    .info-label {
+        font-weight: bold;
+        color: #555;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: #fff;
+        background: #4a90e2;
+    }
+    .status-badge.done {
+        background: #28a745;
+    }
+    .status-badge.pending {
+        background: #ffc107;
+        color: #333;
+    }
+    .status-badge.cancel {
+        background: #dc3545;
+    }
+    .notes-box {
+        background: #fff;
+        border: 1px solid #ddd;
+        padding: 8px 10px;
+        font-size: 14px;
+        margin-bottom: 15px;
+        min-height: 40px;
+    }
+    .rx-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        margin-bottom: 15px;
+    }
+    .rx-items-table th,
+    .rx-items-table td {
+        border: 1px solid #ddd;
+        padding: 6px 8px;
+        font-size: 13px;
+        text-align: center;
+    }
+    .rx-items-table th {
+        background: #f5f5f5;
+    }
+    .stock-ok {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .stock-low {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .btn-main {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: #28a745;
+        color: #fff;
+        text-decoration: none;
+        border: none;
+        font-size: 14px;
+    }
+    .btn-main:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .btn-secondary {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: #6c757d;
+        color: #fff;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .btn-danger {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: #dc3545;
+        color: #fff;
+        text-decoration: none;
+        border: none;
+        font-size: 14px;
+    }
+    .btn-warning {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: #ffc107;
+        color: #333;
+        text-decoration: none;
+        border: none;
+        font-size: 14px;
+    }
+    .alert-text {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #dc3545;
+    }
+</style>
+
+<div class="pharmacy-dispense-page">
+    <div class="dispense-header">
+        <h2>處方領藥  - #{{ prescription.id }}</h2>
+        <div class="info-grid">
+            <div>
+                <span class="info-label">病歷號：</span>
+                {{ prescription.patient.chart_no|default:prescription.patient.id }}
+            </div>
+            <div>
+                <span class="info-label">病人姓名：</span>
+                {{ prescription.patient.full_name }}
+            </div>
+            <div>
+                <span class="info-label">開立日期：</span>
+                {{ prescription.date }}
+            </div>
+            <div>
+                <span class="info-label">醫師：</span>
+                {{ prescription.doctor.user.get_full_name }} / {{ prescription.doctor.department }}
+            </div>
+            <div>
+                <span class="info-label">藥師：</span>
+                {% if prescription.dispensed_by %}
+                    {{ prescription.dispensed_by.get_full_name|default:prescription.dispensed_by.username }}
+                {% else %}
+                    （尚未領藥）
+                {% endif %}
+            </div>
+            <div>
+                <span class="info-label">領藥時間：</span>
+                {% if prescription.dispensed_at %}
+                    {{ prescription.dispensed_at }}
+                {% else %}
+                    （尚未領藥）
+                {% endif %} 
+            </div>
+            <div>
+                <span class="info-label">醫師狀態：</span>
+                <span class="status-badge">
+                    {{ prescription.get_status_display }}
+                </span>
+            </div>
+            <div>
+                <span class="info-label">藥局狀態：</span>
+                <span class="status-badge
+                    {% if prescription.pharmacy_status == prescription.PHARMACY_DONE %}
+                        done
+                    {% elif prescription.pharmacy_status == prescription.PHARMACY_PENDING %}
+                        pending
+                    {% elif prescription.pharmacy_status == prescription.PHARMACY_CANCELLED %}
+                        cancel
+                    {% endif %}
+                ">
+                    {{ prescription.get_pharmacy_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <h4>醫師備註</h4>
+    <div class="notes-box">
+        {{ prescription.notes|default:"（無備註）" }}
+    </div>
+
+    <h4>用藥項目</h4>
+    <table class="rx-items-table">
+        <thead>
+            <tr>
+                <th>藥品</th>
+                <th>數量</th>
+                <th>用法</th>
+                <th>目前庫存</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.drug.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td style="text-align:left;">{{ item.usage|linebreaksbr }}</td>
+                    <td>
+                        {{ item.drug.stock_quantity }}
+                    </td>
+                    <td>
+                        {% if item.drug.stock_quantity >= item.quantity %}
+                            <span class="stock-ok">庫存足夠</span>
+                        {% else %}
+                            <span class="stock-low">庫存不足！</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">尚未填寫用藥項目</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if has_shortage %}
+        <div class="alert-text">
+            部分藥品庫存不足，請先處理補貨或改藥，再完成領藥。
+        </div>
+    {% endif %}
+
+    {# ① 完成領藥按鈕（只在 PENDING 時可按） #}
+    <form method="post" class="actions-row">
+        {% csrf_token %}
+        {% if prescription.pharmacy_status == prescription.PHARMACY_PENDING %}
+            <button type="submit"
+                    name="action"
+                    value="complete"
+                    class="btn-main"
+                    {% if has_shortage %}disabled{% endif %}>
+                完成領藥
+            </button>
+        {% else %}
+            <button type="button" class="btn-main" disabled>
+                已完成領藥
+            </button>
+        {% endif %}
+
+        <a href="{% url 'prescriptions:pharmacy_panel' %}" class="btn-secondary">
+            回藥局面板
+        </a>
+    </form>
+
+    {# ② 作廢 / 退藥按鈕（第二個表單，打到 cancel_or_return） #}
+
+    <form method="post"
+            action="{% url 'prescriptions:cancel_or_return' prescription.id %}"
+            class="actions-row"
+            style="margin-top: 10px;">
+        {% csrf_token %}
+
+        {% if prescription.pharmacy_status == prescription.PHARMACY_PENDING %}
+            <button type="submit" class="btn-danger">
+                作廢處方
+            </button>
+        {% elif prescription.pharmacy_status == prescription.PHARMACY_DONE %}
+            <button type="submit" class="btn-warning">
+                退藥並作廢
+            </button>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

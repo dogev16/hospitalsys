@@ -3,14 +3,14 @@
 {% block title %}病人詳細資料{% endblock %}
 
 {% block content %}
-<h1>病人詳細資料喵</h1>
+<h1>病人詳細資料 </h1>
 
 <p>
   <a href="{% url 'patients:patient_list' %}">← 回病人列表</a>
   |
   <a href="{% url 'patients:patient_update' patient.id %}">編輯此病人</a>
   |
-  <a href="{% url 'appointments:new_for_patient' patient.id %}">＋ 替此病人新增掛號喵</a>
+  <a href="{% url 'appointments:new_for_patient' patient.id %}">＋ 替此病人新增掛號 </a>
 </p>
 
 {# 👉 先顯示病人基本資料 #}
@@ -42,7 +42,7 @@
 </table>
 
 {# 👉 再顯示掛號 / 看診紀錄 #}
-<h2 style="margin-top: 1.5rem;">掛號 / 看診紀錄喵</h2>
+<h2 style="margin-top: 1.5rem;">掛號 / 看診紀錄 </h2>
 {% if appointments %}
   <table border="1" cellpadding="5" cellspacing="0">
     <thead>
@@ -62,7 +62,7 @@
       <td>{{ appt.doctor.name }}</td>
       <td>{{ appt.get_status_display }}</td>
     
-      <!-- ⭐ 狀態操作按鈕喵 ⭐ -->
+      <!-- ⭐ 狀態操作按鈕  ⭐ -->
       <td>
         <!-- 標記為已完成 -->
         <form method="post"
@@ -89,7 +89,7 @@
     </tbody>
   </table>
 {% else %}
-  <p>目前沒有掛號或看診紀錄喵～</p>
+  <p>目前沒有掛號或看診紀錄 ～</p>
 {% endif %}
 
 {% endblock %}

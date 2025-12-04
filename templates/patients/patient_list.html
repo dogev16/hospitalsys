@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>病人列表喵</h1>
+<h1>病人列表 </h1>
 
 <form method="get" style="margin-bottom: 1rem;">
   <label>
@@ -15,7 +15,7 @@
 </form>
 
 <p>
-  <!-- 這裡的 URL 名稱請換成你實際的「新增病人」路由喵 -->
+  <!-- 這裡的 URL 名稱請換成你實際的「新增病人」路由  -->
   <a href="{% url 'patients:patient_create' %}">＋ 新增病人</a>
 </p>
 
@@ -45,7 +45,7 @@
       </tr>
     {% empty %}
       <tr>
-        <td colspan="6">目前沒有資料喵～</td>
+        <td colspan="6">目前沒有資料 ～</td>
       </tr>
     {% endfor %}
   </tbody>

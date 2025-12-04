@@ -2,9 +2,9 @@
 {% block title %}登入{% endblock %}
 
 {% block content %}
-<h1>登入喵</h1>
+<h1>登入 </h1>
 
-<!-- 錯誤訊息美化喵 -->
+<!-- 錯誤訊息美化  -->
 {% if form.errors %}
 <div style="
     background:#ffe5e5;
@@ -14,8 +14,8 @@
     border-radius:5px;
     color:#b30000;
 ">
-    <strong>登入失敗喵！</strong><br>
-    帳號或密碼可能輸入錯誤喵。
+    <strong>登入失敗 ！</strong><br>
+    帳號或密碼可能輸入錯誤 。
 </div>
 {% endif %}
 
@@ -24,13 +24,13 @@
 
   <!-- Username -->
   <div style="margin-bottom: 15px;">
-    <label for="id_username">帳號喵</label><br>
+    <label for="id_username">帳號 </label><br>
     {{ form.username }}
   </div>
 
   <!-- Password with toggle + CapsLock -->
   <div style="margin-bottom: 15px;">
-    <label for="id_password">密碼喵</label><br>
+    <label for="id_password">密碼 </label><br>
 
     <div style="position: relative;">
       {{ form.password }}
@@ -50,20 +50,20 @@
       >👁️</span>
     </div>
 
-    <!-- CapsLock 提醒喵 -->
+    <!-- CapsLock 提醒  -->
     <small id="capsWarning" style="color:red; display:none;">
-      ⚠️ 你開著 CapsLock 喵！
+      ⚠️ 你開著 CapsLock  ！
     </small>
   </div>
 
-  <button type="submit">登入喵</button>
+  <button type="submit">登入 </button>
 </form>
 
 <!-- JS for toggle + CapsLock warning -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ===== 顯示 / 隱藏密碼喵 =====
+    // ===== 顯示 / 隱藏密碼  =====
     const pwd = document.getElementById("id_password");
     const toggle = document.getElementById("togglePassword");
 
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    // ===== CapsLock 檢測喵 =====
+    // ===== CapsLock 檢測  =====
     const capsWarning = document.getElementById("capsWarning");
 
     pwd.addEventListener("keyup", function (event) {

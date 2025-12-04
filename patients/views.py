@@ -36,12 +36,12 @@ def patient_list(request):
 def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
 
-    # 把這個病人的掛號 / 看診紀錄抓出來喵
+    # 把這個病人的掛號 / 看診紀錄抓出來 
     appointments = (
         Appointment.objects
         .filter(patient=patient)
         .select_related("doctor")          # 連 doctor 一起查，模板用 appt.doctor.name
-        .order_by("-date", "-time")        # 讓最新的在最上面喵
+        .order_by("-date", "-time")        # 讓最新的在最上面 
     )
 
     context = {

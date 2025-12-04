@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}{{ doctor.name }} 今日門診喵{% endblock %}
+{% block title %}{{ doctor.name }} 今日門診 {% endblock %}
 
 {% block content %}
-<h1>{{ doctor.name }} 今日門診喵</h1>
+<h1>{{ doctor.name }} 今日門診 </h1>
 
 <p>
   <a href="{% url 'patients:patient_list' %}">← 回病人列表</a>
@@ -14,7 +14,7 @@
   醫師：{{ doctor.name }}
 </p>
 
-<h2 style="margin-top: 1.5rem;">今日掛號列表喵</h2>
+<h2 style="margin-top: 1.5rem;">今日掛號列表 </h2>
 
 {% if appointments %}
   <table border="1" cellpadding="5" cellspacing="0">
@@ -38,7 +38,7 @@
     </tbody>
   </table>
 {% else %}
-  <p>這位醫師今天目前沒有掛號喵～</p>
+  <p>這位醫師今天目前沒有掛號 ～</p>
 {% endif %}
 
 {% endblock %}

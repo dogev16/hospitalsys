@@ -5,7 +5,7 @@ from doctors.models import Doctor
 from appointments.models import Appointment
 
 class VisitTicket(models.Model):
-    # 狀態常數（統一用全大寫，比較不會混淆喵）
+    # 狀態常數（統一用全大寫，比較不會混淆 ）
     STATUS_WAITING   = "WAITING"   # 候診
     STATUS_CALLING   = "CALLING"   # 叫號中
     STATUS_IN_ROOM   = "IN_ROOM"   # 看診中
@@ -42,7 +42,7 @@ class VisitTicket(models.Model):
     called_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
-    # 🔽 為了「過號系統」新增的欄位喵
+    # 🔽 為了「過號系統」新增的欄位 
     is_skipped = models.BooleanField(default=False)      # 是否已過號
     call_count = models.PositiveIntegerField(default=0)  # 被叫了幾次
 
@@ -56,7 +56,7 @@ class VisitTicket(models.Model):
     # ➤ 叫號
     def mark_called(self):
         """
-        將狀態標記為 CALLING，呼叫次數 +1，更新 called_at 喵
+        將狀態標記為 CALLING，呼叫次數 +1，更新 called_at  
         """
         self.status = self.STATUS_CALLING
         self.call_count += 1
@@ -67,7 +67,7 @@ class VisitTicket(models.Model):
     # ➤ 看診完成
     def mark_finished(self):
         """
-        將狀態標記為 DONE，更新 finished_at 喵
+        將狀態標記為 DONE，更新 finished_at  
         """
         self.status = self.STATUS_DONE
         if not self.finished_at:
@@ -77,7 +77,7 @@ class VisitTicket(models.Model):
     # ➤ 過號 / 未到
     def mark_no_show(self):
         """
-        將病人標記為未到 / 過號喵
+        將病人標記為未到 / 過號 
         """
         self.status = self.STATUS_NO_SHOW
         self.is_skipped = True

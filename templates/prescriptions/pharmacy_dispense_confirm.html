@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}處方領藥確認喵{% endblock %}
+{% block title %}處方領藥確認 {% endblock %}
 
 {% block content %}
 
@@ -72,7 +72,7 @@
 </style>
 
 <div class="rx-detail-box">
-    <h2>處方領藥確認喵</h2>
+    <h2>處方領藥確認 </h2>
 
     <div class="rx-header">
         <div class="left">
@@ -114,9 +114,9 @@
 
     <form method="post" class="btn-area">
         {% csrf_token %}
-        <a href="{% url 'prescriptions:pharmacy_panel' %}" class="btn-cancel">返回藥局面板喵</a>
+        <a href="{% url 'prescriptions:pharmacy_panel' %}" class="btn-cancel">返回藥局面板 </a>
         <button type="submit" class="btn-confirm">
-            確認領藥並扣庫存喵
+            確認領藥並扣庫存 
         </button>
     </form>
 </div>

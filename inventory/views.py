@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum  
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required, permission_required
 
@@ -15,15 +15,36 @@ from django.core.paginator import Paginator
 # ------------------------------
 @group_required("PHARMACY")
 def dashboard(request):
-    drugs = Drug.objects.all().order_by("name")
-    low_stock = drugs.filter(
-        is_active=True,
+    # 只抓啟用中的藥品 
+    drugs = Drug.objects.filter(is_active=True).order_by("name")
+
+    # 1️⃣ 總藥品品項數
+    total_drugs = drugs.count()
+
+    # 2️⃣ 總庫存數量（所有藥的 stock_quantity 加總）
+    total_stock_quantity = drugs.aggregate(
+        total=Sum("stock_quantity")
+    )["total"] or 0
+
+    # 3️⃣ 低庫存藥品（庫存 <= 安全存量）
+    low_stock_drugs = drugs.filter(
         stock_quantity__lte=F("reorder_level"),
+    )
+    low_stock_count = low_stock_drugs.count()
+
+    # 4️⃣ 最近庫存異動紀錄
+    recent_transactions = (
+        StockTransaction.objects
+        .select_related("drug")
+        .order_by("-created_at")[:10]
     )
 
     return render(request, "inventory/dashboard.html", {
-        "drugs": drugs,
-        "low_stock": low_stock,
+        "total_drugs": total_drugs,
+        "total_stock_quantity": total_stock_quantity,
+        "low_stock_count": low_stock_count,
+        "low_stock_drugs": low_stock_drugs,
+        "recent_transactions": recent_transactions,
     })
 
 
@@ -99,7 +120,7 @@ def drug_create(request):
                     note="新增藥品初始庫存",
                 )
 
-            messages.success(request, "藥品新增成功喵！")
+            messages.success(request, "藥品新增成功 ！")
             return redirect("inventory:drug_list")
 
     else:
@@ -119,7 +140,7 @@ def edit_drug(request, pk):
         form = DrugForm(request.POST, instance=drug)
         if form.is_valid():
             form.save()
-            messages.success(request, f"已成功更新 {drug.name} 喵！")
+            messages.success(request, f"已成功更新 {drug.name}  ！")
             return redirect("inventory:drug_list")
     else:
         form = DrugForm(instance=drug)
@@ -153,7 +174,7 @@ def stock_adjust(request, pk):
 
             new_stock = drug.stock_quantity + change
             if new_stock < 0:
-                messages.error(request, "庫存不足，無法扣除這麼多喵")
+                messages.error(request, "庫存不足，無法扣除這麼多 ")
             else:
                 # 更新藥品庫存
                 drug.stock_quantity = new_stock
@@ -169,11 +190,11 @@ def stock_adjust(request, pk):
 
                 messages.success(
                     request,
-                    f"已調整 {drug.name} 庫存（變動 {change}，目前庫存 {new_stock}）喵",
+                    f"已調整 {drug.name} 庫存（變動 {change}，目前庫存 {new_stock}） ",
                 )
                 return redirect("inventory:drug_list")
         else:
-            # 先印出錯誤，方便你看 console 除錯喵
+            # 先印出錯誤，方便你看 console 除錯 
             print("StockAdjustForm errors:", form.errors)
     else:
         form = StockAdjustForm()

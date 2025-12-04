@@ -1,10 +1,11 @@
 # C:\project\hospitalsys\inventory\models.py
 from django.db import models
+from django.conf import settings
 
 
 class Drug(models.Model):
     """
-    基本藥品資料喵：給醫師開立處方 & 藥局扣庫存用
+    基本藥品資料 ：給醫師開立處方 & 藥局扣庫存用
     """
     code = models.CharField("藥品代碼", max_length=50, unique=True)
     name = models.CharField("藥品名稱", max_length=100)
@@ -45,7 +46,7 @@ class Drug(models.Model):
 
 class StockTransaction(models.Model):
     """
-    庫存異動紀錄喵：進貨 / 發藥 / 手動調整
+    庫存異動紀錄 ：進貨 / 發藥 / 手動調整
     """
     REASON_CHOICES = [
         ("purchase", "進貨"),
@@ -65,8 +66,18 @@ class StockTransaction(models.Model):
         null=True,
         blank=True,
         related_name="stock_transactions",
+        verbose_name="相關處方",
     )
 
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="stock_operations",
+        verbose_name="操作人員",
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

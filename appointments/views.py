@@ -113,7 +113,7 @@ def _get_available_slots(doctor, appt_date):
 
 def _renumber_visit_tickets(doctor, appt_date):
     """
-    依『醫師 + 日期』重新整理叫號順序喵：
+    依『醫師 + 日期』重新整理叫號順序 ：
     - 先照 appointment.time 排序
     - 再照 created_at / id 做次排序
     - 分兩階段改 number，避免 UNIQUE 衝突 meow
@@ -129,7 +129,7 @@ def _renumber_visit_tickets(doctor, appt_date):
         return
 
     with transaction.atomic():
-        temp_base = 1000  # 暫時的安全區間喵
+        temp_base = 1000  # 暫時的安全區間 
 
         # 第 1 階段：先全部搬到 1001,1002,...，避開現在的號碼
         for idx, t in enumerate(tickets, start=1):
@@ -138,7 +138,7 @@ def _renumber_visit_tickets(doctor, appt_date):
                 t.number = new_temp
                 t.save(update_fields=["number"])
 
-        # 第 2 階段：再改回 1,2,3,... 真正要給醫生叫的號碼喵
+        # 第 2 階段：再改回 1,2,3,... 真正要給醫生叫的號碼 
         for idx, t in enumerate(tickets, start=1):
             if t.number != idx:
                 t.number = idx
@@ -188,7 +188,7 @@ def book(request):
             # action == "confirm"：確認掛號
             if action == "confirm":
                 if not chart_no:
-                    messages.error(request, "請先輸入病歷號再確認掛號喵。")
+                    messages.error(request, "請先輸入病歷號再確認掛號 。")
                     return render(request, "appointments/book.html", {"form": form, "slots": slots})
                 
                 # 先找病人
@@ -270,7 +270,7 @@ def book(request):
 @group_required("RECEPTION")
 def patient_history(request, chart_no):
     """
-    根據病歷號顯示該病人的所有看診紀錄喵
+    根據病歷號顯示該病人的所有看診紀錄 
     """
     # 先找到這個病人（用 chart_no）
     patient = get_object_or_404(Patient, chart_no=chart_no)
@@ -297,12 +297,12 @@ def appointment_detail(request, pk):
 @login_required
 def appointment_new_for_patient(request, patient_id):
     """
-    從病人詳細資料頁面進來的「新增掛號」喵
+    從病人詳細資料頁面進來的「新增掛號」 
     URL: /appointments/new/<patient_id>/
     """
     patient = get_object_or_404(Patient, pk=patient_id)
 
-    slots = []    # 可約時段列表，改成 [] 比較直覺喵
+    slots = []    # 可約時段列表，改成 [] 比較直覺 
     doctor = None
 
     if request.method == "POST":
@@ -313,19 +313,19 @@ def appointment_new_for_patient(request, patient_id):
             doctor = form.cleaned_data["doctor"]
             appt_date = form.cleaned_data["appt_date"]
 
-            # 有選醫師 + 日期才算可用時段喵
+            # 有選醫師 + 日期才算可用時段 
             if doctor and appt_date:
                 # ✅ 改成用跟櫃台一樣的排班邏輯
                 slots = _get_available_slots(doctor, appt_date)
                 # ✅ 把時段塞進 appt_time 下拉選單（跟 book() 一樣）
                 _set_time_choices(form, slots)
 
-            # 👉 只按「載入可約時段」：不存資料，只回畫面喵
+            # 👉 只按「載入可約時段」：不存資料，只回畫面 
             if action == "load_slots":
                 if doctor and appt_date and not slots:
                     messages.warning(
                         request,
-                        "此日期沒有可掛號時段，可能門診未開或額滿喵。"
+                        "此日期沒有可掛號時段，可能門診未開或額滿 。"
                     )
                 return render(
                     request,
@@ -338,25 +338,25 @@ def appointment_new_for_patient(request, patient_id):
                     },
                 )
 
-            # 👉 下面是「確認掛號」流程喵
+            # 👉 下面是「確認掛號」流程 
             appt_time_str = request.POST.get("appt_time")
 
-            # 沒選時段就加錯誤訊息（欄位名稱是 appt_time）喵
+            # 沒選時段就加錯誤訊息（欄位名稱是 appt_time） 
             if not appt_time_str:
-                form.add_error("appt_time", "請先選擇可約時段喵")
+                form.add_error("appt_time", "請先選擇可約時段 ")
             else:
                 # 解析時間
                 try:
                     appt_time = datetime.strptime(appt_time_str, "%H:%M").time()
                 except ValueError:
-                    form.add_error("appt_time", "時間格式錯誤喵")
+                    form.add_error("appt_time", "時間格式錯誤 ")
                 else:
-                    # 再確認一次這個時段還是可用（避免 race condition）喵
+                    # 再確認一次這個時段還是可用（避免 race condition） 
                     latest_slots = _get_available_slots(doctor, appt_date)
                     if appt_time not in latest_slots:
-                        form.add_error("appt_time", "這個時段已經無法掛號，請重新載入喵")
+                        form.add_error("appt_time", "這個時段已經無法掛號，請重新載入 ")
                     else:
-                        # ✅ 先建立 Appointment（掛號紀錄）喵
+                        # ✅ 先建立 Appointment（掛號紀錄） 
                         appt = Appointment.objects.create(
                             patient=patient,
                             doctor=doctor,
@@ -365,7 +365,7 @@ def appointment_new_for_patient(request, patient_id):
                             status=Appointment.STATUS_BOOKED, 
                         )
 
-                        # ⭐ 從 Appointment 自動產生 VisitTicket（號碼牌）喵 ⭐
+                        # ⭐ 從 Appointment 自動產生 VisitTicket（號碼牌）  ⭐
 
                         # 1. 同一位醫師 + 同一天，找目前最大號碼，再 +1
                         next_no = (
@@ -375,7 +375,7 @@ def appointment_new_for_patient(request, patient_id):
                             or 0
                         ) + 1
 
-                        # 2. 建立新的號碼牌，預設狀態 waiting 喵
+                        # 2. 建立新的號碼牌，預設狀態 waiting  
                         VisitTicket.objects.create(
                             appointment=appt,
                             date=appt_date,
@@ -385,15 +385,15 @@ def appointment_new_for_patient(request, patient_id):
                             status="waiting",
                         )
 
-                        # 3. 重新整理這位醫師當天的叫號順序喵
+                        # 3. 重新整理這位醫師當天的叫號順序 
                         _renumber_visit_tickets(doctor, appt_date)
 
-                        # ⭐ 到這裡為止，病人自己線上掛號也會直接進入叫號隊列喵 ⭐
+                        # ⭐ 到這裡為止，病人自己線上掛號也會直接進入叫號隊列  ⭐
 
-                        messages.success(request, "掛號已建立喵！")
+                        messages.success(request, "掛號已建立 ！")
                         return redirect("patients:patient_detail", pk=patient.pk)
 
-        # 表單驗證失敗或上面加了錯誤，就再渲染一次畫面喵
+        # 表單驗證失敗或上面加了錯誤，就再渲染一次畫面 
         return render(
             request,
             "appointments/book_for_patient.html",
@@ -405,7 +405,7 @@ def appointment_new_for_patient(request, patient_id):
             },
         )
 
-    # GET 進來：第一次打開表單喵
+    # GET 進來：第一次打開表單 
     else:
         form = AppointmentForm()
         return render(
@@ -422,44 +422,44 @@ def appointment_new_for_patient(request, patient_id):
 @require_POST
 def appointment_update_status(request, pk):
     """
-    將某一筆掛號的狀態改成 BOOKED / DONE / CANCELLED 喵
-    通常給櫃檯或醫師用，在掛號列表那邊按按鈕就可以改狀態喵
+    將某一筆掛號的狀態改成 BOOKED / DONE / CANCELLED  
+    通常給櫃檯或醫師用，在掛號列表那邊按按鈕就可以改狀態 
     """
     appt = get_object_or_404(Appointment, pk=pk)
 
     new_status = request.POST.get("status")
 
-    # 合法狀態值清單（從 model 的 STATUS_CHOICES 裡抓）喵
+    # 合法狀態值清單（從 model 的 STATUS_CHOICES 裡抓） 
     valid_status_values = {value for value, _ in Appointment.STATUS_CHOICES}
 
     if new_status not in valid_status_values:
-        messages.error(request, "不合法的狀態值喵")
+        messages.error(request, "不合法的狀態值 ")
     else:
         appt.status = new_status
         appt.save()
-        messages.success(request, "掛號狀態已更新喵！")
+        messages.success(request, "掛號狀態已更新 ！")
 
-    # 更新完之後回到原來的頁面（patient 詳細 or 醫師清單）喵
+    # 更新完之後回到原來的頁面（patient 詳細 or 醫師清單） 
     next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/"
     return redirect(next_url)
 
 @login_required
 def doctor_today_appointments(request, doctor_id):
     """
-    醫師今日門診列表喵
+    醫師今日門診列表 
     URL: /appointments/doctor/<doctor_id>/today/
-    會列出該醫師「今天」所有掛號，依時間排序喵
+    會列出該醫師「今天」所有掛號，依時間排序 
     """
     doctor = get_object_or_404(Doctor, pk=doctor_id)
 
-    # 今天日期（有吃 Django 時區設定）喵
+    # 今天日期（有吃 Django 時區設定） 
     today = timezone.localdate()
 
-    # 撈出這位醫師今天的所有掛號，照時間排序喵
+    # 撈出這位醫師今天的所有掛號，照時間排序 
     appointments = (
         Appointment.objects
         .filter(doctor=doctor, date=today)
-        .select_related("patient")   # 預先 join 病人，template 用起來比較快喵
+        .select_related("patient")   # 預先 join 病人，template 用起來比較快 
         .order_by("time")
     )
 

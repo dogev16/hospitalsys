@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}我的處方歷史喵{% endblock %}
+{% block title %}我的處方歷史 {% endblock %}
 
 {% block content %}
 
@@ -68,12 +68,12 @@
     }
 </style>
 
-<h2 class="page-title">我的處方歷史喵</h2>
+<h2 class="page-title">我的處方歷史 </h2>
 
 <div class="info-box">
     <p>
         <strong>醫師：</strong>{{ doctor.name }}<br>
-        <span style="color:#555;">最近開立的處方如下喵：</span>
+        <span style="color:#555;">最近開立的處方如下 ：</span>
     </p>
 </div>
 
@@ -123,9 +123,9 @@
 </table>
 
 {% else %}
-<p>目前尚無處方紀錄喵。</p>
+<p>目前尚無處方紀錄 。</p>
 {% endif %}
 
-<a href="{% url 'queues:doctor_panel' %}" class="back-link">⬅ 回醫師面板喵</a>
+<a href="{% url 'queues:doctor_panel' %}" class="back-link">⬅ 回醫師面板 </a>
 
 {% endblock %}

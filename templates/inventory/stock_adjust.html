@@ -6,7 +6,7 @@
 {% block content %}
 <div class="container mt-4">
 
-    <!-- 標題列喵 -->
+    <!-- 標題列  -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Adjust Stock - {{ drug.name }}</h1>
         <div>
@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <!-- 藥品資訊小卡片喵 -->
+    <!-- 藥品資訊小卡片  -->
     <div class="card shadow-sm mb-3">
         <div class="card-body">
             <p class="mb-1"><strong>Current Stock:</strong> {{ drug.stock_quantity }}</p>
@@ -27,14 +27,14 @@
         </div>
     </div>
 
-    <!-- 如果 view 傳 error 就顯示喵 -->
+    <!-- 如果 view 傳 error 就顯示  -->
     {% if error %}
         <div class="alert alert-danger">
             {{ error }}
         </div>
     {% endif %}
 
-    <!-- 庫存調整表單喵 -->
+    <!-- 庫存調整表單  -->
     <div class="card shadow-sm">
         <div class="card-header">
             New Stock Adjustment
@@ -47,7 +47,7 @@
                 <!-- 類型 + 數量 -->
                 <div class="row mb-3">
 
-                    <!-- reason 喵 -->
+                    <!-- reason   -->
                     <div class="col-md-4">
                         <label class="form-label">Reason</label>
                         <select name="reason" class="form-select" required>
@@ -57,7 +57,7 @@
                         </select>
                     </div>
 
-                    <!-- quantity 喵 -->
+                    <!-- quantity   -->
                     <div class="col-md-4">
                         <label class="form-label">Quantity</label>
                         <input type="number" name="quantity" class="form-control" min="1" required>

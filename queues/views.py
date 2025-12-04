@@ -27,20 +27,20 @@ def reception_call(request):
     today = timezone.localdate()
     doctors = Doctor.objects.all().order_by("name")
 
-    # 先看看有沒有 doctor 參數喵
+    # 先看看有沒有 doctor 參數 
     doctor_id = request.GET.get("doctor") or request.POST.get("doctor")
     selected_doctor = None
     tickets_qs = VisitTicket.objects.none()
     current_ticket = None
 
-    # 沒選就預設第一位醫師喵
+    # 沒選就預設第一位醫師 
     if not doctor_id and doctors.exists():
         selected_doctor = doctors.first()
         doctor_id = selected_doctor.id
     elif doctor_id:
         selected_doctor = get_object_or_404(Doctor, pk=doctor_id)
 
-    # 讀取目前醫師的叫號資料喵
+    # 讀取目前醫師的叫號資料 
     if selected_doctor:
         tickets_qs = (
             VisitTicket.objects
@@ -51,7 +51,7 @@ def reception_call(request):
         current_ticket = tickets_qs.filter(status="CALLING").first()
 
     # ──────────────────────
-    # 處理櫃台按鈕喵
+    # 處理櫃台按鈕 
     # ──────────────────────
     if request.method == "POST" and selected_doctor:
         action = request.POST.get("action")
@@ -67,13 +67,13 @@ def reception_call(request):
 
             # ▶ 開始 / 下一號
             if action == "start_next":
-                # 1. 如果現在有在 CALLING 的號碼，先當作處理完成喵
+                # 1. 如果現在有在 CALLING 的號碼，先當作處理完成 
                 if current_ticket:
                     current_ticket.status = "DONE"
                     current_ticket.finished_at = timezone.now()
                     fields = ["status", "finished_at"]
 
-                    # 如果你也想同步 Appointment，就打開這幾行喵
+                    # 如果你也想同步 Appointment，就打開這幾行 
                     # if current_ticket.appointment_id:
                     #     appt = current_ticket.appointment
                     #     appt.status = Appointment.STATUS_DONE
@@ -84,31 +84,31 @@ def reception_call(request):
                 # 2. 找下一個 WAITING
                 next_ticket = tickets.filter(status="WAITING").first()
                 if not next_ticket:
-                    messages.info(request, "目前沒有下一位候診中的病人喵。")
+                    messages.info(request, "目前沒有下一位候診中的病人 。")
                 else:
                     next_ticket.status = "CALLING"
                     next_ticket.call_count = F("call_count") + 1
                     next_ticket.called_at = timezone.now()
                     next_ticket.save(update_fields=["status", "call_count", "called_at"])
-                    messages.success(request, f"已叫號：第 {next_ticket.number} 號喵。")
+                    messages.success(request, f"已叫號：第 {next_ticket.number} 號 。")
 
             # 🔄 重叫一次（同一個號碼再叫一次）
             elif action == "repeat":
                 if not current_ticket:
-                    messages.warning(request, "目前沒有正在叫的號碼喵。")
+                    messages.warning(request, "目前沒有正在叫的號碼 。")
                 else:
                     current_ticket.call_count = F("call_count") + 1
                     current_ticket.called_at = timezone.now()
                     current_ticket.save(update_fields=["call_count", "called_at"])
                     messages.success(
                         request,
-                        f"已重新叫號：第 {current_ticket.number} 號喵。"
+                        f"已重新叫號：第 {current_ticket.number} 號 。"
                     )
 
             # ⏭ 櫃台過號 + 下一號
             elif action == "skip":
                 if not current_ticket:
-                    messages.warning(request, "目前沒有可以過號的病人喵。")
+                    messages.warning(request, "目前沒有可以過號的病人 。")
                 else:
                     current_ticket.status = "NO_SHOW"
                     if hasattr(current_ticket, "is_skipped"):
@@ -134,25 +134,25 @@ def reception_call(request):
                         )
                         messages.success(
                             request,
-                            f"已標記過號，改叫第 {next_ticket.number} 號喵。"
+                            f"已標記過號，改叫第 {next_ticket.number} 號 。"
                         )
                     else:
                         messages.info(
                             request,
-                            "已標記過號，目前沒有下一位候診病人喵。"
+                            "已標記過號，目前沒有下一位候診病人 。"
                         )
 
-            # 🆕 從列表叫回某一個已過號病人喵
+            # 🆕 從列表叫回某一個已過號病人 
             elif action == "recall_ticket":
                 ticket_id = request.POST.get("ticket_id")
                 target = tickets.filter(pk=ticket_id).first()
 
                 if not target:
-                    messages.error(request, "找不到要叫回的號碼喵。")
+                    messages.error(request, "找不到要叫回的號碼 。")
                 elif target.status != "NO_SHOW":
-                    messages.warning(request, "只能叫回已標記為未到（NO_SHOW）的號碼喵。")
+                    messages.warning(request, "只能叫回已標記為未到（NO_SHOW）的號碼 。")
                 else:
-                    # 如果現在已經在叫別人，就先還原回 WAITING 喵
+                    # 如果現在已經在叫別人，就先還原回 WAITING  
                     if current_ticket and current_ticket.id != target.id:
                         current_ticket.status = "WAITING"
                         current_ticket.save(update_fields=["status"])
@@ -164,17 +164,17 @@ def reception_call(request):
 
                     messages.success(
                         request,
-                        f"已叫回第 {target.number} 號喵。"
+                        f"已叫回第 {target.number} 號 。"
                     )
 
-        # POST 完後 redirect，避免重新整理重送表單喵
+        # POST 完後 redirect，避免重新整理重送表單 
         url = reverse("queues:reception_call")
         if selected_doctor:
             url += f"?doctor={selected_doctor.id}"
         return redirect(url)
 
     # ──────────────────────
-    # GET → 顯示畫面喵
+    # GET → 顯示畫面 
     # ──────────────────────
     context = {
         "today": today,
@@ -192,7 +192,7 @@ def reception_call(request):
 def doctor_panel(request):
     doctor = Doctor.objects.filter(user=request.user).first()
     if not doctor:
-        messages.error(request, "目前帳號沒有綁定醫師資料喵。")
+        messages.error(request, "目前帳號沒有綁定醫師資料 。")
         return redirect("index")
 
     today = timezone.localdate()
@@ -227,7 +227,7 @@ def doctor_panel(request):
             next_ticket = tickets_qs.filter(status="WAITING").first()
 
             if not next_ticket:
-                messages.warning(request, "沒有候診中的病人喵。")
+                messages.warning(request, "沒有候診中的病人 。")
                 return redirect("queues:doctor_panel")
 
             # 把舊 CALLING 的退回 WAITING
@@ -238,7 +238,7 @@ def doctor_panel(request):
             next_ticket.call_count += 1
             next_ticket.save(update_fields=["status", "called_at", "call_count"])
 
-            messages.success(request, f"已叫號：第 {next_ticket.number} 號喵。")
+            messages.success(request, f"已叫號：第 {next_ticket.number} 號 。")
             return redirect("queues:doctor_panel")
 
         # =============================
@@ -257,7 +257,7 @@ def doctor_panel(request):
                 appt.status = Appointment.STATUS_DONE
                 appt.save(update_fields=["status"])
 
-            messages.success(request, f"{ticket.number} 號看診完成喵。")
+            messages.success(request, f"{ticket.number} 號看診完成 。")
             return redirect("queues:doctor_panel")
 
         # =============================
@@ -283,9 +283,9 @@ def doctor_panel(request):
                 next_ticket.called_at = timezone.now()
                 next_ticket.call_count += 1
                 next_ticket.save(update_fields=["status", "called_at", "call_count"])
-                messages.success(request, f"已過號。下一位：{next_ticket.number} 號喵。")
+                messages.success(request, f"已過號。下一位：{next_ticket.number} 號 。")
             else:
-                messages.info(request, "已過號，目前沒有下一位喵。")
+                messages.info(request, "已過號，目前沒有下一位 。")
 
             return redirect("queues:doctor_panel")
 
@@ -303,7 +303,7 @@ def doctor_panel(request):
             ticket.called_at = timezone.now()
             ticket.save(update_fields=["status", "call_count", "called_at"])
 
-            messages.success(request, f"已重新叫號：第 {ticket.number} 號喵。")
+            messages.success(request, f"已重新叫號：第 {ticket.number} 號 。")
             return redirect("queues:doctor_panel")
 
     # =============================
@@ -333,7 +333,7 @@ def doctor_action(request, pk, act):
 
 def board(request):
     """
-    候診區大螢幕用的叫號看板喵（簡易版本）
+    候診區大螢幕用的叫號看板 （簡易版本）
     URL: /queues/board/?doctor=<id>
     """
     today = timezone.localdate()

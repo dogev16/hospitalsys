@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}替病人掛號喵{% endblock %}
+{% block title %}替病人掛號 {% endblock %}
 
 {% block content %}
-<h1>替 {{ patient.full_name }} 掛號喵</h1>
+<h1>替 {{ patient.full_name }} 掛號 </h1>
 
 <p>
   病歷號：{{ patient.chart_no }}　
@@ -39,7 +39,7 @@
         {{ form.appt_time }}
         {% if not slots %}
           <div style="font-size: 0.9em; color: #666;">
-            請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間喵。
+            請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間 。
           </div>
         {% endif %}
       </td>
@@ -51,12 +51,12 @@
   </button>
 
   <button type="submit" name="action" value="confirm">
-    確認掛號喵
+    確認掛號 
   </button>
 </form>
 
 {% if slots %}
-  <h3>本次載入的可掛號時段喵</h3>
+  <h3>本次載入的可掛號時段 </h3>
   <ul>
     {% for t in slots %}
       <li>{{ t|time:"H:i" }}</li>
@@ -65,6 +65,6 @@
 {% endif %}
 
 <p>
-  <a href="{% url 'patients:patient_detail' patient.id %}">← 回病人詳細資料喵</a>
+  <a href="{% url 'patients:patient_detail' patient.id %}">← 回病人詳細資料 </a>
 </p>
 {% endblock %}

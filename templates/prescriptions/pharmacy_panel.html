@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}藥局面板喵{% endblock %}
+{% block title %}藥局面板 {% endblock %}
 
 {% block content %}
 
@@ -73,8 +73,8 @@
 </style>
 
 <div class="pharmacy-page">
-    <h2 class="page-title">藥局面板喵</h2>
-    <div class="page-subtitle">以下為待領藥的處方喵</div>
+    <h2 class="page-title">藥局面板 </h2>
+    <div class="page-subtitle">以下為待領藥的處方 </div>
 
     {% if prescriptions %}
         <table class="rx-table">
@@ -90,42 +90,52 @@
                     <th>動作</th>
                 </tr>
             </thead>
+            
             <tbody>
-                {% for rx in prescriptions %}
-                    <tr>
-                        <td>#{{ rx.id }}</td>
-                        <td>{{ rx.date }}</td>
-                        <td>{{ rx.patient.chart_no }}</td>
-                        <td>{{ rx.patient.full_name }}</td>
-                        <td>{{ rx.doctor.user.get_full_name }}</td>
-                        <td>
-                            <span class="badge-status">
-                                {{ rx.get_status_display }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if rx.items.all %}
-                                {% with first_item=rx.items.all.0 %}
-                                    {{ first_item.drug.name }} x {{ first_item.quantity }}
-                                    {% if rx.items.count > 1 %}
-                                        （+{{ rx.items.count|add:"-1" }} 項）
-                                    {% endif %}
-                                {% endwith %}
+            {% for rx in prescriptions %}
+                <tr>
+                    <td>#{{ rx.id }}</td>
+                    <td>{{ rx.date }}</td>
+                    <td>{{ rx.patient.chart_no }}</td>
+                    <td>{{ rx.patient.full_name }}</td>
+                    <td>{{ rx.doctor.user.get_full_name }}</td>
+                    <td>
+                        <div>
+                            <span class="info-label">藥師：</span>
+                            {% if prescription.dispensed_by %}
+                                {{ prescription.dispensed_by.get_full_name|default:prescription.dispensed_by.username }}
+                                （{{ prescription.dispensed_at|date:"Y-m-d H:i" }}）
                             {% else %}
-                                （尚未填寫用藥）
+                                （尚未領藥）
                             {% endif %}
-                        </td>
-                        <td>
-                            <a class="btn-main" href="{% url 'prescriptions:dispense' rx.id %}">
-                                領藥 / 檢視
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
+                        </div>
+                        <div>
+                            藥局：{{ rx.get_pharmacy_status_display }}
+                        </div>
+                    </td>
+                    <td>  
+                        {% if rx.items.all %}
+                            {% with first_item=rx.items.all.0 %}
+                                {{ first_item.drug.name }} x {{ first_item.quantity }}
+                                {% if rx.items.count > 1 %}
+                                    （+{{ rx.items.count|add:"-1" }} 項）
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            （尚未填寫用藥）
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a class="btn-main" href="{% url 'prescriptions:dispense' rx.id %}">
+                            領藥 / 檢視
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     {% else %}
-        <p class="empty-text">目前沒有待領藥的處方喵～</p>
+        <p class="empty-text">目前沒有待領藥的處方 ～</p>
     {% endif %}
 </div>
 

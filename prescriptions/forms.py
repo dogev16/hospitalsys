@@ -7,13 +7,13 @@ from .models import Prescription, PrescriptionItem
 class PrescriptionForm(forms.ModelForm):
     class Meta:
         model = Prescription
-        # 目前只有醫師備註欄位喵，如果之後有欄位再加進來
+        # 目前只有醫師備註欄位 ，如果之後有欄位再加進來
         fields = ["notes"]
         widgets = {
             "notes": forms.Textarea(
                 attrs={
                     "rows": 3,
-                    "placeholder": "可輸入醫師備註喵…",
+                    "placeholder": "可輸入醫師備註 …",
                 }
             )
         }
@@ -28,7 +28,7 @@ class PrescriptionItemForm(forms.ModelForm):
         }
 
 
-# 🔧 關鍵：這就是 views 要用的 PrescriptionItemFormSet 喵
+# 🔧 關鍵：這就是 views 要用的 PrescriptionItemFormSet  
 PrescriptionItemFormSet = inlineformset_factory(
     Prescription,
     PrescriptionItem,

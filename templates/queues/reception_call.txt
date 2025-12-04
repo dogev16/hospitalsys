@@ -1,75 +1,302 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>櫃台叫號畫面</h1>
-<p>今天日期：{{ today }}</p>
-{% if messages %}
-  <ul style="color:red;">
-    {% for msg in messages %}
-      <li>{{ msg }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+<div class="queue-container">
+    <h1 class="title">櫃台叫號系統</h1>
 
-<form method="get" style="margin-bottom: 1rem;">
-  <label for="doctor">選擇醫師：</label>
-  <select name="doctor" id="doctor" onchange="this.form.submit()">
-    <option value="">-- 請選擇醫師 --</option>
-    {% for d in doctors %}
-      <option value="{{ d.id }}" {% if selected_doctor and d.id == selected_doctor.id %}selected{% endif %}>
-        {{ d }}
-      </option>
-    {% endfor %}
-  </select>
-  <noscript><button type="submit">載入</button></noscript>
-</form>
-
-{% if selected_doctor %}
-  <h2>目前選擇：{{ selected_doctor }} </h2>
-
-  <form method="post" style="margin: 1rem 0;">
-    {% csrf_token %}
-    <input type="hidden" name="doctor" value="{{ selected_doctor.id }}">
-    <button type="submit" name="action" value="next">叫下一號</button>
-  </form>
-
-  {% if current_ticket %}
-    <div style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem;">
-      <h3>目前叫號中</h3>
-      <p>號碼：{{ current_ticket.number }}</p>
-      <p>病患：{{ current_ticket.patient }}</p>
-      <p>門診時間：{{ current_ticket.appointment.time }}</p>
-      <p>叫號時間：{{ current_ticket.called_at }}</p>
-      <p>狀態：{{ current_ticket.get_status_display }}</p>
+    <div class="today-box">
+        <span>📅 今天日期：<strong>{{ today }}</strong></span>
     </div>
-  {% else %}
-    <p>目前還沒有被叫出的號碼。</p>
-  {% endif %}
 
-  <h3>今天掛號列表（{{ selected_doctor }}）</h3>
-  <table border="1" cellpadding="4" cellspacing="0">
-    <tr>
-      <th>號碼</th>
-      <th>病患</th>
-      <th>預約時間</th>
-      <th>狀態</th>
-      <th>叫號時間</th>
-      <th>結束時間</th>
-    </tr>
-    {% for t in tickets %}
-    <tr>
-      <td>{{ t.number }}</td>
-      <td>{{ t.patient }}</td>
-      <td>{{ t.appointment.time }}</td>
-      <td>{{ t.get_status_display }}</td>
-      <td>{{ t.called_at }}</td>
-      <td>{{ t.finished_at }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="6">今天沒有掛號。</td></tr>
-    {% endfor %}
-  </table>
-{% else %}
-  <p>請先選擇一位醫師。</p>
-{% endif %}
+    <!-- 選擇醫師 -->
+    <form method="get" class="doctor-selector">
+        <label>🩺 選擇醫師：</label>
+        <select name="doctor" onchange="this.form.submit()">
+            {% for d in doctors %}
+                <option value="{{ d.pk }}"
+                    {% if selected_doctor and d.pk == selected_doctor.pk %}selected{% endif %}>
+                    {{ d.name }}（{{ d.department }}）
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <!-- 叫號資訊 -->
+    <div class="current-ticket-box">
+        {% if current_ticket %}
+            <p>🔔 目前叫號：</p>
+            <p class="big-number">第 {{ current_ticket.number }} 號</p>
+            <p class="patient-name">{{ current_ticket.patient }}</p>
+
+            <p class="status-tag status-{{ current_ticket.status|lower }}">
+                狀態：{{ current_ticket.status }}
+            </p>
+        {% else %}
+            <p class="empty">目前沒有叫號中的病患 。</p>
+        {% endif %}
+    </div>
+
+    <!-- 操作按鈕 -->
+    <form method="post" class="action-buttons">
+        {% csrf_token %}
+        {% if selected_doctor %}
+            <input type="hidden" name="doctor" value="{{ selected_doctor.pk }}">
+        {% endif %}
+
+        <!-- 開始 / 下一號 -->
+        <button type="submit" name="action" value="start_next" class="btn btn-next">
+            ▶ 開始 / 下一號
+        </button>
+
+        <!-- 重叫一次 -->
+        <button type="submit" name="action" value="repeat" class="btn btn-recall">
+            🔄 重叫一次
+        </button>
+
+        <!-- 🆕 過號 + 下一號 -->
+        <button type="submit" name="action" value="skip" class="btn btn-skip">
+            ⏭ 過號 + 下一號
+        </button>
+    </form>
+
+    <!-- 列表 -->
+    <h2 class="subtitle">今日所有掛號（{{ selected_doctor.name }})</h2>
+
+    <div class="table-container">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>號碼</th>
+                    <th>病人</th>
+                    <th>預約時間</th>
+                    <th>狀態</th>
+                    <th>叫號時間</th>
+                    <th>完成時間</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tickets %}
+                <tr class="row-{{ t.status|lower }}">
+                    <td>{{ t.number }}</td>
+                    <td>{{ t.patient }}</td>
+                    <td>{{ t.appointment.time|default:"-" }}</td>
+                    <td>{{ t.status }}</td>
+                    <td>{{ t.called_at|default:"-" }}</td>
+                    <td>{{ t.finished_at|default:"-" }}</td>
+            
+                    <!-- 🆕 操作欄位 -->
+                    <td>
+                        {% if t.status == "NO_SHOW" %}
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                {% if selected_doctor %}
+                                    <input type="hidden" name="doctor" value="{{ selected_doctor.pk }}">
+                                {% endif %}
+                                <input type="hidden" name="ticket_id" value="{{ t.pk }}">
+                                <button type="submit"
+                                        name="action"
+                                        value="recall_ticket"
+                                       class="btn btn-small">
+                                    叫回 
+                                </button>
+                            </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty">今天沒有掛號 。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+
+/* --- Layout 外框 --- */
+.queue-container {
+    max-width: 900px;
+    margin: auto;
+    background: #ffffffdd;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px #00000022;
+}
+
+.title {
+    text-align: center;
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* --- 日期顯示 --- */
+.today-box {
+    padding: 10px 15px;
+    background: #f0f7ff;
+    border-left: 4px solid #2980b9;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+/* --- 醫師選單 --- */
+.doctor-selector {
+    margin-bottom: 25px;
+    font-size: 18px;
+}
+
+.doctor-selector select {
+    padding: 6px 12px;
+    margin-left: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+/* --- 目前叫號 --- */
+.current-ticket-box {
+    background: #fdf6e4;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #e67e22;
+    margin-bottom: 25px;
+}
+
+.big-number {
+    font-size: 42px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.patient-name {
+    font-size: 22px;
+    margin: 5px 0;
+}
+
+.empty {
+    color: #888;
+}
+
+.status-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* 狀態顏色 */
+.status-waiting { background: #dfe6e9; }
+.status-calling { background: #ffeaa7; }
+.status-done    { background: #badc58; }
+.status-no_show { background: #ff7675; }
+
+/* --- 操作按鈕 --- */
+.action-buttons {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.btn-next,
+.btn-recall,
+.btn-skip {
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 20px;
+    border: none;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+/* 下一號 */
+.btn-next {
+    background: #2980b9;
+}
+.btn-next:hover {
+    background: #1f6390;
+}
+
+/* 重叫 */
+.btn-recall {
+    background: #7f8c8d;
+}
+.btn-recall:hover {
+    background: #626c6d;
+}
+
+/* 🆕 過號 + 下一號 */
+.btn-skip {
+    background: #e67e22;
+}
+.btn-skip:hover {
+    background: #cf7118;
+}
+
+/* --- 表格樣式 --- */
+.table-container {
+    overflow-x: auto;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* 動態列背景 */
+.row-calling  { background: #fff6d1; }
+.row-done     { background: #e5ffd6; }
+.row-waiting  { background: #f7f7f7; }
+.row-no_show  { background: #ffe0e0; }
+
+.btn-small {
+    background: #3498db;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-small:hover {
+    background: #2176b5;
+}
+
+</style>
+<script>
+  (function () {
+    const REFRESH_INTERVAL = 5000; // 這裡我幫你設 5 秒一次
+
+    let timerId = null;
+
+    function startAutoRefresh() {
+      if (timerId !== null) return;
+      timerId = setInterval(function () {
+        if (document.hidden) return;
+        window.location.reload();
+      }, REFRESH_INTERVAL);
+    }
+
+    function stopAutoRefresh() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    startAutoRefresh();
+    window.addEventListener("beforeunload", stopAutoRefresh);
+  })();
+</script>
 {% endblock %}
