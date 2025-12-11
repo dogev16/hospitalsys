@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}處方藥單 - #{{ prescription.id }}{% endblock %}
+
+{% block content %}
+<div class="page-shell rx-print-page">
+  <div class="rx-print-card">
+
+    <!-- 頁首：診所資訊喵 -->
+    <div class="rx-print-header">
+      <div class="rx-print-title">苦命 醫院 / 診所</div>
+      <div class="rx-print-subtitle">處方藥單（病人留存聯）</div>
+    </div>
+
+    <!-- 病人 / 處方基本資料喵 -->
+    <div class="rx-print-meta-grid">
+      <div>
+        <span class="rx-print-label">病歷號：</span>
+        <span class="rx-print-value">
+          {{ prescription.patient.chart_no|default:prescription.patient.id }}
+        </span>
+      </div>
+      <div>
+        <span class="rx-print-label">開立日期：</span>
+        <span class="rx-print-value">
+          {{ prescription.date }}
+        </span>
+      </div>
+      <div>
+        <span class="rx-print-label">姓名：</span>
+        <span class="rx-print-value">
+          {{ prescription.patient.full_name }}
+        </span>
+      </div>
+      <div>
+        <span class="rx-print-label">性別 / 年齡：</span>
+        <span class="rx-print-value">
+          {{ prescription.patient.get_gender_display|default:"-" }}
+          /
+          {{ prescription.patient.age|default:"-" }}
+        </span>
+      </div>
+      <div>
+        <span class="rx-print-label">醫師：</span>
+        <span class="rx-print-value">
+          {{ prescription.doctor.user.get_full_name|default:prescription.doctor.name }}
+        </span>
+      </div>
+      <div>
+        <span class="rx-print-label">領藥日期：</span>
+        <span class="rx-print-value">
+          {% if prescription.dispensed_at %}
+            {{ prescription.dispensed_at|date:"Y-m-d" }}
+          {% else %}
+            （尚未領藥）
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <!-- 用藥明細喵 -->
+    <table class="rx-print-table">
+      <thead>
+        <tr>
+          <th style="width: 60px;">序號</th>
+          <th style="width: 220px;">藥品名稱</th>
+          <th style="width: 80px;">數量</th>
+          <th>用法 / 說明</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.drug.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td class="rx-print-usage">
+              {{ item.usage|default:"-"|linebreaksbr }}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="rx-print-empty">
+              目前尚未填寫用藥項目。
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- 醫師備註喵 -->
+    <div class="rx-print-note-block">
+      <div class="rx-print-note-label">醫師備註：</div>
+      <div class="rx-print-note-body">
+        {{ prescription.notes|default:"（無備註）" }}
+      </div>
+    </div>
+
+    <!-- footer 說明 + 簽章喵 -->
+    <div class="rx-print-footer">
+      <div class="rx-print-disclaimer">
+        ※ 請依照醫師 / 藥師指示服藥，如有不適或疑問請立即回診或就醫。
+      </div>
+      <div class="rx-print-sign">
+        藥師簽章：
+        <span class="rx-print-sign-line"></span>
+      </div>
+    </div>
+
+    <!-- 動作按鈕（列印＋返回）喵 -->
+    <div class="rx-print-actions">
+      <button type="button"
+              class="btn btn-primary btn-sm"
+              onclick="window.print()">
+        列印
+      </button>
+
+      <a href="{% url 'prescriptions:pharmacy_panel' %}"
+         class="btn btn-outline btn-sm">
+        回藥局面板
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

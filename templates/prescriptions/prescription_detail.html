@@ -1,50 +1,457 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>處方明細</h2>
 
-<p>
-    病人：{{ prescription.patient.chart_no|default:prescription.patient.id }}
-    {{ prescription.patient.full_name }}<br>
-    開立日期：{{ prescription.date }}<br>
-    醫師：{{ prescription.doctor.user.get_full_name }} / {{ prescription.doctor.department }}<br>
-    狀態：{{ prescription.status }}
-</p>
+<div class="container mt-4 app-page prescription-detail-page">
 
-<h4>醫師備註</h4>
-<p>
-    {{ prescription.notes|default:"（無備註）" }}
-</p>
+    <!-- 頁首區塊 -->
+    <div class="app-page-header d-flex justify-content-between align-items-start flex-wrap mb-3">
+        <div>
+            <div class="app-breadcrumb text-muted small mb-1">
+                處方編號 #{{ prescription.id }}
+            </div>
+            <h1 class="app-page-title mb-1">
+                處方明細
+            </h1>
+            <p class="app-page-subtitle text-muted mb-0">
+                病人：{{ prescription.patient.chart_no|default:prescription.patient.id }} {{ prescription.patient.full_name }}
+            </p>
+        </div>
 
-<h4>用藥項目</h4>
-<table border="1" cellspacing="0" cellpadding="5">
-    <thead>
-        <tr>
-            <th>藥品</th>
-            <th>數量</th>
-            <th>用法</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in prescription.items.all %}
-            <tr>
-                <td>{{ item.drug.name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.usage|linebreaksbr }}</td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="3">尚未填寫用藥項目 </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        <div class="text-end mt-3 mt-md-0">
+            <div class="mb-1 d-flex flex-wrap justify-content-end gap-2">
 
-<p style="margin-top:20px;">
-    {% if request.user.doctor %}
-        <a href="{% url 'prescriptions:doctor_history' %}">回醫師處方歷史</a>
-    {% elif request.user.patient %}
-        <a href="{% url 'prescriptions:patient_history' %}">回我的處方歷史</a>
-    {% endif %}
-</p>
+                {# 處方狀態 #}
+                {% with s=prescription.status %}
+                    {% if s == "FINAL" %}
+                        <span class="badge rounded-pill bg-primary">
+                            {{ prescription.get_status_display|default:s }}
+                        </span>
+                    {% elif s == "DRAFT" %}
+                        <span class="badge rounded-pill bg-secondary">
+                            {{ prescription.get_status_display|default:s }}
+                        </span>
+                    {% elif s == "CANCELLED" %}
+                        <span class="badge rounded-pill bg-dark">
+                            {{ prescription.get_status_display|default:s }}
+                        </span>
+                    {% else %}
+                        <span class="badge rounded-pill bg-light text-dark border">
+                            {{ prescription.get_status_display|default:s }}
+                        </span>
+                    {% endif %}
+                {% endwith %}
+
+                {# 審核狀態 #}
+                {% with vs=prescription.verify_status %}
+                    {% if vs == "APPROVED" %}
+                        <span class="badge rounded-pill bg-success">
+                            審核：{{ prescription.get_verify_status_display|default:vs }}
+                        </span>
+                    {% elif vs == "REJECTED" %}
+                        <span class="badge rounded-pill bg-danger">
+                            審核：{{ prescription.get_verify_status_display|default:vs }}
+                        </span>
+                    {% elif vs == "PENDING" %}
+                        <span class="badge rounded-pill bg-warning text-dark">
+                            審核：{{ prescription.get_verify_status_display|default:vs }}
+                        </span>
+                    {% else %}
+                        <span class="badge rounded-pill bg-light text-dark border">
+                            審核：{{ prescription.get_verify_status_display|default:vs }}
+                        </span>
+                    {% endif %}
+                {% endwith %}
+
+                {# 藥局狀態 #}
+                {% with ps=prescription.pharmacy_status %}
+                    {% if ps == "PENDING" %}
+                        <span class="badge rounded-pill bg-outline app-badge-outline">
+                            藥局：{{ prescription.get_pharmacy_status_display|default:ps }}
+                        </span>
+                    {% elif ps == "DONE" %}
+                        <span class="badge rounded-pill bg-info text-dark">
+                            藥局：{{ prescription.get_pharmacy_status_display|default:ps }}
+                        </span>
+                    {% elif ps == "CANCELLED" %}
+                        <span class="badge rounded-pill bg-secondary">
+                            藥局：{{ prescription.get_pharmacy_status_display|default:ps }}
+                        </span>
+                    {% else %}
+                        <span class="badge rounded-pill bg-light text-dark border">
+                            藥局：{{ prescription.get_pharmacy_status_display|default:ps }}
+                        </span>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <div class="small text-muted mt-2">
+                最後更新時間：
+                {% if logs and logs.0.created_at %}
+                    {{ logs.0.created_at|date:"Y-m-d H:i" }}
+                {% else %}
+                    {{ prescription.date }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 主體兩欄 -->
+    <div class="row g-4">
+
+        <!-- 左側：基本資訊 + 用藥明細 -->
+        <div class="col-lg-7">
+
+            <!-- 基本資訊 -->
+            <div class="card app-card shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">基本資訊</span>
+                </div>
+                <div class="card-body">
+                    <div class="row gy-2 app-meta-list">
+                        <div class="col-md-6">
+                            <div class="text-muted small">病人</div>
+                            <div class="fw-semibold">
+                                {{ prescription.patient.chart_no|default:prescription.patient.id }}
+                                {{ prescription.patient.full_name }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="text-muted small">開立日期</div>
+                            <div class="fw-semibold">
+                                {{ prescription.date }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="text-muted small">醫師</div>
+                            <div>
+                                <span class="fw-semibold">
+                                    {{ prescription.doctor.user.get_full_name }}
+                                </span>
+                                {% if prescription.doctor.department %}
+                                    <span class="text-muted small">
+                                        （{{ prescription.doctor.department }}）
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-muted small">掛號票</div>
+                            <div class="fw-semibold">
+                                {% if prescription.visit_ticket %}
+                                    #{{ prescription.visit_ticket.id }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- 狀態摘要 -->
+                    <div class="row gy-2">
+                        <div class="col-md-4">
+                            <div class="text-muted small">處方狀態</div>
+                            {% with s=prescription.status %}
+                                {% if s == "FINAL" %}
+                                    <span class="badge rounded-pill bg-primary">
+                                        {{ prescription.get_status_display|default:s }}
+                                    </span>
+                                {% elif s == "DRAFT" %}
+                                    <span class="badge rounded-pill bg-secondary">
+                                        {{ prescription.get_status_display|default:s }}
+                                    </span>
+                                {% elif s == "CANCELLED" %}
+                                    <span class="badge rounded-pill bg-dark">
+                                        {{ prescription.get_status_display|default:s }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-light text-dark border">
+                                        {{ prescription.get_status_display|default:s }}
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-muted small">審核狀態</div>
+                            {% with vs=prescription.verify_status %}
+                                {% if vs == "APPROVED" %}
+                                    <span class="badge rounded-pill bg-success">
+                                        {{ prescription.get_verify_status_display|default:vs }}
+                                    </span>
+                                {% elif vs == "REJECTED" %}
+                                    <span class="badge rounded-pill bg-danger">
+                                        {{ prescription.get_verify_status_display|default:vs }}
+                                    </span>
+                                {% elif vs == "PENDING" %}
+                                    <span class="badge rounded-pill bg-warning text-dark">
+                                        {{ prescription.get_verify_status_display|default:vs }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-light text-dark border">
+                                        {{ prescription.get_verify_status_display|default:vs }}
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-muted small">藥局狀態</div>
+                            {% with ps=prescription.pharmacy_status %}
+                                {% if ps == "PENDING" %}
+                                    <span class="badge rounded-pill bg-outline app-badge-outline">
+                                        {{ prescription.get_pharmacy_status_display|default:ps }}
+                                    </span>
+                                {% elif ps == "DONE" %}
+                                    <span class="badge rounded-pill bg-info text-dark">
+                                        {{ prescription.get_pharmacy_status_display|default:ps }}
+                                    </span>
+                                {% elif ps == "CANCELLED" %}
+                                    <span class="badge rounded-pill bg-secondary">
+                                        {{ prescription.get_pharmacy_status_display|default:ps }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-light text-dark border">
+                                        {{ prescription.get_pharmacy_status_display|default:ps }}
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-muted small">審核藥師</div>
+                            <div class="fw-semibold">
+                                {% if prescription.verified_by %}
+                                    {{ prescription.verified_by.get_full_name|default:prescription.verified_by.username }}
+                                {% else %}
+                                    <span class="text-muted">尚未審核</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-muted small">審核時間</div>
+                            <div class="fw-semibold">
+                                {% if prescription.verified_at %}
+                                    {{ prescription.verified_at|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="text-muted small">領藥資訊</div>
+                            <div class="small">
+                                {% if prescription.dispensed_by %}
+                                    由
+                                    <span class="fw-semibold">
+                                        {{ prescription.dispensed_by.get_full_name|default:prescription.dispensed_by.username }}
+                                    </span>
+                                    於 {{ prescription.dispensed_at|date:"Y-m-d H:i" }} 完成領藥
+                                {% else %}
+                                    <span class="text-muted">尚未領藥</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-2">
+                            <div class="text-muted small">審核備註</div>
+                            {% if prescription.verify_note %}
+                                <div class="border rounded p-2 bg-light small">
+                                    {{ prescription.verify_note|linebreaksbr }}
+                                </div>
+                            {% else %}
+                                <p class="text-muted small mb-0">（無審核備註）</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用藥項目 -->
+            <div class="card app-card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">用藥明細</span>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border rounded-pill small px-2">
+                        共 {{ prescription.items.count }} 項
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if prescription.items.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">藥品</th>
+                                        <th style="width: 15%;">數量</th>
+                                        <th>用法 / 備註</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in prescription.items.all %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">
+                                                    {{ item.drug.code }} - {{ item.drug.name }}
+                                                </div>
+                                                {% if item.drug.specification %}
+                                                    <div class="text-muted small">
+                                                        {{ item.drug.specification }}
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ item.quantity }}
+                                            </td>
+                                            <td class="small">
+                                                {% if item.usage %}
+                                                    {{ item.usage|linebreaksbr }}
+                                                {% else %}
+                                                    <span class="text-muted">（未填寫）</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0 small">目前尚未填寫任何用藥項目喵。</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：異動紀錄 / 稽核紀錄 -->
+        <div class="col-lg-5">
+
+            <!-- 處方異動紀錄 -->
+            <div class="card app-card shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">處方異動紀錄</span>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border rounded-pill small px-2">
+                        {{ logs|length }} 筆
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if logs %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 140px;">時間</th>
+                                        <th style="width: 120px;">操作人員</th>
+                                        <th style="width: 110px;">動作</th>
+                                        <th>說明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in logs %}
+                                        <tr>
+                                            <td class="small text-nowrap">
+                                                {{ log.created_at|date:"Y-m-d H:i" }}
+                                            </td>
+                                            <td class="small">
+                                                {% if log.operator %}
+                                                    {{ log.operator.get_full_name|default:log.operator.username }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td class="small text-nowrap">
+                                                {{ log.get_action_display|default:log.action }}
+                                            </td>
+                                            <td class="small">{{ log.message }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0 small">目前尚無異動紀錄喵。</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 系統稽核紀錄 -->
+            <div class="card app-card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">系統稽核紀錄</span>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border rounded-pill small px-2">
+                        {{ audit_logs|length }} 筆
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% if audit_logs %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 140px;">時間</th>
+                                        <th style="width: 130px;">執行者</th>
+                                        <th style="width: 90px;">動作</th>
+                                        <th>詳細內容</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for a in audit_logs %}
+                                        <tr>
+                                            <td class="small text-nowrap">
+                                                {{ a.created_at|date:"Y-m-d H:i" }}
+                                            </td>
+                                            <td class="small">
+                                                {% if a.performed_by %}
+                                                    {{ a.performed_by.get_full_name|default:a.performed_by.username }}
+                                                {% else %}
+                                                    系統
+                                                {% endif %}
+                                            </td>
+                                            <td class="small text-nowrap">{{ a.action }}</td>
+                                            <td class="small">
+                                                <div class="border rounded px-2 py-1 bg-light-subtle text-break font-monospace">
+                                                    {{ a.detail }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0 small">目前尚無稽核紀錄喵。</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 底部返回說明 -->
+    <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            {% if request.user.doctor %}
+                <a href="{% url 'prescriptions:doctor_prescription_list' %}"
+                   class="btn btn-outline-secondary btn-sm">
+                    ⬅ 回醫師處方歷史
+                </a>
+            {% elif request.user.patient %}
+                <a href="{% url 'prescriptions:patient_history' %}"
+                   class="btn btn-outline-secondary btn-sm">
+                    ⬅ 回我的處方歷史
+                </a>
+            {% endif %}
+        </div>
+        <div class="small text-muted">
+            * 此頁面僅提供查詢，不可直接修改處方內容。
+        </div>
+    </div>
+
+</div>
+
 {% endblock %}

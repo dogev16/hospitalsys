@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}處方審核列表{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">處方審核列表（{{ today }}）</h1>
+        <a href="{% url 'prescriptions:pharmacy_panel' %}" class="btn btn-outline-secondary btn-sm">
+            回到領藥面板
+        </a>
+    </div>
+
+    {% if prescriptions %}
+        <table class="table table-striped table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>病歷號</th>
+                    <th>病人姓名</th>
+                    <th>醫師</th>
+                    <th>日期</th>
+                    <th>狀態</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rx in prescriptions %}
+                    <tr>
+                        <td>{{ rx.id }}</td>
+                        <td>{{ rx.patient.chart_no }}</td>
+                        <td>{{ rx.patient.name }}</td>
+                        <td>{{ rx.doctor.user.get_full_name|default:rx.doctor.user.username }}</td>
+                        <td>{{ rx.date }}</td>
+                        <td>{{ rx.get_status_display }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'prescriptions:pharmacy_review_detail' rx.id %}"
+                               class="btn btn-primary btn-sm">
+                                審核
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info">
+            今天目前沒有待審核的處方喵。
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

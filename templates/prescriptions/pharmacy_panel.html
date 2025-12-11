@@ -1,142 +1,178 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}藥局面板 {% endblock %}
+{% block title %}藥局面板{% endblock %}
 
 {% block content %}
+<div class="page-shell">
 
-<style>
-    .pharmacy-page {
-        max-width: 1100px;
-        margin: 0 auto;
-    }
+  <!-- 頁首 -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">藥局面板</h1>
+      <p class="page-subtitle">
+        以下為目前待領藥的處方喵
+      </p>
+    </div>
 
-    .page-title {
-        font-size: 26px;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
+    <div class="toolbar-actions">
+      <a href="{% url 'prescriptions:pharmacy_review_list' %}"
+         class="btn btn-outline btn-sm">
+        處方審核列表
+      </a>
+    </div>
+  </div>
 
-    .page-subtitle {
-        color: #666;
-        margin-bottom: 20px;
-    }
+  {% if prescriptions %}
+    <div class="card">
+      <div class="card-header card-header-between">
+        <div class="card-title-sm">
+          等待領藥的處方
+        </div>
+        <div class="card-meta text-muted text-xs">
+          系統共 {{ prescriptions|length }} 筆待領藥處方喵
+        </div>
+      </div>
 
-    .rx-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        background: #fff;
-    }
-
-    .rx-table th, .rx-table td {
-        border: 1px solid #ddd;
-        padding: 8px 10px;
-        text-align: center;
-        font-size: 14px;
-    }
-
-    .rx-table th {
-        background: #f5f5f5;
-    }
-
-    .rx-table tr:nth-child(even) {
-        background: #fafafa;
-    }
-
-    .badge-status {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 12px;
-        color: #fff;
-        background: #4a90e2;
-    }
-
-    .btn-main {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 6px;
-        background: #28a745;
-        color: #fff;
-        text-decoration: none;
-        font-size: 13px;
-    }
-
-    .btn-main:hover {
-        background: #218838;
-    }
-
-    .empty-text {
-        margin-top: 20px;
-        color: #777;
-    }
-</style>
-
-<div class="pharmacy-page">
-    <h2 class="page-title">藥局面板 </h2>
-    <div class="page-subtitle">以下為待領藥的處方 </div>
-
-    {% if prescriptions %}
-        <table class="rx-table">
+      <div class="card-body">
+        <div class="table-container">
+          <table class="table table-hover">
             <thead>
-                <tr>
-                    <th>處方編號</th>
-                    <th>日期</th>
-                    <th>病歷號</th>
-                    <th>病人姓名</th>
-                    <th>主治醫師</th>
-                    <th>狀態</th>
-                    <th>摘要</th>
-                    <th>動作</th>
-                </tr>
+              <tr>
+                <th style="width: 90px;">處方編號</th>
+                <th style="width: 120px;">日期</th>
+                <th style="width: 110px;">病歷號</th>
+                <th style="width: 140px;">病人姓名</th>
+                <th style="width: 150px;">主治醫師</th>
+                <th style="width: 260px;">狀態</th>
+                <th>摘要</th>
+                <th style="width: 140px;">動作</th>
+              </tr>
             </thead>
-            
+
             <tbody>
             {% for rx in prescriptions %}
-                <tr>
-                    <td>#{{ rx.id }}</td>
-                    <td>{{ rx.date }}</td>
-                    <td>{{ rx.patient.chart_no }}</td>
-                    <td>{{ rx.patient.full_name }}</td>
-                    <td>{{ rx.doctor.user.get_full_name }}</td>
-                    <td>
-                        <div>
-                            <span class="info-label">藥師：</span>
-                            {% if prescription.dispensed_by %}
-                                {{ prescription.dispensed_by.get_full_name|default:prescription.dispensed_by.username }}
-                                （{{ prescription.dispensed_at|date:"Y-m-d H:i" }}）
-                            {% else %}
-                                （尚未領藥）
-                            {% endif %}
-                        </div>
-                        <div>
-                            藥局：{{ rx.get_pharmacy_status_display }}
-                        </div>
-                    </td>
-                    <td>  
-                        {% if rx.items.all %}
-                            {% with first_item=rx.items.all.0 %}
-                                {{ first_item.drug.name }} x {{ first_item.quantity }}
-                                {% if rx.items.count > 1 %}
-                                    （+{{ rx.items.count|add:"-1" }} 項）
-                                {% endif %}
-                            {% endwith %}
-                        {% else %}
-                            （尚未填寫用藥）
+              <tr>
+                <!-- 編號 / 基本資料 -->
+                <td>#{{ rx.id }}</td>
+                <td>{{ rx.date }}</td>
+                <td>{{ rx.patient.chart_no|default:rx.patient.id }}</td>
+                <td>{{ rx.patient.full_name }}</td>
+                <td>{{ rx.doctor.user.get_full_name|default:rx.doctor.name }}</td>
+
+                <!-- 狀態 -->
+                <td>
+                  <div class="rx-status-block text-xs">
+
+                    <!-- 審核狀態 -->
+                    <div class="rx-status-row">
+                      <span class="status-label">審核：</span>
+
+                      {% if rx.verify_status == rx.VERIFY_APPROVED %}
+                        <span class="status-dot status-dot--success"></span>
+                        <span class="tag tag-pill tag-verified">已通過</span>
+                        {% if rx.verified_by %}
+                          <span class="status-meta">
+                            {{ rx.verified_by.get_full_name|default:rx.verified_by.username }}
+                            / {{ rx.verified_at|date:"Y-m-d H:i" }}
+                          </span>
                         {% endif %}
-                    </td>
-                    <td>
-                        <a class="btn-main" href="{% url 'prescriptions:dispense' rx.id %}">
-                            領藥 / 檢視
-                        </a>
-                    </td>
-                </tr>
+
+                      {% elif rx.verify_status == rx.VERIFY_REJECTED %}
+                        <span class="status-dot status-dot--danger"></span>
+                        <span class="tag tag-pill tag-rejected">已退回醫師</span>
+
+                      {% elif rx.verify_status == rx.VERIFY_PENDING %}
+                        <span class="status-dot status-dot--warning"></span>
+                        <span class="tag tag-pill tag-pending">待審核</span>
+
+                      {% else %}
+                        <span class="text-muted">未知狀態</span>
+                      {% endif %}
+                    </div>
+
+                    <!-- 領藥狀態 -->
+                    <div class="rx-status-row">
+                      <span class="status-label">領藥：</span>
+
+                      {% if rx.pharmacy_status == rx.PHARMACY_DONE %}
+                        <span class="status-dot status-dot--success"></span>
+                        <span class="tag tag-pill tag-dispensed">已領藥</span>
+                        {% if rx.dispensed_by %}
+                          <span class="status-meta">
+                            {{ rx.dispensed_by.get_full_name|default:rx.dispensed_by.username }}
+                            / {{ rx.dispensed_at|date:"Y-m-d H:i" }}
+                          </span>
+                        {% endif %}
+
+                      {% elif rx.pharmacy_status == rx.PHARMACY_PENDING %}
+                        <span class="status-dot status-dot--warning"></span>
+                        <span class="tag tag-pill tag-pending">待領藥</span>
+
+                      {% elif rx.pharmacy_status == rx.PHARMACY_CANCELLED %}
+                        <span class="status-dot status-dot--danger"></span>
+                        <span class="tag tag-pill tag-rejected">已作廢</span>
+
+                      {% else %}
+                        <span class="text-muted">未知狀態</span>
+                      {% endif %}
+                    </div>
+
+                  </div>
+                </td>
+
+                <!-- 用藥摘要 -->
+                <td>
+                  {% with items=rx.items.all %}
+                    {% if items %}
+                      {% with first=items.0 %}
+                        <div class="text-sm">
+                          {{ first.drug.name }} × {{ first.quantity }}
+                          {% if items|length > 1 %}
+                            <span class="text-muted">
+                              （另有 {{ items|length|add:"-1" }} 項）
+                            </span>
+                          {% endif %}
+                        </div>
+                      {% endwith %}
+                    {% else %}
+                      <span class="text-muted text-xs">尚未填寫用藥項目</span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+
+                <!-- 動作 -->
+                <td>
+                  <div class="table-row-actions">
+                    <a href="{% url 'prescriptions:dispense' rx.id %}"
+                       class="btn btn-primary btn-sm btn-pill">
+                      領藥 / 檢視
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted">
+                  目前沒有待領藥的處方。
+                </td>
+              </tr>
             {% endfor %}
             </tbody>
-        </table>
-    {% else %}
-        <p class="empty-text">目前沒有待領藥的處方 ～</p>
-    {% endif %}
-</div>
+          </table>
+        </div>
+      </div>
+    </div>
 
+  {% else %}
+    <div class="card">
+      <div class="card-body">
+        <p class="text-muted mb-0">
+          目前沒有待領藥的處方 ～
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

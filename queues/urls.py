@@ -13,7 +13,14 @@ urlpatterns = [
 
     # 醫師面板（新版本整合叫號、開始看診、完成看診）
     path("doctor/", views.doctor_panel, name="doctor_panel"),
+    path("doctor/<int:pk>/<str:act>/", views.doctor_action, name="doctor_action"),
 
     # 大廳叫號看板
     path("board/", views.board, name="board"),
+    
+    path(
+        "api/current_number/",
+        views.api_current_number,
+        name="api_current_number",
+    ),
 ]

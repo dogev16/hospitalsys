@@ -1,0 +1,577 @@
+/* ===== 版心 / 排版共用 ===== */
+.app-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem 0 2rem;
+}
+
+/* 標題 / 副標 */
+.app-page-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.app-page-subtitle {
+    font-size: 0.95rem;
+    opacity: 0.85;
+}
+
+/* ===== 卡片共用 ===== */
+.app-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.app-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.app-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* ===== 小標籤 / Pills ===== */
+.app-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.app-pill {
+    border-radius: 999px;
+    padding: 0.15rem 0.7rem;
+    font-size: 0.8rem;
+    background: rgba(148, 163, 184, 0.15);
+}
+
+/* 狀態小標籤 */
+.app-status-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.app-status-waiting {
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+}
+
+.app-status-calling {
+    background: rgba(234, 179, 8, 0.18);
+    color: #92400e;
+}
+
+.app-status-done {
+    background: rgba(34, 197, 94, 0.14);
+    color: #166534;
+}
+
+.app-status-no-show {
+    background: rgba(248, 113, 113, 0.18);
+    color: #991b1b;
+}
+
+/* ===== 表格共用 ===== */
+.app-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 0.35rem;
+}
+
+.app-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.app-table th,
+.app-table td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.app-table th {
+    font-weight: 600;
+    background: rgba(148, 163, 184, 0.12);
+}
+
+.app-row-highlight {
+    background: rgba(250, 204, 21, 0.2);
+    font-weight: 600;
+}
+
+/* ===== 按鈕共用 ===== */
+.app-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+    white-space: nowrap;
+}
+
+.app-btn + .app-btn {
+    margin-left: 0.4rem;
+}
+
+.app-btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+}
+
+.app-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
+}
+
+.app-btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+}
+
+.app-btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(239, 68, 68, 0.45);
+}
+
+.app-btn-ghost {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: inherit;
+    box-shadow: none;
+    padding-inline: 0.9rem;
+}
+
+.app-btn-ghost:hover {
+    background: rgba(148, 163, 184, 0.09);
+}
+
+/* 小按鈕 */
+.app-btn-sm {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.7rem;
+}
+
+/* ===== 自動重新整理提示區可以共用 ===== */
+.app-note {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 0.4rem;
+}
+/* ===== 門診看板 ===== */
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.board-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.board-col {
+  flex: 1 1 220px;
+}
+
+/* 號碼樣式 */
+.queue-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+.queue-number-current {
+  color: #4a4de7;
+}
+
+.queue-number-next {
+  color: #f39c12;
+}
+
+.queue-patient {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.queue-meta {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* 已完成列表 */
+.queue-done-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.queue-done-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.18rem 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.queue-done-list li:last-child {
+  border-bottom: none;
+}
+
+.queue-number-small {
+  font-weight: 600;
+  margin-right: 0.4rem;
+}
+
+.queue-time-small {
+  font-variant-numeric: tabular-nums;
+  color: #888;
+  margin-left: 0.5rem;
+}
+/* ===== 門診看板 - 全新專業美化 ===== */
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1.8rem;
+}
+
+.board-card {
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  overflow: hidden;
+  border: 1px solid #e8e8e8;
+}
+
+.board-card-header {
+  background: #f7f8ff;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ececff;
+}
+
+.board-doctor {
+  font-size: 1.28rem;
+  font-weight: 700;
+  color: #3d3f8c;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tag {
+  padding: 3px 7px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+.tag-soft {
+  background: #eaeaff;
+  color: #5551d9;
+}
+
+.tag-outline {
+  border: 1px solid #ccc;
+  color: #555;
+}
+
+/* 內容區塊 */
+
+.board-card-body {
+  padding: 20px;
+}
+
+.board-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.board-section {
+  padding: 14px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #eee;
+}
+
+.section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+/* 目前叫號強調 */
+
+.highlight-current {
+  background: #eef3ff;
+  border-color: #ccd8ff;
+}
+
+.highlight-next {
+  background: #fff7ea;
+  border-color: #f4d9a3;
+}
+
+/* 號碼大字型 */
+
+.num-display {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.current-num {
+  color: #304ffe;
+}
+
+.next-num {
+  color: #f39c12;
+}
+
+/* 病人資訊 */
+
+.patient-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* 完成列表 */
+
+.done-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.done-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.88rem;
+  border-bottom: 1px dashed #ddd;
+}
+
+.done-list li:last-child {
+  border-bottom: none;
+}
+
+.done-num {
+  font-weight: 700;
+  color: #444;
+}
+
+.done-time {
+  color: #777;
+  font-variant-numeric: tabular-nums;
+}
+/* ================================
+   頁面框架與標題
+================================ */
+
+.page-shell {
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.25rem;
+    margin-bottom: 16px;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.separator-dot::before {
+    content: "·";
+    margin: 0 4px;
+}
+
+/* 小標題、meta 文案 */
+.card-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+}
+
+.card-title-sm {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.card-meta {
+    font-size: 0.8rem;
+}
+
+/* ================================
+   表格與行內動作
+================================ */
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table-hospital {
+    font-size: 13px;
+}
+
+.table-hospital thead {
+    background-color: #f3f4fa;
+}
+
+.table-hospital tbody tr:nth-child(even) {
+    background-color: #fafbff;
+}
+
+.table-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* ================================
+   客製按鈕（不動原本 .btn-main 等）
+================================ */
+
+.btn-hosp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-hosp:hover {
+    text-decoration: none;
+}
+
+/* 主要色：藍色實心（例如 編輯） */
+.btn-hosp-main {
+    background-color: #3f7bc1;
+    border-color: #3f7bc1;
+    color: #fff;
+}
+
+.btn-hosp-main:hover {
+    background-color: #34649c;
+    border-color: #34649c;
+    color: #fff;
+}
+
+/* 外框按鈕（例如 返回醫師面板） */
+.btn-hosp-outline {
+    background-color: #fff;
+    border-color: #3f7bc1;
+    color: #3f7bc1;
+}
+
+.btn-hosp-outline:hover {
+    background-color: #3f7bc1;
+    color: #fff;
+}
+
+/* 淡色按鈕（例如 詳細） */
+.btn-hosp-soft {
+    background-color: #eef3ff;
+    border-color: #d3ddff;
+    color: #445;
+}
+
+.btn-hosp-soft:hover {
+    background-color: #dde7ff;
+}
+
+/* 小按鈕尺寸沿用 .btn-sm */
+.btn-sm {
+    font-size: 12px;
+    padding: 3px 9px;
+}
+/* 狀態小區塊 */
+.rx-status-block {
+    line-height: 1.4;
+}
+
+.rx-status-row + .rx-status-row {
+    margin-top: 2px;
+}
+
+/* 左邊「審核：」「領藥：」標籤 */
+.status-label {
+    color: #4b5563;           /* 比原本深一點 */
+    font-weight: 600;
+    margin-right: 2px;
+}
+
+/* 審核人 / 領藥人 / 時間：縮小、單行、超出… */
+.status-meta {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.75rem;       /* 比一般文字小一號 */
+    color: #6b7280;           /* 比 tag 淡一點，但比原本文字清楚 */
+    max-width: 220px;         /* 限制在狀態欄寬度內，可視情況調整 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+/* 狀態小燈號 */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.status-dot--success { background-color: #22c55e; }  /* 綠燈 */
+.status-dot--warning { background-color: #eab308; }  /* 黃燈 */
+.status-dot--danger  { background-color: #ef4444; }  /* 紅燈 */

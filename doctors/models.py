@@ -45,7 +45,7 @@ class DoctorSchedule(models.Model):
     start_time = models.TimeField("開始時間")
     end_time = models.TimeField("結束時間")
 
-    slot_minutes = models.PositiveIntegerField("每位看診間隔（分鐘）", default=20)
+    slot_minutes = models.PositiveIntegerField("每位看診間隔（分鐘）", default=10)
     max_patients = models.PositiveIntegerField("每診最多看診人數", default=20)
 
     is_active = models.BooleanField("啟用", default=True)

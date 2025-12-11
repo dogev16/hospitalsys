@@ -1,128 +1,140 @@
 {% extends "base.html" %}
-<meta http-equiv="refresh" content="5">
 
-{% block title %}叫號看板 {% endblock %}
+{% block title %}門診看板{% endblock %}
 
 {% block content %}
+<div class="page-wrapper">
 
-<style>
-    body {
-        background: #f4f8ff;
-    }
+  <div class="page-header mb-2">
+    <h1 class="page-title">門診看板</h1>
+    <p class="page-subtitle text-muted">
+      今天日期：{{ today|date:"Y-m-d" }}<br>
+      即時顯示所有診間的叫號狀況喵。
+    </p>
+  </div>
 
-    .board-container {
-        width: 95%;
-        margin: 0 auto;
-        margin-top: 20px;
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+  {# 🔽 新增：選擇要看的醫師喵 #}
+  <div class="mb-3 d-flex align-items-center gap-2">
+    <form method="get" class="d-flex align-items-center gap-2">
+      <label class="text-muted text-sm" for="doctor-select">顯示醫師：</label>
+      <select id="doctor-select" name="doctor" class="form-select form-select-sm" style="max-width: 260px;">
+        <option value="">全部醫師</option>
+        {% for d in doctors %}
+          <option value="{{ d.id }}"
+                  {% if selected_doctor and selected_doctor.id == d.id %}selected{% endif %}>
+            {{ d.name }}
+            {% if d.department %} / {{ d.department }}{% endif %}
+            {% if d.room %}（診間：{{ d.room }}）{% endif %}
+          </option>
+        {% endfor %}
+      </select>
 
-    h1 {
-        text-align: center;
-        font-size: 32px;
-        margin-bottom: 20px;
-        color: #333;
-    }
+      <button type="submit" class="btn btn-sm btn-primary">
+        切換
+      </button>
+    </form>
+  </div>
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 20px;
-    }
+  {% if board_data %}
+    <div class="board-grid">
+      {% for row in board_data %}
+        <div class="board-card">
 
-    th, td {
-        border: 1px solid #ccc;
-        padding: 12px;
-        text-align: center;
-    }
+          <!-- 標題 -->
+          <div class="board-card-header">
+            <div class="board-doctor">
+              {{ row.doctor.name }}
+              {% if row.doctor.department %}
+                <span class="tag tag-soft">{{ row.doctor.department }}</span>
+              {% endif %}
+              {% if row.doctor.room %}
+                <span class="tag tag-outline">診間：{{ row.doctor.room }}</span>
+              {% endif %}
+            </div>
+          </div>
 
-    th {
-        background: #eaf0ff;
-        font-size: 22px;
-        font-weight: bold;
-    }
+          <div class="board-card-body">
 
-    .calling {
-        background: #fff4c2 !important; /* 黃色，代表正在看診 */
-        font-weight: bold;
-    }
+            <div class="board-sections">
 
-    .next {
-        background: #e7ffe7 !important; /* 綠色，代表下一位 */
-        font-weight: bold;
-    }
+              <!-- 目前叫號 -->
+              <div class="board-section highlight-current">
+                <div class="section-title">目前叫號</div>
+                {% if row.current %}
+                  <div class="num-display current-num">#{{ row.current.number }}</div>
+                  <div class="patient-name">
+                    {{ row.current.patient.chart_no }} {{ row.current.patient.full_name }}
+                  </div>
+                  <div class="meta">
+                    狀態：{{ row.current.get_status_display }}<br>
+                    叫號：{{ row.current.called_at|date:"H:i" }}
+                  </div>
+                {% else %}
+                  <p class="text-muted mb-0">尚無叫號。</p>
+                {% endif %}
+              </div>
 
-    .done {
-        color: #666;
-        font-size: 18px;
-    }
-</style>
+              <!-- 下一位 -->
+              <div class="board-section highlight-next">
+                <div class="section-title">下一位</div>
+                {% if row.next %}
+                  <div class="num-display next-num">#{{ row.next.number }}</div>
+                  <div class="patient-name">
+                    {{ row.next.patient.chart_no }} {{ row.next.patient.full_name }}
+                  </div>
+                  <div class="meta">
+                    狀態：{{ row.next.get_status_display }}
+                  </div>
+                {% else %}
+                  <p class="text-muted mb-0">沒有候診喵。</p>
+                {% endif %}
+              </div>
 
-<div class="board-container">
-    <h1>候診叫號看板 </h1>
+              <!-- 已完成 -->
+              <div class="board-section">
+                <div class="section-title">最近完成</div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>醫師</th>
-                <th>正在看診</th>
-                <th>下一位</th>
-                <th>已看診（最近幾位）</th>
-            </tr>
-        </thead>
+                {% if row.done %}
+                  <ul class="done-list">
+                    {% for t in row.done %}
+                      <li>
+                        <span class="done-num">#{{ t.number }}</span>
+                        <span class="done-name">
+                          {{ t.patient.chart_no }} {{ t.patient.full_name }}
+                        </span>
+                        <span class="done-time">
+                          {{ t.finished_at|date:"H:i" }}
+                        </span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <p class="text-muted mb-0">無完成紀錄。</p>
+                {% endif %}
+              </div>
 
-        <tbody>
-            {% if board_data %}
-                {% for row in board_data %}
-                    <tr>
-                        <!-- 醫師 -->
-                        <td>
-                            {{ row.doctor.name }}
-                            {% if row.doctor.department %}
-                                <br><span style="font-size:16px;">{{ row.doctor.department }}</span>
-                            {% endif %}
-                        </td>
+            </div>
+          </div>
 
-                        <!-- 正在看診 -->
-                        <td class="{% if row.current %}calling{% endif %}">
-                            {% if row.current %}
-                                #{{ row.current.number }} — {{ row.current.patient.full_name }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <!-- 下一位 -->
-                        <td class="{% if row.next %}next{% endif %}">
-                            {% if row.next %}
-                                #{{ row.next.number }} — {{ row.next.patient.full_name }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <!-- 已看診 -->
-                        <td class="done">
-                            {% if row.done %}
-                                {% for t in row.done %}
-                                    #{{ t.number }} — {{ t.patient.full_name }}<br>
-                                {% endfor %}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="4">今天沒有資料 。</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-secondary text-center">
+      今天沒有任何叫號紀錄喵。
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  (function () {
+    const REFRESH_INTERVAL_MS = 5000;
+    setInterval(function () {
+      if (!document.hidden) {
+        window.location.reload();
+      }
+    }, REFRESH_INTERVAL_MS);
+  })();
+</script>
 
 {% endblock %}

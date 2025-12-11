@@ -1,129 +1,31 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}處方開立 / 編輯 {% endblock %}
+{% block title %}處方開立 / 編輯{% endblock %}
 
 {% block content %}
+<div class="page-shell">
 
-<style>
-    .rx-container {
-        margin-top: 15px;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        background: #fafafa;
-        max-width: 900px;
-    }
-
-    .rx-header { margin-bottom: 15px; }
-    .rx-header h2 { margin-top: 0; margin-bottom: 10px; }
-
-    .rx-info {
-        font-size: 14px;
-        line-height: 1.6;
-        background: #f9f9ff;
-        border-radius: 6px;
-        padding: 10px 12px;
-        border: 1px solid #e0e0ff;
-    }
-
-    .rx-notes-label {
-        font-weight: bold;
-        margin-top: 15px;
-        margin-bottom: 5px;
-        display: block;
-    }
-
-    .rx-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        font-size: 14px;
-        background: white;
-    }
-
-    .rx-table th,
-    .rx-table td {
-        border: 1px solid #ccc;
-        padding: 6px 8px;
-        text-align: center;
-    }
-
-    .rx-table th { background: #efefef; }
-
-    .rx-actions { margin-top: 18px; }
-
-    .btn-primary {
-        background: #4a90e2;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        text-decoration: none;
-        font-size: 14px;
-    }
-    .btn-primary:hover { background: #357ABD; }
-
-    .btn-secondary {
-        display: inline-block;
-        margin-left: 10px;
-        padding: 8px 16px;
-        border-radius: 6px;
-        border: 1px solid #999;
-        text-decoration: none;
-        font-size: 14px;
-        color: #333;
-        background: #f5f5f5;
-    }
-    .btn-secondary:hover { background: #e0e0e0; }
-
-    .error-text {
-        color: red;
-        font-size: 12px;
-        margin-top: 3px;
-    }
-
-    .alert {
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-    .alert-success {
-        background: #dcfce7;
-        border: 1px solid #22c55e;
-        color: #166534;
-    }
-    .alert-danger {
-        background: #fee2e2;
-        border: 1px solid #ef4444;
-        color: #991b1b;
-    }
-</style>
-
-<div class="rx-container">
-    <div class="rx-header">
-        <h2>處方開立 / 編輯 </h2>
-
-        <div class="rx-info">
-            <p>
-                <strong>病人：</strong>
+    <!-- 頁面標題 -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">處方開立 / 編輯</h1>
+            <p class="page-subtitle">
+                病人：
                 {% if ticket %}
                     {{ ticket.patient.chart_no }} {{ ticket.patient.full_name }}
                 {% else %}
                     {{ prescription.patient.chart_no }} {{ prescription.patient.full_name }}
                 {% endif %}
-                <br>
-
-                <strong>看診日期：</strong>
+                <span class="separator-dot"></span>
+                看診日期：
                 {% if ticket %}
                     {{ ticket.date }}
                 {% else %}
                     {{ prescription.date }}
                 {% endif %}
-                <br>
-
-                <strong>醫師：</strong>
+                <span class="separator-dot"></span>
+                醫師：
                 {% if ticket %}
                     {{ ticket.doctor.user.get_full_name }} / {{ ticket.doctor.department }}
                 {% else %}
@@ -131,106 +33,265 @@
                 {% endif %}
             </p>
         </div>
-    </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {% for err in form.non_field_errors %}
-                    <div>{{ err }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        {% if items.non_form_errors %}
-            <div class="alert alert-danger">
-                {% for err in items.non_form_errors %}
-                    <div>{{ err }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <!-- 醫師備註 -->
-        <label class="rx-notes-label" for="{{ form.notes.id_for_label }}">醫師備註</label>
-        {{ form.notes }}
-        {% if form.notes.errors %}
-            <div class="error-text">
-                {{ form.notes.errors }}
-            </div>
-        {% endif %}
-
-        <!-- 用藥項目 -->
-        <h4 style="margin-top: 18px;">用藥項目</h4>
-
-        {{ items.management_form }}
-
-        <table class="rx-table">
-            <thead>
-                <tr>
-                    <th>藥品</th>
-                    <th>數量</th>
-                    <th>用法</th>
-                    <th>刪除</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item_form in items %}
-                    <tr>
-                        {% for hidden in item_form.hidden_fields %}
-                            {{ hidden }}
-                        {% endfor %}
-
-                        <td>
-                            {{ item_form.drug }}
-                            {% if item_form.drug.errors %}
-                                <div class="error-text">{{ item_form.drug.errors }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ item_form.quantity }}
-                            {% if item_form.quantity.errors %}
-                                <div class="error-text">{{ item_form.quantity.errors }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ item_form.usage }}
-                            {% if item_form.usage.errors %}
-                                <div class="error-text">{{ item_form.usage.errors }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if item_form.instance.pk %}
-                                {{ item_form.DELETE }}
-                            {% else %}
-                                <!-- 新增行還沒存檔，暫不顯示刪除勾選  -->
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>  {# 🔚 記得關掉 table  ！ #}
-
-        <div class="rx-actions">
-            <button type="submit" class="btn-primary">儲存處方 </button>
-
+        <div class="toolbar-actions">
             {% if ticket %}
-                <a href="{% url 'queues:doctor_panel' %}" class="btn-secondary">回候診列表 </a>
+                <a href="{% url 'queues:doctor_panel' %}" class="btn btn-outline btn-sm">
+                    返回候診列表
+                </a>
             {% else %}
-                <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn-secondary">回處方歷史 </a>
+                <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn btn-outline btn-sm">
+                    返回處方歷史
+                </a>
             {% endif %}
         </div>
+    </div>
 
-    </form>
+    <!-- 系統訊息 -->
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-2">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# 🆕 若處方被藥師退回，顯示醒目提醒喵 #}
+    {% if prescription and prescription.verify_status == prescription.VERIFY_REJECTED %}
+        <div class="alert alert-warning mb-3">
+            <strong>⚠ 藥師退回處方喵：</strong><br>
+            {% if prescription.verify_note %}
+                {{ prescription.verify_note }}
+            {% else %}
+                藥師退回此處方，請檢查藥品或劑量設定喵。
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {# 病人資訊卡片：優先用 ticket.patient，沒有就用 prescription.patient 喵 #}
+    {% with p=ticket.patient|default:prescription.patient %}
+    <div class="card mb-3">
+        <div class="card-header card-header-between">
+            <div class="card-title-sm">
+                病人基本資料
+            </div>
+            <div class="card-meta text-xs text-muted">
+                病歷號：{{ p.chart_no }}
+                {% if p.created_at %}
+                    <span class="separator-dot"></span>
+                    建立於：{{ p.created_at|date:"Y-m-d H:i" }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <!-- 上半部：基本資訊 + 聯絡資訊喵 -->
+            <div class="patient-info-layout">
+
+                <!-- 左欄：基本資料喵 -->
+                <div class="patient-info-column">
+                    <div class="patient-info-section-title">基本資料</div>
+                    <dl class="patient-info-list">
+                        <div class="patient-info-row">
+                            <dt>姓名</dt>
+                            <dd>{{ p.full_name }}</dd>
+                        </div>
+
+                        <div class="patient-info-row">
+                            <dt>性別 / 年齡</dt>
+                            <dd>
+                                {{ p.get_gender_display|default:"-" }}
+                                {% if p.age %}
+                                    （約 {{ p.age }} 歲）
+                                {% endif %}
+                            </dd>
+                        </div>
+
+                        <div class="patient-info-row">
+                            <dt>出生日期</dt>
+                            <dd>{{ p.birth_date|date:"Y-m-d"|default:"-" }}</dd>
+                        </div>
+
+                        <div class="patient-info-row">
+                            <dt>地址</dt>
+                            <dd>{{ p.address|default:"-" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- 右欄：聯絡 / 緊急聯絡人喵 -->
+                <div class="patient-info-column">
+                    <div class="patient-info-section-title">聯絡資訊</div>
+                    <dl class="patient-info-list">
+                        <div class="patient-info-row">
+                            <dt>聯絡電話</dt>
+                            <dd>{{ p.phone|default:"-" }}</dd>
+                        </div>
+
+                        <div class="patient-info-row">
+                            <dt>緊急聯絡人</dt>
+                            <dd>
+                                {{ p.emergency_contact_name|default:"-" }}
+                                {% if p.emergency_contact_phone %}
+                                    （{{ p.emergency_contact_phone }}）
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+            </div>
+
+            <!-- 下半部：醫療風險區塊喵 -->
+            <div class="patient-risk-layout">
+                <div class="patient-info-section-title mb-1">醫療風險 / 病史</div>
+
+                <div class="patient-risk-grid">
+                    <div class="patient-risk-item">
+                        <div class="info-label">過敏史</div>
+                        <div class="info-value text-danger">
+                            {{ p.allergies|default:"無特別過敏紀錄" }}
+                        </div>
+                    </div>
+
+                    <div class="patient-risk-item">
+                        <div class="info-label">慢性疾病 / 重要病史</div>
+                        <div class="info-value">
+                            {{ p.chronic_diseases|default:"未填寫" }}
+                        </div>
+                    </div>
+
+                    <div class="patient-risk-item">
+                        <div class="info-label">家族病史</div>
+                        <div class="info-value">
+                            {{ p.family_disease_notes|default:"無家族病史" }}
+                        </div>
+                    </div>
+
+                    <div class="patient-risk-item">
+                        <div class="info-label">其他風險</div>
+                        <div class="info-value">
+                            {{ p.other_risk_notes|default:"無" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endwith %}
+
+    <!-- 表單卡片 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title-sm">處方內容編輯</span>
+        </div>
+
+        <div class="card-body">
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for err in form.non_field_errors %}
+                            <div>{{ err }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if items.non_form_errors %}
+                    <div class="alert alert-danger">
+                        {% for err in items.non_form_errors %}
+                            <div>{{ err }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- 醫師備註 -->
+                <label class="form-label fw-bold">醫師備註</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <div class="form-error">{{ form.notes.errors }}</div>
+                {% endif %}
+
+                <!-- 用藥項目 -->
+                <h3 class="section-title mt-4">用藥項目</h3>
+
+                {{ items.management_form }}
+
+                <div class="table-container mt-2">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>藥品</th>
+                                <th style="width: 120px;">數量</th>
+                                <th style="width: 220px;">用法</th>
+                                <th style="width: 80px;">刪除</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item_form in items %}
+                                <tr>
+                                    {% for hidden in item_form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+
+                                    <td>
+                                        {{ item_form.drug }}
+                                        {% if item_form.drug.errors %}
+                                            <div class="form-error">{{ item_form.drug.errors }}</div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ item_form.quantity }}
+                                        {% if item_form.quantity.errors %}
+                                            <div class="form-error">{{ item_form.quantity.errors }}</div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ item_form.usage }}
+                                        {% if item_form.usage.errors %}
+                                            <div class="form-error">{{ item_form.usage.errors }}</div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if item_form.instance.pk %}
+                                            {{ item_form.DELETE }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 操作按鈕 -->
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">儲存處方</button>
+
+                    {% if ticket %}
+                        <a href="{% url 'queues:doctor_panel' %}" class="btn btn-secondary">
+                            回候診列表
+                        </a>
+                    {% else %}
+                        <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn btn-secondary">
+                            回處方歷史
+                        </a>
+                    {% endif %}
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
 </div>
-
 {% endblock %}

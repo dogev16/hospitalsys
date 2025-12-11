@@ -250,7 +250,7 @@ def book(request):
                 _renumber_visit_tickets(doctor, appt_date)
 
 
-# 顯示成功訊息（修正 patient.name）
+                # 顯示成功訊息（修正 patient.name）
                 messages.success(
                     request,
                     f"掛號成功：{patient} / {doctor.name} / {appt_date} {appt_time_str} 。",

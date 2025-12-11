@@ -12,11 +12,107 @@
                 - {{ selected_drug.name }}
             {% endif %}
         </h1>
-        <a href="{% url 'inventory:dashboard' %}" class="btn btn-outline-secondary btn-sm">
-            Back to Dashboard
+        <a href="{{ back_url }}" class="btn btn-outline-secondary btn-sm">
+            Back
         </a>
     </div>
 
+    {# 🔍 搜尋 + 篩選列 #}
+    <form method="get" class="row g-2 mb-3">
+        {# 固定保留 drug/back 參數 #}
+        {% if drug_id %}
+            <input type="hidden" name="drug" value="{{ drug_id }}">
+        {% endif %}
+        {% if back_url %}
+            <input type="hidden" name="back" value="{{ back_url }}">
+        {% endif %}
+
+        {# 只有「全部藥品」時才顯示 Drug 搜尋 #}
+        {% if not selected_drug %}
+            <div class="col-md-3">
+                <input type="text"
+                       name="q_drug"
+                       class="form-control form-control-sm"
+                       placeholder="Search by drug name..."
+                       value="{{ q_drug|default_if_none:'' }}">
+            </div>
+        {% endif %}
+
+        <div class="col-md-3">
+            <input type="text"
+                   name="q_operator"
+                   class="form-control form-control-sm"
+                   placeholder="Search by operator (By)..."
+                   value="{{ q_operator|default_if_none:'' }}">
+        </div>
+
+        <div class="col-md-3">
+            <div class="d-flex gap-1">
+                <input type="date"
+                       name="date_from"
+                       class="form-control form-control-sm"
+                       value="{{ date_from|default_if_none:'' }}">
+                <span class="align-self-center small">~</span>
+                <input type="date"
+                       name="date_to"
+                       class="form-control form-control-sm"
+                       value="{{ date_to|default_if_none:'' }}">
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <select name="reason" class="form-select form-select-sm">
+                <option value="">All types</option>
+                <option value="purchase" {% if reason == 'purchase' %}selected{% endif %}>Purchase</option>
+                <option value="dispense" {% if reason == 'dispense' %}selected{% endif %}>Dispense</option>
+                <option value="adjust" {% if reason == 'adjust' %}selected{% endif %}>Adjust</option>
+            </select>
+        </div>
+
+        <div class="col-md-1 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                Apply
+            </button>
+            <a href="{% url 'inventory:stock_history' %}" class="btn btn-outline-secondary btn-sm">
+                Reset
+            </a>
+        </div>
+    </form>
+    
+    {# 篩選後的總覽 summary #}
+    {% if total_count %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-body d-flex flex-wrap gap-3 align-items-center">
+                <div>
+                    <div class="fw-bold small text-muted">Total records</div>
+                    <div class="h5 mb-0">{{ total_count }}</div>
+                </div>
+                <div class="vr d-none d-md-block"></div>
+                <div>
+                    <div class="fw-bold small text-muted">Total In ( > 0 )</div>
+                    <div class="mb-0">
+                        +{{ total_in }} 
+                    </div>
+                </div>
+                <div class="vr d-none d-md-block"></div>
+                <div>
+                    <div class="fw-bold small text-muted">Total Out ( < 0 )</div>
+                    <div class="mb-0">
+                        -{{ total_out }}
+                    </div>
+                </div>
+                <div class="vr d-none d-md-block"></div>
+                <div>
+                    <div class="fw-bold small text-muted">Net Change</div>
+                    <div class="mb-0">
+                        {% if net_change > 0 %}+{% endif %}{{ net_change }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {# 單一藥品的小 summary #}
     {% if selected_drug %}
         <div class="card shadow-sm mb-3">
             <div class="card-body">
@@ -48,31 +144,97 @@
                                 <tr>
                                     <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
                                     <td>{{ tx.drug.name }}</td>
-                                    
                                     <td>
-                                        <span class="badge 
-                                            {% if tx.change >= 0 %}
+                                        <span class="badge
+                                            {% if tx.change > 0 %}
                                                 bg-success
-                                            {% else %}
+                                            {% elif tx.change < 0 %}
                                                 bg-danger
+                                            {% else %}
+                                                bg-secondary
                                             {% endif %}
                                         ">
                                             {{ tx.get_reason_display }}
                                         </span>
                                     </td>
-                                    
-                                    <td class="text-end">{{ tx.change }}</td>
-                                    
-                                    <td>-</td>  {# reference 留空 #}
-                                    <td>-</td>  {# performed_by 留空 #}
-                                    
+                                    <td class="text-end">
+                                        {% if tx.change > 0 %}+{% endif %}{{ tx.change }}
+                                    </td>
+                                    <td>
+                                        {% if tx.prescription %}
+                                            Rx #{{ tx.prescription.id }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if tx.operator %}
+                                            {{ tx.operator.get_full_name|default:tx.operator.username }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
                                     <td>{{ tx.note }}</td>
-
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
+                {# 分頁 #}
+                {% if transactions.has_other_pages %}
+                    <nav class="mt-2 px-3 pb-2">
+                        <ul class="pagination pagination-sm mb-0">
+                            {# 上一頁 #}
+                            {% if transactions.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="?page={{ transactions.previous_page_number }}
+                                          {% if q_drug %}&q_drug={{ q_drug }}{% endif %}
+                                          {% if q_operator %}&q_operator={{ q_operator }}{% endif %}
+                                          {% if date_from %}&date_from={{ date_from }}{% endif %}
+                                          {% if date_to %}&date_to={{ date_to }}{% endif %}
+                                          {% if reason %}&reason={{ reason }}{% endif %}
+                                          {% if drug_id %}&drug={{ drug_id }}{% endif %}
+                                          {% if back_url %}&back={{ back_url|urlencode }}{% endif %}">
+                                        «
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">«</span>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    Page {{ transactions.number }} / {{ transactions.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {# 下一頁 #}
+                            {% if transactions.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="?page={{ transactions.next_page_number }}
+                                          {% if q_drug %}&q_drug={{ q_drug }}{% endif %}
+                                          {% if q_operator %}&q_operator={{ q_operator }}{% endif %}
+                                          {% if date_from %}&date_from={{ date_from }}{% endif %}
+                                          {% if date_to %}&date_to={{ date_to }}{% endif %}
+                                          {% if reason %}&reason={{ reason }}{% endif %}
+                                          {% if drug_id %}&drug={{ drug_id }}{% endif %}
+                                          {% if back_url %}&back={{ back_url|urlencode }}{% endif %}">
+                                        »
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">»</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
             </div>
         </div>
     {% else %}

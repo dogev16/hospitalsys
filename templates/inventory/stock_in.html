@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}進貨 - {{ drug.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="h4 mb-3">
+        進貨：{{ drug.name }}
+        <small class="text-muted">({{ drug.code }})</small>
+    </h1>
+
+    <p class="text-muted">
+        目前總庫存：<strong>{{ drug.stock_quantity }}</strong> {{ drug.unit }}
+    </p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} py-2">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" class="card p-3">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">批號</label>
+            <p class="form-control-plaintext text-muted mb-0">
+                送出後由系統依日期自動產生批號喵（例如 20251211-001）
+            </p>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">有效期限</label>
+            {{ form.expiry_date }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">進貨數量</label>
+            {{ form.quantity }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            儲存進貨批次
+        </button>
+        <a href="{% url 'inventory:drug_list' %}" class="btn btn-secondary">
+            返回藥品清單
+        </a>
+    </form>
+</div>
+{% endblock %}

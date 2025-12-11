@@ -1,6 +1,7 @@
 # C:\project\hospitalsys\inventory\admin.py
 from django.contrib import admin
 from .models import Drug, StockTransaction
+from .models import StockBatch
 
 
 @admin.register(Drug)
@@ -28,3 +29,9 @@ class StockTransactionAdmin(admin.ModelAdmin):
     )
     list_filter = ("reason", "created_at")
     search_fields = ("drug__name", "note")
+
+@admin.register(StockBatch)
+class StockBatchAdmin(admin.ModelAdmin):
+    list_display = ("drug", "batch_no", "expiry_date", "quantity")
+    list_filter = ("expiry_date", "drug")
+    search_fields = ("drug__name", "batch_no")

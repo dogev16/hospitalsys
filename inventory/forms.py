@@ -1,5 +1,5 @@
 from django import forms
-from .models import Drug, StockTransaction
+from .models import Drug, StockTransaction, StockBatch
 
 
 class DrugForm(forms.ModelForm):
@@ -41,3 +41,16 @@ class StockAdjustForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"class": "form-control", "rows": 2}),
     )
+
+class StockBatchForm(forms.ModelForm):
+    class Meta:
+        model = StockBatch
+        fields = ["batch_no", "expiry_date", "quantity"]
+        widgets = {
+            "expiry_date": forms.DateInput(attrs={"type": "date"}),
+        }
+        labels = {
+            "batch_no": "批號",
+            "expiry_date": "有效期限",
+            "quantity": "進貨數量",
+        }

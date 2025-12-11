@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}處方審核 #{{ prescription.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">處方審核 - #{{ prescription.id }}</h1>
+        <a href="{% url 'prescriptions:pharmacy_review_list' %}" class="btn btn-outline-secondary btn-sm">
+            回到審核列表
+        </a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="mb-1"><strong>病人：</strong>{{ prescription.patient }}</p>
+            <p class="mb-1"><strong>醫師：</strong>{{ prescription.doctor }}</p>
+            <p class="mb-1"><strong>日期：</strong>{{ prescription.date }}</p>
+            <p class="mb-0"><strong>目前審核狀態：</strong>{{ prescription.get_verify_status_display }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            用藥項目
+        </div>
+        <div class="card-body p-0">
+            <table class="table mb-0 table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>藥品</th>
+                        <th>數量</th>
+                        <th>用法</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in prescription.items.all %}
+                        <tr>
+                            <td>{{ item.drug.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.usage }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header">
+            審核意見
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="id_verify_note" class="form-label">備註（選填，退回時可以寫原因）</label>
+                <textarea id="id_verify_note"
+                          name="verify_note"
+                          rows="3"
+                          class="form-control">{{ prescription.verify_note }}</textarea>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                退回醫師
+            </button>
+            <button type="submit" name="action" value="approve" class="btn btn-success">
+                通過審核
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}藥品效期管理{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+  <!-- 頁面標題 -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">藥品效期管理</h1>
+      <p class="page-subtitle">
+        今天日期：{{ today|date:"Y-m-d" }}
+        <span class="separator-dot"></span>
+        顯示所有已過期與 {{ warning_days }} 天內即將到期的批次喵。
+      </p>
+    </div>
+
+    <div class="toolbar-actions">
+      <a href="{% url 'inventory:drug_list' %}" class="btn btn-outline btn-sm">
+        返回藥品清單
+      </a>
+    </div>
+  </div>
+
+  <!-- 系統訊息（messages） -->
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-2">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- 🔴 已過期批次 -->
+  <div class="card mb-4">
+    <div class="card-header card-header-flex">
+      <div class="card-title-sm">
+        已過期批次（不得再發藥）
+      </div>
+      <div class="card-meta text-xs text-muted">
+        只顯示「效期 < 今天」且「尚有庫存」的批次喵。
+      </div>
+    </div>
+
+    <div class="card-body">
+      {% if expired_batches %}
+        <div class="table-container">
+          <table class="table table-hospital">
+            <thead>
+              <tr>
+                <th style="width: 140px;">藥品代碼</th>
+                <th>藥品名稱</th>
+                <th style="width: 120px;">批號</th>
+                <th style="width: 120px;">效期</th>
+                <th style="width: 110px;">剩餘庫存</th>
+                <th style="width: 180px;">建議處理</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in expired_batches %}
+                <tr class="row-expired">
+                  <td>{{ b.drug.code }}</td>
+                  <td>{{ b.drug.name }}</td>
+                  <td>{{ b.batch_no|default:"-" }}</td>
+                  <td>{{ b.expiry_date|date:"Y-m-d" }}</td>
+                  <td>{{ b.quantity }}</td>
+                  <td>
+                    <span class="badge-status badge-status-danger">已過期</span>
+                    <span class="text-muted-small d-block">
+                      建議：停止發藥、標記報廢或退貨喵。
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted-small mb-0">
+          目前沒有已過期且尚有庫存的批次喵，太棒了喵！
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 🟡 即將到期批次 -->
+  <div class="card mb-4">
+    <div class="card-header card-header-flex">
+      <div class="card-title-sm">
+        {{ warning_days }} 天內即將到期的批次
+      </div>
+      <div class="card-meta text-xs text-muted">
+        協助藥師優先發藥與控管進貨節奏喵。
+      </div>
+    </div>
+
+    <div class="card-body">
+      {% if near_expiry_batches %}
+        <div class="table-container">
+          <table class="table table-hospital">
+            <thead>
+              <tr>
+                <th style="width: 140px;">藥品代碼</th>
+                <th>藥品名稱</th>
+                <th style="width: 120px;">批號</th>
+                <th style="width: 120px;">效期</th>
+                <th style="width: 110px;">剩餘庫存</th>
+                <th style="width: 180px;">提醒</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in near_expiry_batches %}
+                <tr class="row-warning">
+                  <td>{{ b.drug.code }}</td>
+                  <td>{{ b.drug.name }}</td>
+                  <td>{{ b.batch_no|default:"-" }}</td>
+                  <td>{{ b.expiry_date|date:"Y-m-d" }}</td>
+                  <td>{{ b.quantity }}</td>
+                  <td>
+                    <span class="badge-status badge-status-warning">即將到期</span>
+                    <span class="text-muted-small d-block">
+                      建議：優先發藥、評估是否減少進貨喵。
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted-small mb-0">
+          目前沒有 {{ warning_days }} 天內即將到期的庫存喵。
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

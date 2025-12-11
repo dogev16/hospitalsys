@@ -1,131 +1,197 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}我的處方歷史 {% endblock %}
+{% block title %}我的處方歷史{% endblock %}
 
 {% block content %}
+<div class="page-shell">
 
-<style>
-    .page-title {
-        font-size: 26px;
-        font-weight: bold;
-        margin-bottom: 15px;
-        color: #333;
-    }
+  <!-- 頁首 -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">我的處方歷史</h1>
+      <p class="page-subtitle">
+        醫師：{{ doctor.name }}
+        {% if doctor.department %}
+          <span class="separator-dot">·</span>{{ doctor.department }}
+        {% endif %}
+        <span class="separator-dot">·</span>
+        <span class="text-muted">顯示最近開立的處方紀錄喵</span>
+      </p>
+    </div>
 
-    .info-box {
-        margin-bottom: 20px;
-        padding: 12px;
-        background: #f9f9ff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        width: 60%;
-    }
+    <div class="toolbar-actions">
+      <a href="{% url 'queues:doctor_panel' %}"
+         class="btn-hosp btn-hosp-outline btn-sm">
+        返回醫師面板
+      </a>
+    </div>
+  </div>
 
-    .history-table {
-        width: 90%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
+  <!-- 訊息區：Django messages -->
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-2">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-    .history-table th, .history-table td {
-        border: 1px solid #ccc;
-        padding: 10px 14px;
-        text-align: center;
-    }
+  {% if prescriptions %}
+    <!-- 處方列表卡片 -->
+    <div class="card">
+      <div class="card-header card-header-flex">
+        <div class="card-title-sm">最近開立的處方</div>
+        <div class="card-meta text-muted text-xs">
+          系統共 {{ prescriptions|length }} 筆處方紀錄
+        </div>
+      </div>
 
-    .history-table th {
-        background: #efefef;
-        font-size: 15px;
-    }
+      <div class="card-body">
+        <div class="table-container">
+          <table class="table table-hospital">
+            <thead>
+              <tr>
+                <th style="width: 90px;">處方號碼</th>   {# 🆕 新增欄喵 #}
+                <th style="width: 120px;">日期</th>
+                <th style="width: 110px;">病歷號</th>
+                <th style="width: 140px;">病人姓名</th>
+                <th style="width: 260px;">狀態</th>
+                <th>用藥摘要</th>
+                <th style="width: 170px;">動作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rx in prescriptions %}
+                <tr>
+                  <!-- 🆕 處方號碼 -->
+                  <td>#{{ rx.id }}</td>
 
-    .history-table tr:nth-child(even) {
-        background: #fafafa;
-    }
+                  <!-- 日期 -->
+                  <td>{{ rx.date }}</td>
 
-    .btn-link {
-        background: #4a90e2;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-size: 14px;
-    }
+                  <!-- 病人基本資料 -->
+                  <td>{{ rx.patient.chart_no|default:rx.patient.id }}</td>
+                  <td>{{ rx.patient.full_name }}</td>
 
-    .btn-link:hover {
-        background: #357ABD;
-    }
+                  <!-- 狀態區塊 -->
+                  <td>
+                    <div class="text-xs status-block">
+                      <div class="status-block-row">
+                        <span class="status-label">處方：</span>
+                        {{ rx.get_status_display|default:rx.status|default:"-" }}
+                      </div>
 
-    .back-link {
-        margin-top: 20px;
-        display: inline-block;
-        text-decoration: none;
-        color: #444;
-    }
-
-    .back-link:hover {
-        color: #000;
-        text-decoration: underline;
-    }
-</style>
-
-<h2 class="page-title">我的處方歷史 </h2>
-
-<div class="info-box">
-    <p>
-        <strong>醫師：</strong>{{ doctor.name }}<br>
-        <span style="color:#555;">最近開立的處方如下 ：</span>
-    </p>
-</div>
-
-{% if prescriptions %}
-<table class="history-table">
-    <thead>
-        <tr>
-            <th>日期</th>
-            <th>病歷號</th>
-            <th>病人姓名</th>
-            <th>狀態</th>
-            <th>用藥摘要</th>
-            <th>動作</th>
-        </tr>
-    </thead>
-    <tbody>
-
-        {% for rx in prescriptions %}
-        <tr>
-            <td>{{ rx.date }}</td>
-            <td>{{ rx.patient.chart_no }}</td>
-            <td>{{ rx.patient.full_name }}</td>
-            <td>{{ rx.status }}</td>
-
-            <td>
-                {% if rx.items.all %}
-                    {% with first_item=rx.items.all.0 %}
-                        {{ first_item.drug.name }} x {{ first_item.quantity }}
-                        {% if rx.items.count > 1 %}
-                            （+{{ rx.items.count|add:"-1" }} 項）
+                      <div class="status-block-row">
+                        <span class="status-label">審核：</span>
+                        {% if rx.verify_status %}
+                          {% if rx.verify_status == "PENDING" %}
+                            <span class="badge-status badge-status-warning">待審核</span>
+                          {% elif rx.verify_status == "VERIFIED" %}
+                            <span class="badge-status badge-status-success">已通過</span>
+                          {% elif rx.verify_status == "REJECTED" %}
+                            <span class="badge-status badge-status-danger">退回</span>
+                          {% else %}
+                            <span class="badge-status badge-status-muted">
+                              {{ rx.get_verify_status_display|default:rx.verify_status }}
+                            </span>
+                          {% endif %}
+                        {% else %}
+                          <span class="text-muted-small">尚未審核</span>
                         {% endif %}
+                      </div>
+
+                      <div class="status-block-row">
+                        <span class="status-label">藥局：</span>
+                        {% if rx.pharmacy_status %}
+                          {% if rx.pharmacy_status == "PENDING" %}
+                            <span class="badge-status badge-status-warning">待調劑</span>
+                          {% elif rx.pharmacy_status == "DISPENSED" %}
+                            <span class="badge-status badge-status-success">已領藥</span>
+                          {% else %}
+                            <span class="badge-status badge-status-muted">
+                              {{ rx.get_pharmacy_status_display|default:rx.pharmacy_status }}
+                            </span>
+                          {% endif %}
+                        {% else %}
+                          <span class="text-muted-small">-</span>
+                        {% endif %}
+                      </div>
+
+                      <div class="status-block-row">
+                        <span class="status-label">領藥：</span>
+                        {% if rx.dispensed_by %}
+                          {{ rx.dispensed_by.get_full_name|default:rx.dispensed_by.username }}
+                          {% if rx.dispensed_at %}
+                            <span class="text-muted-small">
+                              （{{ rx.dispensed_at|date:"Y-m-d H:i" }}）
+                            </span>
+                          {% endif %}
+                        {% else %}
+                          <span class="text-muted-small">尚未領藥</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- 用藥摘要 -->
+                  <td>
+                    {% with items=rx.items.all %}
+                      {% if items %}
+                        {% with first=items.0 %}
+                          <div class="text-sm">
+                            {{ first.drug.name }} × {{ first.quantity }}
+                            {% if items|length > 1 %}
+                              <span class="text-muted-small">
+                                （另有 {{ items|length|add:"-1" }} 項）
+                              </span>
+                            {% endif %}
+                          </div>
+                        {% endwith %}
+                      {% else %}
+                        <span class="text-muted-small">尚未填寫用藥項目</span>
+                      {% endif %}
                     {% endwith %}
-                {% else %}
-                    （尚未填寫用藥）
-                {% endif %}
-            </td>
+                  </td>
 
-            <td>
-                <a class="btn-link" href="{% url 'prescriptions:edit_prescription' rx.id %}">
-                    查看 / 編輯
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
+                  <!-- 動作按鈕 -->
+                  <td>
+                    <div class="table-row-actions">
+                      <a href="{% url 'prescriptions:prescription_detail' rx.id %}"
+                        class="btn-hosp btn-hosp-soft btn-sm">
+                        詳細
+                      </a>
+                      <a href="{% url 'prescriptions:edit_prescription' rx.id %}"
+                        class="btn-hosp btn-hosp-main btn-sm">
+                        編輯
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <!-- 🆕 欄位變 7 個，所以 colspan 也要改成 7 喵 -->
+                  <td colspan="7" class="text-center text-muted-small">
+                    目前尚無處方紀錄。
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    </tbody>
-</table>
+  {% else %}
+    <!-- 沒有處方紀錄時 -->
+    <div class="card">
+      <div class="card-body">
+        <p class="text-muted-small mb-0">目前尚無處方紀錄。</p>
+      </div>
+    </div>
+  {% endif %}
 
-{% else %}
-<p>目前尚無處方紀錄 。</p>
-{% endif %}
-
-<a href="{% url 'queues:doctor_panel' %}" class="back-link">⬅ 回醫師面板 </a>
-
+</div>
 {% endblock %}

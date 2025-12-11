@@ -20,7 +20,12 @@
         <a href="{% url 'inventory:drug_create' %}" class="btn btn-primary btn-sm">
             + Add New Drug
         </a>
+
+        <a href="{% url 'inventory:expiry_dashboard' %}" class="btn btn-outline-danger btn-sm">
+            ⚠️ Expiry Dashboard
+        </a>
     </div>
+
 
     {# 搜尋 + 篩選列 #}
     <form method="get" class="row g-2 mb-3">
@@ -65,7 +70,7 @@
                     <th>Form</th>
                     <th>Strength</th>
                     <th class="text-end">Unit Price</th>
-                    <th class="text-end">Stock</th>
+                    <th class="text-end">Available (non-expired)</th>
                     <th class="text-end">Reorder Level</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -74,7 +79,7 @@
             <tbody>
             {% for drug in drugs %}
                 {# 低庫存 + 啟用 用顏色提醒 #}
-                <tr class="{% if drug.is_active and drug.stock_quantity <= drug.reorder_level %}table-warning{% endif %}">
+                <tr class="{% if drug.is_active and drug.non_expired_quantity <= drug.reorder_level %}table-warning{% endif %}">
                     <td>{{ drug.code }}</td>
                     <td>{{ drug.name }}</td>
                     <td>{{ drug.generic_name }}</td>
@@ -87,7 +92,8 @@
                             -
                         {% endif %}
                     </td>
-                    <td class="text-end">{{ drug.stock_quantity }}</td>
+                    {# ✅ 改成顯示未過期批次庫存喵 #}
+                    <td class="text-end">{{ drug.non_expired_quantity }}</td>
                     <td class="text-end">{{ drug.reorder_level }}</td>
                     <td>
                         {% if drug.is_active %}
@@ -96,15 +102,20 @@
                             <span class="badge bg-secondary">Inactive</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <a href="{% url 'inventory:edit_drug' drug.id %}" class="btn btn-sm btn-outline-primary">
-                            Edit
+                    <td class="d-flex gap-1">
+                        <a href="{% url 'inventory:edit_drug' drug.id %}"
+                            class="btn btn-sm btn-outline-primary">
+                                Edit
                         </a>
-                        <a href="{% url 'inventory:adjust_stock' drug.id %}" class="btn btn-sm btn-outline-warning">
-                            Adjust
+
+                        <a href="{% url 'inventory:stock_in' drug.id %}"
+                            class="btn btn-sm btn-outline-success">
+                                Stock In
                         </a>
-                        <a href="{% url 'inventory:stock_history_drug' drug.id %}" class="btn btn-sm btn-outline-info">
-                            History
+
+                        <a href="{% url 'inventory:stock_history' %}?drug={{ drug.id }}"
+                            class="btn btn-sm btn-outline-info">
+                                History
                         </a>
                     </td>
                 </tr>

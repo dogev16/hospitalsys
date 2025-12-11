@@ -1,0 +1,990 @@
+/* ================================
+   全站基礎
+================================ */
+
+body {
+    background-color: #f5f7fb;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+        "Microsoft JhengHei", system-ui, sans-serif;
+    font-size: 14px;
+}
+
+/* 主要內容容器的預設間距，可視需求調整 */
+.main-container {
+    padding-top: 20px;
+    padding-bottom: 30px;
+}
+
+/* 頁面標題 + 副標題 */
+.page-header {
+    margin-bottom: 16px;
+}
+
+.page-header-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.page-header-subtitle {
+    font-size: 13px;
+    color: #777;
+}
+
+/* ================================
+   Card 統一樣式
+================================ */
+
+.card {
+    border-radius: 10px;
+    border: 1px solid #e2e6f0;
+}
+
+.card-header {
+    border-bottom: 1px solid #e5e7f2;
+    background-color: #f7f8fc;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.card + .card {
+    margin-top: 10px;
+}
+
+/* ================================
+   按鈕樣式
+================================ */
+
+/* 按鈕樣式 ------------------------------------------------------------ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #d2d7e5;
+    background-color: #ffffff;
+    color: #1f2937;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    gap: 6px;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.05s ease;
+}
+
+.btn:hover {
+    background-color: #eef2ff;
+    border-color: #9ca3db;
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08);
+}
+
+.btn:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+/* 小一點的按鈕（列表、工具列用） */
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}
+
+/* 主要行動按鈕：藍色（例如「領藥 / 檢視」） */
+.btn-main {
+    border-color: #2563eb;
+    background-image: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    box-shadow: 0 6px 12px rgba(37, 99, 235, 0.25);
+    font-weight: 500;
+}
+
+.btn-main:hover {
+    background-image: linear-gradient(135deg, #1d4ed8, #1e40af);
+    border-color: #1d4ed8;
+    color: #ffffff;
+}
+
+/* 次要按鈕：灰藍底，用在「編輯」那種不那麼重要的動作 */
+.btn-secondary {
+    background-color: #f3f4ff;
+    color: #111827;
+    border-color: #d2d7e5;
+}
+
+.btn-secondary:hover {
+    background-color: #e5edff;
+    border-color: #9ca3db;
+}
+
+/* 外框按鈕：像 header 右上的「處方審核列表」 */
+.btn-outline {
+    background-color: transparent;
+    color: #2563eb;
+    border-color: #cbd5f5;
+}
+
+.btn-outline:hover {
+    background-color: #e5edff;
+    border-color: #2563eb;
+}
+
+/* 比較輕量的小連結按鈕（工具列右上角那種） */
+.btn-link-sm {
+    font-size: 0.85rem;
+    padding: 3px 9px;
+}
+
+/* 有圖示在左邊的時候使用，拉出一點間距 */
+.btn-icon-left {
+    gap: 6px;
+}
+
+/* 狀態小圓點（紅綠燈） ---------------------------------------------- */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    margin-right: 4px;
+}
+
+.status-dot-ok {
+    background-color: #22c55e;  /* 綠色：OK */
+}
+
+.status-dot-warn {
+    background-color: #eab308;  /* 黃色：等待 */
+}
+
+.status-dot-bad {
+    background-color: #ef4444;  /* 紅色：錯誤 / 退回 */
+}
+
+.status-dot-muted {
+    background-color: #d1d5db;  /* 灰色：無資料 */
+}
+
+
+.btn-main:hover {
+    background-color: #34649c;
+    border-color: #34649c;
+    color: #fff;
+}
+
+.btn-outline-main {
+    border-color: #3f7bc1;
+    color: #3f7bc1;
+}
+
+.btn-outline-main:hover {
+    background-color: #3f7bc1;
+    color: #fff;
+}
+
+.btn-soft {
+    background-color: #eef3ff;
+    border-color: #d3ddff;
+    color: #445;
+}
+
+/* 小按鈕統一高度 / 字級 */
+.btn-sm {
+    font-size: 12px;
+    padding: 3px 9px;
+}
+
+/* ================================
+   Table 統一樣式
+================================ */
+
+.table-hospital {
+    font-size: 13px;
+}
+
+.table-hospital thead {
+    background-color: #f3f4fa;
+}
+
+.table-hospital thead th {
+    border-bottom-width: 1px;
+}
+
+.table-hospital tbody tr:nth-child(even) {
+    background-color: #fafbff;
+}
+
+/* 表格裡的標籤、次文字 */
+.table-hospital .cell-label {
+    font-weight: 600;
+    color: #555;
+}
+
+/* ================================
+   狀態 Badge 統一（處方 / 掛號 / 藥局）
+================================ */
+
+/* 一般狀態色系基底，可之後全部一起改色 */
+.badge-status {
+    border-radius: 999px;
+    font-size: 11px;
+    padding: 3px 8px;
+}
+
+/* 藍：正式 / 進行中 */
+.badge-status-primary {
+    background-color: #e2ebff;
+    color: #2055a5;
+}
+
+/* 綠：完成 / 正常 */
+.badge-status-success {
+    background-color: #e0f4ea;
+    color: #1c7b4d;
+}
+
+/* 黃：待處理 / 待審核 */
+.badge-status-warning {
+    background-color: #fff4d6;
+    color: #a26b02;
+}
+
+/* 紅：作廢 / 錯誤 */
+.badge-status-danger {
+    background-color: #ffe0e0;
+    color: #b3261e;
+}
+
+/* 灰：草稿 / 未設定 */
+.badge-status-muted {
+    background-color: #eef0f4;
+    color: #666;
+}
+
+/* ================================
+   小區塊資訊（例如狀態欄）
+================================ */
+
+.status-block {
+    text-align: left;
+    line-height: 1.4;
+    font-size: 12px;
+}
+
+.status-block-row + .status-block-row {
+    margin-top: 3px;
+}
+
+.status-label {
+    font-weight: 600;
+    color: #555;
+    margin-right: 2px;
+}
+
+/* ================================
+   表單排版小工具
+================================ */
+
+.form-section-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.form-hint {
+    font-size: 12px;
+    color: #888;
+}
+
+/* ================================
+   其他常用輔助類別
+================================ */
+
+.text-muted-small {
+    font-size: 12px;
+    color: #888;
+}
+
+.badge-count {
+    background-color: #f4f4f8;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    font-size: 11px;
+    padding: 2px 7px;
+}
+/* === 通用標題樣式（給歷史 / 列表頁用） === */
+.page-title {
+    font-size: 1.5rem;          /* 24px 左右 */
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    color: #1f2933;
+}
+
+.page-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+/* 舊 class 也繼續支援（如果別的頁面已經用到） */
+.page-header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+}
+
+.page-header-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+/* header 右邊的按鈕區 */
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* 文字工具類 */
+.text-muted {
+    color: #6b7280;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+}
+
+/* 連結樣式（像「詳細」、「編輯」） */
+.link-inline {
+    color: #3f7bc1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.link-inline:hover {
+    text-decoration: underline;
+}
+
+/* 處方狀態 badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* 依你的 Prescription 狀態自己對應顏色喵 */
+.status-badge.status_pending,
+.status-badge.status-待確認 {
+    background-color: #fff7e6;
+    color: #b7791f;
+}
+
+.status-badge.status_verified,
+.status-badge.status-已核准 {
+    background-color: #e6fffa;
+    color: #0f766e;
+}
+
+.status-badge.status_rejected,
+.status-badge.status-退回 {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+/* ---- Pharmacy panel extra styles ---- */
+
+.rx-status-block {
+    text-align: left;
+    line-height: 1.4;
+}
+
+.status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-right: 4px;
+}
+
+/* 已有 tag 基礎樣式情況下，只補顏色 */
+.tag-dispensed {
+    background-color: #16a34a; /* 領藥完成：綠色 */
+    color: #ffffff;
+}
+
+.card-header-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+/* =============================
+   統一按鈕樣式（全域）
+   ============================= */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+/* 主色（藍色） */
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+.btn-primary:hover {
+    background: #1e4cc9;
+}
+
+/* 成功（綠色） */
+.btn-success {
+    background: #16a34a;
+    color: white;
+}
+.btn-success:hover {
+    background: #12833d;
+}
+
+/* 次要（灰色） */
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+.btn-secondary:hover {
+    background: #555b63;
+}
+
+/* 危險（紅色） */
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
+.btn-danger:hover {
+    background: #b71c1c;
+}
+
+/* 警告（黃色） */
+.btn-warning {
+    background: #facc15;
+    color: #4b4b4b;
+}
+.btn-warning:hover {
+    background: #eab308;
+}
+
+/* 停用狀態 */
+.btn-disabled,
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+/* ===========================
+   Pharmacy Dispense Page
+   =========================== */
+
+.pharmacy-dispense-page {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.dispense-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 20px;
+    font-size: 14px;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #444;
+}
+
+/* ===== 狀態膠囊（跟你的 pharmacy panel 完美統一） ===== */
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-success {
+    background: #e6f5ec;
+    color: #16803c;
+}
+
+.status-warning {
+    background: #fff7e6;
+    color: #b7791f;
+}
+
+.status-danger {
+    background: #fdecea;
+    color: #c53030;
+}
+
+/* 小燈號 */
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-dot-ok {
+    background: #16a34a;
+}
+
+.status-dot-warn {
+    background: #d97706;
+}
+
+.status-dot-bad {
+    background: #dc2626;
+}
+
+/* ===== 備註框 ===== */
+.notes-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+/* ===== 用藥表格 ===== */
+.rx-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin-top: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.rx-items-table th {
+    background: #f3f4f6;
+    font-weight: 600;
+}
+
+.rx-items-table th,
+.rx-items-table td {
+    border: 1px solid #e5e7eb;
+    padding: 8px 10px;
+    text-align: center;
+}
+
+.usage-col {
+    text-align: left;
+}
+
+.stock-ok {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.stock-low {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* ===== 按鈕排列 ===== */
+.actions-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.btn-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+/* ==== 處方藥單列印頁 rx-print-page ==== */
+
+.rx-print-page {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 16px 24px 32px;
+}
+
+.rx-print-header {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.rx-clinic-name {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.rx-clinic-sub {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.rx-print-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 24px;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.rx-print-meta .label {
+    font-weight: 600;
+}
+
+.rx-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.rx-print-table th,
+.rx-print-table td {
+    border: 1px solid #e5e7eb;
+    padding: 6px 8px;
+    vertical-align: top;
+}
+
+.rx-print-table th {
+    background: #f3f4f6;
+}
+
+.rx-print-table td.usage {
+    white-space: pre-wrap;
+}
+
+.rx-print-notes .label {
+    font-weight: 600;
+    margin-bottom: 2px;
+    font-size: 13px;
+}
+
+.rx-print-notes .box {
+    min-height: 40px;
+    border: 1px solid #e5e7eb;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.rx-print-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 16px;
+    font-size: 12px;
+}
+
+.rx-print-footer .hint {
+    max-width: 60%;
+    color: #6b7280;
+}
+
+.rx-print-footer .sign {
+    text-align: right;
+}
+
+.rx-print-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+}
+
+/* 列印時隱藏按鈕、導航列等喵 */
+@media print {
+    .no-print,
+    .navbar,
+    .top-nav,
+    .footer {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+    }
+
+    .rx-print-page {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+}
+/* ===== 處方藥單列印樣式 ===== */
+
+.rx-print-page {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 40px;
+}
+
+.rx-print-card {
+  width: 820px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  padding: 24px 32px 28px;
+  font-size: 14px;
+}
+
+.rx-print-header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.rx-print-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  margin-bottom: 4px;
+}
+
+.rx-print-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.rx-print-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 32px;
+  margin-bottom: 16px;
+}
+
+.rx-print-label {
+  color: #6b7280;
+  margin-right: 4px;
+}
+
+.rx-print-value {
+  font-weight: 500;
+  color: #111827;
+}
+
+.rx-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+.rx-print-table th,
+.rx-print-table td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.rx-print-table th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.rx-print-usage {
+  text-align: left;
+}
+
+.rx-print-empty {
+  color: #9ca3af;
+  text-align: center;
+}
+
+.rx-print-note-block {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.rx-print-note-label {
+  flex: 0 0 80px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.rx-print-note-body {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.rx-print-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.rx-print-disclaimer {
+  max-width: 520px;
+  line-height: 1.4;
+}
+
+.rx-print-sign {
+  white-space: nowrap;
+}
+
+.rx-print-sign-line {
+  display: inline-block;
+  min-width: 150px;
+  border-bottom: 1px solid #111827;
+  margin-left: 4px;
+}
+
+.rx-print-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 8px;
+}
+
+/* 列印時隱藏按鈕與外框，只留藥單本體喵 */
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .navbar,
+  .top-nav,
+  .page-header,
+  .rx-print-actions {
+    display: none !important;
+  }
+
+  .rx-print-page {
+    padding: 0;
+  }
+
+  .rx-print-card {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    width: 100%;
+  }
+}
+.two-column-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 24px;
+}
+
+.info-block {
+    margin-bottom: 4px;
+}
+
+.info-block.full-row {
+    grid-column: 1 / -1;
+}
+
+.info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280; /* 跟你其他 subtitle 類似的灰色 */
+    margin-bottom: 2px;
+}
+/* 病人資訊卡版面喵 ---------------------------------- */
+
+.patient-info-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr);
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.patient-info-column {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.patient-info-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.patient-info-list {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.patient-info-row {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    column-gap: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.patient-info-row dt {
+    margin: 0;
+    color: #6b7280;
+    font-weight: 600;
+    text-align: right;
+}
+
+.patient-info-row dd {
+    margin: 0;
+    color: #111827;
+}
+
+/* 醫療風險區塊喵 */
+
+.patient-risk-layout {
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+.patient-risk-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 16px;
+    font-size: 13px;
+}
+
+.patient-risk-item .info-label {
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.patient-risk-item .info-value {
+    color: #111827;
+    white-space: pre-line;
+}
