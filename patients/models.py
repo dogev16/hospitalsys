@@ -128,7 +128,7 @@ class Patient(models.Model):
         return years
 
     def save(self, *args, **kwargs):
-        # 只在「沒有病歷號」的情況下自動產生（避免已存在的被改掉喵）
+        # 只在「沒有病歷號」的情況下自動產生（避免已存在的被改掉 ）
         if not self.chart_no:
             self.chart_no = self._generate_chart_no()
         super().save(*args, **kwargs)
@@ -137,7 +137,7 @@ class Patient(models.Model):
     def _generate_chart_no():
         """
         自動產生下一個病歷號：
-        找出目前最大尾碼 → +1 → P001, P002, P003... 喵
+        找出目前最大尾碼 → +1 → P001, P002, P003...  
         """
         last = Patient.objects.order_by("-id").first()
         if not last or not last.chart_no:
@@ -147,6 +147,6 @@ class Patient(models.Model):
             if m:
                 num = int(m.group(1)) + 1
             else:
-                # 如果舊資料沒有數字，就保險用 id + 1 喵
+                # 如果舊資料沒有數字，就保險用 id + 1  
                 num = (last.id or 0) + 1
         return f"P{num:03d}"

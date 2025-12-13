@@ -6,7 +6,7 @@ class PatientForm(forms.ModelForm):
     class Meta:
         model = Patient
 
-        # 這裡照臨床邏輯排順序喵（基本 → 聯絡 → 身體狀況 → 風險 → 緊急聯絡 → 備註）
+        # 這裡照臨床邏輯排順序 （基本 → 聯絡 → 身體狀況 → 風險 → 緊急聯絡 → 備註）
         fields = [
             # ─── 基本資料 ───
             "full_name",
@@ -40,7 +40,7 @@ class PatientForm(forms.ModelForm):
             "note",
         ]
 
-        # 一些欄位用比較適合的輸入元件喵
+        # 一些欄位用比較適合的輸入元件 
         widgets = {
             "birth_date": forms.DateInput(
                 attrs={
@@ -85,7 +85,7 @@ class PatientForm(forms.ModelForm):
             ),
         }
 
-        # 如果你不想顯示太多 help_text，也可以在這裡覆蓋掉喵
+        # 如果你不想顯示太多 help_text，也可以在這裡覆蓋掉 
         help_texts = {
             "height_cm": "可略過，若已知請填整數（公分）",
             "weight_kg": "可略過，若已知請填公斤，最多一位小數",

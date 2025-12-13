@@ -1,33 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
-
-from common.utils import group_required
-
-from .models import (
-    Prescription,
-    PrescriptionItem,
-    PrescriptionLog,
-    PrescriptionAuditLog,
-)
-from .forms import PrescriptionForm, PrescriptionItemFormSet
-
-
-# 原本用 inventory.models.StockTransaction，現在改成共用工具
-from inventory.utils import adjust_stock, can_dispense_item, preview_use_drug_from_prescription_item, use_drug_from_prescription_item
-from queues.models import VisitTicket
-from doctors.models import Doctor
-from patients.models import Patient
-from django.db import transaction
-
-
-# ============================================================
-#  藥局：今日待領藥列表 + 領藥動作
-# ============================================================
-
-@group_required("PHARMACY")
+﻿@group_required("PHARMACY")
 def pharmacy_panel(request):
     today = timezone.localdate()
 
@@ -77,21 +48,10 @@ def pharmacy_panel(request):
         "rx_rows": rx_rows,
         "min_valid_days": MIN_VALID_DAYS,
     })
-
-
-
-
-def add_prescription_log(prescription, action, message="", user=None):
-    """
-    統一寫入處方異動紀錄的小工具。
-    """
-    PrescriptionLog.objects.create(
-        prescription=prescription,
-        action=action,
-        message=message,
-        operator=user,
-    )
-
+這個 view 負責顯示今天可領藥的處方，
+只顯示已完成醫師開立、且通過藥師審核的處方，
+並在顯示前先計算每張處方是否可領藥，
+避免藥師進入頁面後才發現庫存或效期不足。
 
 @group_required("PHARMACY")
 @transaction.atomic
@@ -204,8 +164,12 @@ def dispense(request, pk):
     }
     return render(request, "prescriptions/pharmacy_dispense.html", context)
 
+在完成領藥時，我設計了多層檢查，
+包含審核狀態、是否已領藥、以及即時庫存確認，
+並使用 transaction 確保扣庫存與狀態更新為同一個原子操作，
+避免重複發藥或資料不一致。
 
-@group_required("PHARMACY")
+    @group_required("PHARMACY")
 def pharmacy_review_list(request):
     """
     藥師審核列表：顯示今天所有『待審核』的處方
@@ -346,11 +310,9 @@ def pharmacy_review_detail(request, pk):
     }
     return render(request, "prescriptions/pharmacy_review_detail.html", context)
 
-
-
-# ============================================================
-#  醫師：依掛號票開立 / 編輯處方
-# ============================================================
+我將藥師審核與實際發藥分成兩個階段，
+確保處方內容在進入藥局流程前已被確認，
+同時保留完整審核紀錄與備註，方便追蹤。
 
 @group_required("DOCTOR")
 def edit_for_ticket(request, ticket_id):
@@ -440,224 +402,9 @@ def edit_for_ticket(request, ticket_id):
     }
     return render(request, "prescriptions/prescription_form.html", context)
 
-
-@group_required("DOCTOR")
-def edit_prescription(request, pk):
-    """
-    醫師從『處方歷史列表』點進來編輯某一張處方
-    """
-    doctor = get_object_or_404(Doctor, user=request.user)
-    prescription = get_object_or_404(Prescription, pk=pk, doctor=doctor)
-
-    if prescription.pharmacy_status != Prescription.PHARMACY_PENDING:
-        messages.error(request, "此處方已經由藥局處理，無法再修改 。")
-        return redirect("prescriptions:doctor_prescription_list")
-
-    if request.method == "POST":
-        form = PrescriptionForm(request.POST, instance=prescription)
-        items = PrescriptionItemFormSet(request.POST, instance=prescription)
-
-        if form.is_valid() and items.is_valid():
-            # 先不要立即存，拿到物件
-            prescription_obj = form.save(commit=False)
-
-            # ⭐ 編輯完按儲存 → 視為「正式處方」
-            prescription_obj.status = Prescription.STATUS_FINAL
-            prescription_obj.verify_status = Prescription.VERIFY_PENDING
-            prescription_obj.verified_by = None
-            prescription_obj.verified_at = None
-            prescription_obj.verify_note = ""
-
-            # 先存主處方，再存項目
-            prescription_obj.save()
-            items.instance = prescription_obj
-            items.save()
-
-            # ⭐ 寫入異動紀錄
-            add_prescription_log(
-                prescription_obj,
-                PrescriptionLog.ACTION_UPDATE,
-                "醫師修改處方內容",
-                user=request.user,
-            )
-
-            messages.success(request, "處方已更新並送出 ！")
-            return redirect("prescriptions:doctor_prescription_list")
-    else:
-        form = PrescriptionForm(instance=prescription)
-        items = PrescriptionItemFormSet(instance=prescription)
-
-    context = {
-        "prescription": prescription,
-        "form": form,
-        "items": items,
-        "ticket": None,  # 這裡沒有 ticket，給 template 一個空的也沒關係
-        "patient": prescription.patient,
-    }
-    return render(request, "prescriptions/prescription_form.html", context)
-
-
-@group_required("DOCTOR")
-def doctor_prescription_list(request):
-    """
-    醫師查看自己開立過的所有處方
-    """
-    doctor = Doctor.objects.filter(user=request.user).first()
-    if not doctor:
-        messages.error(request, "找不到對應的醫師資料 ，請聯絡系統管理員。")
-        return redirect("index")
-
-    prescriptions = (
-        Prescription.objects
-        .filter(doctor=doctor)
-        .select_related("patient")
-        .prefetch_related("items__drug")
-        .order_by("-date", "-created_at")
-    )
-
-    context = {
-        "doctor": doctor,
-        "prescriptions": prescriptions,
-    }
-    return render(request, "prescriptions/doctor_prescription_list.html", context)
-
-
-# ============================================================
-#  病人：自己的處方列表 / 明細
-# ============================================================
-
-@login_required
-@group_required("PATIENT")
-def patient_prescription_list(request):
-    """
-    病人自己的處方歷史列表 （新版）
-    """
-    # 1. 找出目前登入的病人 （chart_no = username）
-    patient = get_object_or_404(Patient, chart_no=request.user.username)
-
-    # 2. 抓這個病人的所有處方
-    prescriptions = (
-        Prescription.objects
-        .filter(patient=patient)
-        .select_related("doctor")
-        .prefetch_related("items__drug")
-        .order_by("-date", "-created_at")
-    )
-
-    context = {
-        "patient": patient,
-        "prescriptions": prescriptions,
-    }
-    return render(
-        request,
-        "prescriptions/patient_prescription_list.html",
-        context,
-    )
-
-
-@login_required
-@group_required("PATIENT")
-def patient_prescription_detail(request, pk):
-    """
-    病人查看單一處方明細 （新版 patient_ 開頭）
-    """
-    patient = get_object_or_404(Patient, user=request.user)
-
-    prescription = get_object_or_404(
-        Prescription.objects
-        .select_related("doctor", "patient")
-        .prefetch_related("items__drug"),
-        pk=pk,
-        patient=patient,   # 保證是自己的處方
-    )
-
-    context = {
-        "patient": patient,
-        "rx": prescription,
-    }
-    return render(
-        request,
-        "prescriptions/patient_prescription_detail.html",
-        context,
-    )
-
-
-@login_required
-def patient_history(request):
-    """
-    病人查看自己的處方歷史 （舊版路由，如果還有用就保留）
-    """
-    patient = getattr(request.user, "patient", None)
-    if patient is None:
-        # 不是病人帳號就不讓看
-        return redirect("core:home")
-
-    prescriptions = (
-        Prescription.objects
-        .filter(patient=patient)
-        .select_related("doctor", "patient")
-        .prefetch_related("items__drug")
-        .order_by("-date", "-created_at")
-    )
-
-    context = {
-        "prescriptions": prescriptions,
-        "patient": patient,
-    }
-    return render(request, "prescriptions/patient_history.html", context)
-
-
-# ============================================================
-#  通用：處方明細（醫師 / 病人都可用）
-# ============================================================
-@login_required
-def prescription_detail(request, pk):
-    prescription = get_object_or_404(
-        Prescription.objects
-        .select_related("patient", "doctor", "doctor__user")
-        .prefetch_related("items__drug"),
-        pk=pk,
-    )
-
-    user = request.user
-
-    # ✅ 角色與權限判斷
-    is_doctor_owner = hasattr(user, "doctor") and user.doctor == prescription.doctor
-    is_patient_owner = hasattr(user, "patient") and user.patient == prescription.patient
-    is_pharmacy = user.groups.filter(name="PHARMACY").exists() or user.is_superuser
-
-    # ✅ 統一給 template 用的角色布林值
-    is_doctor = is_doctor_owner
-    is_patient = is_patient_owner
-
-    if not (is_doctor_owner or is_patient_owner or is_pharmacy):
-        return HttpResponseForbidden("你沒有權限查看這張處方 。")
-
-    logs = (
-        PrescriptionLog.objects
-        .filter(prescription=prescription)
-        .select_related("operator")
-        .order_by("-created_at")
-    )
-
-    audit_logs = (
-        PrescriptionAuditLog.objects
-        .filter(prescription=prescription)
-        .select_related("performed_by")
-        .order_by("-created_at")
-    )
-
-    context = {
-        "prescription": prescription,
-        "logs": logs,
-        "audit_logs": audit_logs,
-        "is_doctor": is_doctor,
-        "is_patient": is_patient,
-        "is_pharmacy": is_pharmacy,
-    }
-
-    return render(request, "prescriptions/prescription_detail.html", context)
-
+醫師是以掛號票為單位開立處方，
+確保每張處方都對應實際看診紀錄，
+避免出現沒有看診卻有處方的情況。
 
 @group_required("PHARMACY")
 @transaction.atomic
@@ -740,108 +487,184 @@ def cancel_or_return_prescription(request, pk):
         "prescription": prescription,
     })
 
-@login_required
+我有區分「尚未領藥作廢」與「已領藥退藥」兩種情境，
+並依狀態決定是否需要回補庫存，
+確保庫存數量與實際狀態一致。
+
+以上全部是來自"C:\project\hospitalsys\prescriptions\views.py"
+
+@transaction.atomic
+def adjust_stock(
+    drug: Drug,
+    change: int,
+    reason: str,
+    note: str = "",
+    prescription=None,
+    operator=None,
+):
+    """
+    舊版「以 Drug.stock_quantity 為主」的調整工具。
+    為了相容保留；批次模式下你應該改用 adjust_batch_stock  
+    """
+    new_stock = (drug.stock_quantity or 0) + change
+    if new_stock < 0:
+        raise ValueError(f"{drug.name} 庫存不足，無法扣除 {abs(change)}  ")
+
+    drug.stock_quantity = new_stock
+    drug.save(update_fields=["stock_quantity"])
+
+    StockTransaction.objects.create(
+        drug=drug,
+        batch=None,
+        change=change,
+        reason=reason,
+        note=note,
+        prescription=prescription,
+        operator=operator,
+    )
+    return drug
+
+所有庫存變動都集中透過 adjust_stock 處理，
+避免在不同地方直接修改庫存數量，
+讓庫存邏輯集中、可追蹤、可審計。
+
 @group_required("PHARMACY")
 @transaction.atomic
-def dispense_confirm(request, pk):
-    prescription = get_object_or_404(
-        Prescription.objects.prefetch_related("items__drug"),
-        pk=pk,
+def stock_adjust(request, pk):
+    """
+    單一藥品庫存調整：
+    - 使用 StockAdjustForm 收集「原因 / 數量 / 備註」
+    - 實際異動交給 inventory.utils.adjust_stock()
+    """
+    drug = get_object_or_404(Drug, pk=pk)
+
+    if request.method == "POST":
+        form = StockAdjustForm(request.POST)
+        if form.is_valid():
+            reason = form.cleaned_data["reason"]   # purchase / dispense / return / adjust
+            qty = form.cleaned_data["quantity"]    # 正整數
+            note = form.cleaned_data["note"]
+
+            # 依照原因決定是加還是減
+            change = qty
+            if reason in ("dispense", "adjust") and qty > 0:
+                # 發藥或調整（扣庫存）：變成負數
+                change = -qty
+
+            try:
+                # ✨ 統一透過 adjust_stock 處理：
+                # - 檢查庫存是否不足
+                # - 寫入 StockTransaction
+                # - 更新 drug.stock_quantity
+                adjust_stock(
+                    drug=drug,
+                    change=change,
+                    reason=reason,
+                    note=note,
+                    prescription=None,
+                    operator=request.user,   # ✅ 記錄調整人
+                )
+            except ValueError as e:
+                # 例如：庫存不足會在 adjust_stock 丟 ValueError
+                messages.error(request, str(e))
+            else:
+                # 重新讀取最新庫存
+                drug.refresh_from_db()
+                messages.success(
+                    request,
+                    f"已調整 {drug.name} 庫存（變動 {change}，目前庫存 {drug.stock_quantity}） ",
+                )
+                return redirect("inventory:drug_list")
+        else:
+            # 先印出錯誤，方便你看 console 除錯
+            print("StockAdjustForm errors:", form.errors)
+    else:
+        form = StockAdjustForm()
+
+    # 最近 20 筆該藥品的異動紀錄
+    logs = (
+        StockTransaction.objects.filter(drug=drug)
+        .order_by("-created_at")[:20]
     )
-    items = list(prescription.items.all())
 
-    MIN_VALID_DAYS = 7  # 政策：至少還要能放 7 天才可發 
+    return render(
+        request,
+        "inventory/stock_adjust.html",
+        {
+            "drug": drug,
+            "form": form,
+            "logs": logs,
+        },
+    )
 
-    # ----------------------------
-    # ✅ GET：預檢查（不扣庫存）
-    # ----------------------------
-    checks = []
-    for item in items:
-        try:
-            preview_use_drug_from_prescription_item(
-                item,
-                min_valid_days=MIN_VALID_DAYS,
+提供藥師手動調整庫存的入口，
+每次調整都必須指定原因與備註，
+並寫入異動紀錄，避免黑箱操作。
+
+@group_required("PHARMACY")
+def expiry_dashboard(request):
+    """
+    藥品效期管理儀表板：
+    - 已過期（不可發藥）
+    - N 天內到期（提醒）
+    - 隔離批次（不可發藥，待藥師處理）
+    """
+    today = timezone.localdate()
+    warning_days = 30
+    warn_date = today + timedelta(days=warning_days)
+
+    expired_batches = (
+        StockBatch.objects
+        .select_related("drug")
+        .filter(
+            status=StockBatch.STATUS_NORMAL,
+            expiry_date__lt=today,
+            quantity__gt=0,
+        )
+        .order_by("expiry_date", "drug__name", "batch_no")
+    )
+
+    near_expiry_batches = (
+        StockBatch.objects
+        .select_related("drug")
+        .filter(
+            status=StockBatch.STATUS_NORMAL,
+            expiry_date__gte=today,
+            expiry_date__lte=warn_date,
+            quantity__gt=0,
+        )
+        .order_by("expiry_date", "drug__name", "batch_no")
+    )
+
+    quarantined_batches = (
+        StockBatch.objects
+        .select_related("drug")
+        .filter(
+            status=StockBatch.STATUS_QUARANTINE,
+            quantity__gt=0,
+        )
+        .order_by("expiry_date", "drug__name", "batch_no")
+    )
+
+    q = (request.GET.get("q") or "").strip()
+    search_batches = StockBatch.objects.none()
+    if q:
+        search_batches = (
+            StockBatch.objects
+            .select_related("drug")
+            .filter(quantity__gt=0)
+            .filter(
+                Q(drug__code__icontains=q) |
+                Q(drug__name__icontains=q) |
+                Q(batch_no__icontains=q)
             )
-            checks.append({"item": item, "ok": True, "reason": ""})
-        except ValueError as e:
-            checks.append({"item": item, "ok": False, "reason": str(e)})
-
-    has_shortage = any(not c["ok"] for c in checks)
-
-    if request.method == "GET":
-        return render(
-            request,
-            "prescriptions/pharmacy_dispense_confirm.html",
-            {
-                "prescription": prescription,
-                "items": items,
-                "checks": checks,
-                "has_shortage": has_shortage,
-                "min_valid_days": MIN_VALID_DAYS,
-            },
+            .order_by("expiry_date", "id")[:50]
         )
 
-    # ----------------------------
-    # ✅ POST：真正完成領藥（要再檢查一次）
-    # ----------------------------
-    if prescription.pharmacy_status != Prescription.PHARMACY_PENDING:
-        messages.warning(request, "此處方已非待領藥狀態 。")
-        return redirect("prescriptions:pharmacy_panel")
-
-    # 若 GET 就已經判斷不足，POST 直接擋（避免有人硬按）
-    if has_shortage:
-        messages.error(request, "部分藥品效期或庫存不足，無法完成領藥 。")
-        return redirect("prescriptions:dispense_confirm", pk=pk)
-
-    try:
-        for item in items:
-            use_drug_from_prescription_item(
-                item,
-                operator=request.user,
-                prescription=prescription,
-                min_valid_days=MIN_VALID_DAYS,
-            )
-    except ValueError as e:
-        messages.error(request, str(e))
-        return redirect("prescriptions:dispense_confirm", pk=pk)
-
-    prescription.pharmacy_status = Prescription.PHARMACY_DONE
-    prescription.dispensed_by = request.user
-    prescription.dispensed_at = timezone.now()
-    if prescription.status != Prescription.STATUS_FINAL:
-        prescription.status = Prescription.STATUS_FINAL
-
-    prescription.save(update_fields=["pharmacy_status", "dispensed_by", "dispensed_at", "status"])
-
-    add_prescription_log(
-        prescription,
-        PrescriptionLog.ACTION_DISPENSE,
-        "藥局完成領藥（經確認頁）並扣庫存",
-        user=request.user,
-    )
-    PrescriptionAuditLog.objects.create(
-        prescription=prescription,
-        action="DISPENSE",
-        performed_by=request.user,
-        detail="藥局完成領藥（經確認頁）並扣庫存",
-    )
-
-    messages.success(request, f"處方 #{prescription.id} 已完成領藥 ！")
-    return redirect("prescriptions:pharmacy_panel")
-
-
-@login_required
-@group_required("PHARMACY")   # 或者 PATIENT 也可看，就看你要給誰印 
-def prescription_print(request, pk):
-    prescription = get_object_or_404(
-        Prescription.objects.select_related("patient", "doctor", "doctor__user")
-                            .prefetch_related("items__drug"),
-        pk=pk,
-    )
-
-    context = {
-        "prescription": prescription,
-        "items": prescription.items.all(),
-        # 可以順便放診所名稱、地址，如果有設定 
-    }
-    return render(request, "prescriptions/prescription_print.html", context)
+    expired_count = expired_batches.count()
+    near_expiry_count = near_expiry_batches.count()
+    quarantine_count = quarantined_batches.count()
+    
+我有將庫存拆分成批次與效期管理，
+過期或隔離批次無法被發藥，
+確保病人只會拿到有效藥品。

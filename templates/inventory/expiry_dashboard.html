@@ -12,17 +12,41 @@
       <p class="page-subtitle">
         今天日期：{{ today|date:"Y-m-d" }}
         <span class="separator-dot"></span>
-        顯示所有已過期與 {{ warning_days }} 天內即將到期的批次喵。
+        顯示所有已過期與 {{ warning_days }} 天內即將到期的批次 。
       </p>
     </div>
+    
 
     <div class="toolbar-actions">
       <a href="{% url 'inventory:drug_list' %}" class="btn btn-outline btn-sm">
         返回藥品清單
       </a>
+      <a href="{% url 'inventory:quarantine_dashboard' %}" class="btn btn-outline btn-sm">
+        隔離庫存
+      </a>
     </div>
   </div>
 
+  <div class="row g-2 mb-3">
+    <div class="col-md-4">
+      <div class="card shadow-sm"><div class="card-body">
+        <div class="text-muted small">已過期批次</div>
+        <div class="h4 mb-0">{{ expired_count }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm"><div class="card-body">
+        <div class="text-muted small">即將到期批次</div>
+        <div class="h4 mb-0">{{ near_expiry_count }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm"><div class="card-body">
+        <div class="text-muted small">隔離批次</div>
+        <div class="h4 mb-0">{{ quarantine_count }}</div>
+      </div></div>
+    </div>
+  </div>
   <!-- 系統訊息（messages） -->
   {% if messages %}
     <div class="mb-3">
@@ -41,7 +65,7 @@
         已過期批次（不得再發藥）
       </div>
       <div class="card-meta text-xs text-muted">
-        只顯示「效期 < 今天」且「尚有庫存」的批次喵。
+        只顯示「效期 < 今天」且「尚有庫存」的批次 。
       </div>
     </div>
 
@@ -57,6 +81,7 @@
                 <th style="width: 120px;">效期</th>
                 <th style="width: 110px;">剩餘庫存</th>
                 <th style="width: 180px;">建議處理</th>
+                <th style="width: 140px;">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -70,9 +95,21 @@
                   <td>
                     <span class="badge-status badge-status-danger">已過期</span>
                     <span class="text-muted-small d-block">
-                      建議：停止發藥、標記報廢或退貨喵。
+                      建議：停止發藥、標記報廢或退貨 。
                     </span>
                   </td>
+                  <!-- ✅ 這格就是「操作」 -->
+                  <td>
+                    <form method="post" action="{% url 'inventory:batch_destroy' b.id %}" style="display:inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="quantity" value="{{ b.quantity }}">
+                      <button class="btn btn-danger btn-sm" type="submit"
+                              onclick="return confirm('確定要整批報廢/銷毀嗎？ ')">
+                        整批銷毀
+                      </button>
+                    </form>
+                  </td>
+
                 </tr>
               {% endfor %}
             </tbody>
@@ -80,7 +117,7 @@
         </div>
       {% else %}
         <p class="text-muted-small mb-0">
-          目前沒有已過期且尚有庫存的批次喵，太棒了喵！
+          目前沒有已過期且尚有庫存的批次 ，太棒了 ！
         </p>
       {% endif %}
     </div>
@@ -93,7 +130,7 @@
         {{ warning_days }} 天內即將到期的批次
       </div>
       <div class="card-meta text-xs text-muted">
-        協助藥師優先發藥與控管進貨節奏喵。
+        協助藥師優先發藥與控管進貨節奏 。
       </div>
     </div>
 
@@ -109,6 +146,7 @@
                 <th style="width: 120px;">效期</th>
                 <th style="width: 110px;">剩餘庫存</th>
                 <th style="width: 180px;">提醒</th>
+                <th style="width: 140px;">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -122,8 +160,22 @@
                   <td>
                     <span class="badge-status badge-status-warning">即將到期</span>
                     <span class="text-muted-small d-block">
-                      建議：優先發藥、評估是否減少進貨喵。
+                      建議：優先發藥、評估是否減少進貨 。
                     </span>
+                  </td>
+
+                  <!-- ✅ 新增：操作（隔離） -->
+                  <td>
+                    <form method="post" action="{% url 'inventory:batch_quarantine' b.id %}" class="d-flex gap-1 align-items-center">
+                      {% csrf_token %}
+                      <input type="hidden" name="reason" value="near_expiry">
+                      <input type="hidden" name="note" value="即將到期手動隔離">
+
+                      <button class="btn btn-outline btn-sm" type="submit"
+                              onclick="return confirm('確定要隔離此批次嗎？ ')">
+                        隔離
+                      </button>
+                    </form>
                   </td>
                 </tr>
               {% endfor %}
@@ -132,8 +184,98 @@
         </div>
       {% else %}
         <p class="text-muted-small mb-0">
-          目前沒有 {{ warning_days }} 天內即將到期的庫存喵。
+          目前沒有 {{ warning_days }} 天內即將到期的庫存 。
         </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header card-header-flex">
+      <div class="card-title-sm">快速搜尋批次（可隔離）</div>
+      <div class="card-meta text-xs text-muted">輸入藥品代碼 / 名稱 / 批號，找到後手動隔離 。</div>
+    </div>
+
+    <div class="card-body">
+      <form method="get" class="d-flex gap-2 mb-3">
+        <input name="q" class="form-control form-control-sm"
+              placeholder="搜尋：代碼 / 名稱 / 批號" value="{{ q|default:'' }}">
+        <button class="btn btn-outline btn-sm" type="submit">搜尋</button>
+        <a class="btn btn-outline btn-sm" href="{% url 'inventory:expiry_dashboard' %}">清除</a>
+      </form>
+
+      {% if search_batches %}
+        <div class="table-container">
+          <table class="table table-hospital">
+            <thead>
+              <tr>
+                <th style="width: 140px;">藥品代碼</th>
+                <th>藥品名稱</th>
+                <th style="width: 120px;">批號</th>
+                <th style="width: 120px;">效期</th>
+                <th style="width: 110px;">剩餘庫存</th>
+                <th style="width: 160px;">狀態</th>
+                <th style="width: 140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in search_batches %}
+              <tr>
+                <td>{{ b.drug.code }}</td>
+                <td>{{ b.drug.name }}</td>
+                <td>{{ b.batch_no|default:"-" }}</td>
+                <td>{{ b.expiry_date|date:"Y-m-d" }}</td>
+                <td>{{ b.quantity }}</td>
+                <td>
+                  {% if b.status == b.STATUS_QUARANTINE %}
+                    <span class="badge-status badge-status-warning">隔離中</span>
+                  {% else %}
+                    <span class="badge-status badge-status-ok">正常</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if b.status == b.STATUS_QUARANTINE %}
+                    <span class="badge-status badge-status-warning">隔離中</span>
+                    <a class="btn btn-outline btn-sm ms-2"
+                      href="{% url 'inventory:quarantine_dashboard' %}">去隔離頁</a>
+                  {% else %}
+                    <form method="post"
+                          action="{% url 'inventory:batch_quarantine' b.id %}"
+                          class="d-flex flex-wrap gap-1 align-items-center">
+                      {% csrf_token %}
+
+                      {# ✅ 成功後回到同一個搜尋結果頁（保留 ?q=...） #}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                      <select name="reason" class="form-select form-select-sm" style="width: 140px;" required>
+                        <option value="" selected disabled>原因</option>
+                        <option value="packaging">包裝異常</option>
+                        <option value="temperature">溫控異常</option>
+                        <option value="recall">疑似召回/批次問題</option>
+                        <option value="source">來源/文件不齊</option>
+                        <option value="other">其他</option>
+                      </select>
+
+                      <input name="note"
+                            class="form-control form-control-sm"
+                            style="min-width: 200px;"
+                            placeholder="備註（必填）"
+                            required>
+
+                      <button class="btn btn-outline btn-sm" type="submit"
+                              onclick="return confirm('確定要隔離此批次嗎？ ')">
+                        隔離
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% elif q %}
+        <div class="text-muted-small">查無結果 。</div>
       {% endif %}
     </div>
   </div>

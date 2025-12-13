@@ -27,7 +27,8 @@ urlpatterns = [
     # ⭐ 6. 通用處方詳細內容頁（你的 logs 都在這裡）
     path("detail/<int:pk>/", views.prescription_detail, name="prescription_detail"),
 
-    path("pharmacy/<int:pk>/dispense/", views.dispense, name="dispense"),
+    path("pharmacy/<int:pk>/dispense/", views.dispense_confirm, name="dispense"),
+
     path(
         "pharmacy/<int:pk>/dispense/confirm/",
         views.dispense_confirm,

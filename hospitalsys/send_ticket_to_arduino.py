@@ -16,15 +16,15 @@ from django.utils import timezone
 from queues.models import VisitTicket
 from doctors.models import Doctor
 
-# === 串口設定，請把 COM3 改成你實際的 Port 喵 ===
-SERIAL_PORT = "COM3"  # 例如 COM4 / COM5，去裝置管理員看喵
+# === 串口設定，請把 COM3 改成你實際的 Port   ===
+SERIAL_PORT = "COM3"  # 例如 COM4 / COM5，去裝置管理員看 
 BAUDRATE = 9600
 
-DOCTOR_ID = 1  # 想顯示哪一位醫師的號碼就改這裡喵
+DOCTOR_ID = 1  # 想顯示哪一位醫師的號碼就改這裡 
 INTERVAL_SEC = 3  # 每幾秒更新一次
 
 def get_current_number_for_doctor(doctor_id):
-    """回傳指定醫師今天目前 CALLING/IN_PROGRESS 的號碼，沒有的話回 0 喵"""
+    """回傳指定醫師今天目前 CALLING/IN_PROGRESS 的號碼，沒有的話回 0  """
     today = timezone.localdate()
     doctor = Doctor.objects.filter(id=doctor_id, is_active=True).first()
     if not doctor:
@@ -48,13 +48,13 @@ def get_current_number_for_doctor(doctor_id):
 def main():
     print(f"[INFO] Opening serial port {SERIAL_PORT} ...")
     ser = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=1)
-    time.sleep(2)  # 等 Arduino reset 完喵
+    time.sleep(2)  # 等 Arduino reset 完 
 
     try:
         last_sent = None
         while True:
             number = get_current_number_for_doctor(DOCTOR_ID)
-            # 只在號碼有變動的時候才送，避免沒完沒了刷喵
+            # 只在號碼有變動的時候才送，避免沒完沒了刷 
             if number != last_sent:
                 last_sent = number
                 payload = f"{number:04d}\n"

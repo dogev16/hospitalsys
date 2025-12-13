@@ -9,11 +9,11 @@
     <h1 class="page-title">門診看板</h1>
     <p class="page-subtitle text-muted">
       今天日期：{{ today|date:"Y-m-d" }}<br>
-      即時顯示所有診間的叫號狀況喵。
+      即時顯示所有診間的叫號狀況 。
     </p>
   </div>
 
-  {# 🔽 新增：選擇要看的醫師喵 #}
+  {# 🔽 新增：選擇要看的醫師  #}
   <div class="mb-3 d-flex align-items-center gap-2">
     <form method="get" class="d-flex align-items-center gap-2">
       <label class="text-muted text-sm" for="doctor-select">顯示醫師：</label>
@@ -86,7 +86,7 @@
                     狀態：{{ row.next.get_status_display }}
                   </div>
                 {% else %}
-                  <p class="text-muted mb-0">沒有候診喵。</p>
+                  <p class="text-muted mb-0">沒有候診 。</p>
                 {% endif %}
               </div>
 
@@ -121,7 +121,7 @@
     </div>
   {% else %}
     <div class="alert alert-secondary text-center">
-      今天沒有任何叫號紀錄喵。
+      今天沒有任何叫號紀錄 。
     </div>
   {% endif %}
 </div>

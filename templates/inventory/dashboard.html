@@ -96,7 +96,7 @@
         color: #fff;
     }
 
-    /* 讓藥品超連結看起來像文字，但是滑過去有提示喵 */
+    /* 讓藥品超連結看起來像文字，但是滑過去有提示  */
     .drug-link {
         color: #0d6efd;
         text-decoration: none;
@@ -148,13 +148,13 @@
                 {% for d in low_stock_drugs %}
                     <tr>
                         <td>
-                            {# 點藥名 → 該藥的歷史紀錄喵 #}
+                            {# 點藥名 → 該藥的歷史紀錄  #}
                             <a href="{% url 'inventory:stock_history' %}?drug={{ d.id }}" class="drug-link">
                                 {{ d.name }}
                             </a>
                         </td>
 
-                        {# ✅ 使用「未過期批次總和」喵 #}
+                        {# ✅ 使用「未過期批次總和」  #}
                         <td>{{ d.non_expired_quantity }}</td>
                         <td>{{ d.reorder_level }}</td>
                         <td>
@@ -203,6 +203,7 @@
                         </td>
                         <td>{{ tx.get_reason_display }}</td>
                         <td>{{ tx.note }}</td>
+                        
                     </tr>
                 {% endfor %}
             </tbody>

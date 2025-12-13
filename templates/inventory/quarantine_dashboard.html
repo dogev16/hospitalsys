@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}隔離庫存{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">隔離庫存</h1>
+      <p class="page-subtitle">
+        顯示所有「隔離中」且仍有庫存的批次 。
+      </p>
+    </div>
+
+    <div class="toolbar-actions">
+      <a href="{% url 'inventory:expiry_dashboard' %}" class="btn btn-outline btn-sm">
+        返回效期管理
+      </a>
+      <a href="{% url 'inventory:drug_list' %}" class="btn btn-outline btn-sm">
+        返回藥品清單
+      </a>
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="card mb-4">
+    <div class="card-header card-header-flex">
+      <div class="card-title-sm">隔離批次清單</div>
+      <div class="card-meta text-xs text-muted">
+        隔離中批次不可發藥，請確認原因後再解除或轉報廢 。
+      </div>
+    </div>
+
+    <div class="card-body">
+      {% if batches %}
+        <div class="table-container">
+          <table class="table table-hospital">
+            <thead>
+              <tr>
+                <th style="width: 140px;">藥品代碼</th>
+                <th>藥品名稱</th>
+                <th style="width: 120px;">批號</th>
+                <th style="width: 120px;">效期</th>
+                <th style="width: 110px;">剩餘庫存</th>
+                <th style="width: 200px;">狀態</th>
+                <th style="width: 140px;">原因</th>
+                <th>備註</th>
+                <th style="width: 160px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in batches %}
+                <tr>
+                  <td>{{ b.drug.code }}</td>
+                  <td>{{ b.drug.name }}</td>
+                  <td>{{ b.batch_no|default:"-" }}</td>
+                  <td>{{ b.expiry_date|date:"Y-m-d" }}</td>
+                  <td>{{ b.quantity }}</td>
+                    
+                  <td>
+                    <span class="badge-status badge-status-warning">隔離中</span>
+                    <span class="text-muted-small d-block">
+                      建議：查驗來源 / 包裝 / 溫控紀錄後處理 。
+                    </span>
+                  </td>
+
+                  <td>{{ b.quarantine_reason|default:"-" }}</td>
+                  <td class="text-muted-small">{{ b.quarantine_note|default:"-" }}</td>
+
+                  <td>
+                    <div class="d-flex flex-column gap-2">
+
+                      <!-- 第一排：查紀錄（連結） -->
+                      <div class="d-flex flex-wrap gap-1">
+                        <a class="btn btn-outline btn-sm"
+                          href="{% url 'inventory:stock_history' %}?drug={{ b.drug.id }}">
+                          查紀錄
+                        </a>
+                      </div>
+
+                      <!-- 第二排：解除隔離 / 轉報廢（動作） -->
+                      <div class="d-flex flex-wrap gap-1">
+                        <form method="post"
+                              action="{% url 'inventory:batch_unquarantine' b.id %}"
+                              class="m-0">
+                          {% csrf_token %}
+                          <button class="btn btn-outline btn-sm" type="submit"
+                                  onclick="return confirm('確定要解除隔離並恢復為正常庫存嗎？ ')">
+                            解除隔離
+                          </button>
+                        </form>
+
+                        <form method="post"
+                              action="{% url 'inventory:batch_destroy' b.id %}"
+                              class="m-0">
+                          {% csrf_token %}
+                          <input type="hidden" name="quantity" value="{{ b.quantity }}">
+                          <button class="btn btn-danger btn-sm" type="submit"
+                                  onclick="return confirm('確定要將此隔離批次整批報廢嗎？ ')">
+                            轉報廢
+                          </button>
+                        </form>
+                      </div>
+
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted-small mb-0">
+          目前沒有隔離中的庫存批次 。
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

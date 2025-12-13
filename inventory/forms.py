@@ -45,7 +45,8 @@ class StockAdjustForm(forms.Form):
 class StockBatchForm(forms.ModelForm):
     class Meta:
         model = StockBatch
-        fields = ["batch_no", "expiry_date", "quantity"]
+        
+        fields = ["expiry_date", "quantity"]
         widgets = {
             "expiry_date": forms.DateInput(attrs={"type": "date"}),
         }

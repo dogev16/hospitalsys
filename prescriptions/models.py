@@ -116,7 +116,12 @@ class PrescriptionItem(models.Model):
     )
     quantity = models.PositiveIntegerField()
     usage = models.TextField(blank=True)
-
+    days_supply = models.PositiveIntegerField("療程天數", default=7)
+    treatment_days = models.PositiveIntegerField(
+        "預計用藥天數",
+        default=1,
+        help_text="例如連續吃幾天：1、3、7...  ",
+    )
     def __str__(self):
         return f"{self.drug} x {self.quantity}"
     

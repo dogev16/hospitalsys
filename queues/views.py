@@ -316,7 +316,7 @@ def doctor_panel(request):
         .order_by("-date", "-id")
     )
 
-    # debug 想看的話可以暫時打開這行喵：
+    # debug 想看的話可以暫時打開這行 ：
     # print("REJECTED:", list(rejected_prescriptions.values_list("id", flat=True)))
 
     # =============================
@@ -333,7 +333,7 @@ def doctor_panel(request):
 
         "today_appointments": today_appointments,
 
-        # 🆕 丟進 template 給你顯示提醒喵
+        # 🆕 丟進 template 給你顯示提醒 
         "rejected_prescriptions": rejected_prescriptions,
     }
 
@@ -350,7 +350,7 @@ def doctor_action(request, pk, act):
 def board(request):
     today = timezone.localdate()
 
-    # 1️⃣ 先把所有啟用中的醫師抓出來，給前端下拉選單用喵
+    # 1️⃣ 先把所有啟用中的醫師抓出來，給前端下拉選單用 
     doctors = Doctor.objects.filter(is_active=True).order_by("name")
 
     # 2️⃣ 看 URL 有沒有帶 ?doctor=ID
@@ -364,11 +364,11 @@ def board(request):
     )
 
     if doctor_id:
-        # 如果指定醫師，就只看那一位喵
+        # 如果指定醫師，就只看那一位 
         selected_doctor = get_object_or_404(Doctor, pk=doctor_id, is_active=True)
         tickets_today = tickets_today.filter(doctor=selected_doctor)
 
-    # 排序（就算只一位醫師也沒關係喵）
+    # 排序（就算只一位醫師也沒關係 ）
     tickets_today = tickets_today.order_by("doctor__name", "number")
 
     # 3️⃣ 一樣用原本的分組邏輯
@@ -404,7 +404,7 @@ def board(request):
 
 def api_current_number(request):
     """
-    回傳指定醫師今天的叫號資訊，給 Python → Arduino 用喵
+    回傳指定醫師今天的叫號資訊，給 Python → Arduino 用 
     GET 參數：
       - doctor_id: 醫師 ID (Doctor.pk)
     回傳 JSON：

@@ -15,6 +15,10 @@
         <a href="{{ back_url }}" class="btn btn-outline-secondary btn-sm">
             Back
         </a>
+        <a class="btn btn-outline-secondary btn-sm"
+            href="{% url 'inventory:stock_history_export_csv' %}?{% if request.GET %}{{ request.GET.urlencode }}{% endif %}">
+            Export CSV
+        </a>
     </div>
 
     {# 🔍 搜尋 + 篩選列 #}
@@ -65,6 +69,9 @@
                 <option value="">All types</option>
                 <option value="purchase" {% if reason == 'purchase' %}selected{% endif %}>Purchase</option>
                 <option value="dispense" {% if reason == 'dispense' %}selected{% endif %}>Dispense</option>
+                <option value="quarantine" {% if reason == 'quarantine' %}selected{% endif %}>Quarantine</option>
+                <option value="unquarantine" {% if reason == 'unquarantine' %}selected{% endif %}>Unquarantine</option>
+                <option value="destroy" {% if reason == 'destroy' %}selected{% endif %}>Destroy</option>
                 <option value="adjust" {% if reason == 'adjust' %}selected{% endif %}>Adjust</option>
             </select>
         </div>
@@ -146,10 +153,18 @@
                                     <td>{{ tx.drug.name }}</td>
                                     <td>
                                         <span class="badge
-                                            {% if tx.change > 0 %}
+                                            {% if tx.reason == 'purchase' %}
                                                 bg-success
-                                            {% elif tx.change < 0 %}
+                                            {% elif tx.reason == 'dispense' %}
                                                 bg-danger
+                                            {% elif tx.reason == 'quarantine' %}
+                                                bg-warning text-dark
+                                            {% elif tx.reason == 'unquarantine' %}
+                                                bg-info text-dark
+                                            {% elif tx.reason == 'destroy' %}
+                                                bg-dark
+                                            {% elif tx.reason == 'adjust' %}
+                                                bg-secondary
                                             {% else %}
                                                 bg-secondary
                                             {% endif %}

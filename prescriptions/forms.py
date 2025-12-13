@@ -22,10 +22,12 @@ class PrescriptionForm(forms.ModelForm):
 class PrescriptionItemForm(forms.ModelForm):
     class Meta:
         model = PrescriptionItem
-        fields = ["drug", "quantity", "usage"]
+        fields = ["drug", "quantity", "treatment_days", "usage"]
         widgets = {
             "usage": forms.Textarea(attrs={"rows": 2}),
+            "treatment_days": forms.NumberInput(attrs={"min": 1, "class": "form-control"}),
         }
+
 
 
 # 🔧 關鍵：這就是 views 要用的 PrescriptionItemFormSet  

@@ -99,7 +99,7 @@
     <!-- 主體兩欄 -->
     <div class="row g-4">
 
-        <!-- 左側：基本資訊 + 用藥明細 -->
+        <!-- 左側：基本資訊 + 用藥明細 + 扣庫存批次 -->
         <div class="col-lg-7">
 
             <!-- 基本資訊 -->
@@ -128,7 +128,7 @@
                             <div class="text-muted small">醫師</div>
                             <div>
                                 <span class="fw-semibold">
-                                    {{ prescription.doctor.user.get_full_name }}
+                                    {{ prescription.doctor.user.get_full_name|default:prescription.doctor.name }}
                                 </span>
                                 {% if prescription.doctor.department %}
                                     <span class="text-muted small">
@@ -283,7 +283,7 @@
                     </span>
                 </div>
                 <div class="card-body">
-                    {% if prescription.items.all %}
+                    {% if prescription.items.count %}
                         <div class="table-responsive">
                             <table class="table table-sm table-hover align-middle mb-0">
                                 <thead class="table-light">
@@ -322,10 +322,50 @@
                             </table>
                         </div>
                     {% else %}
-                        <p class="text-muted mb-0 small">目前尚未填寫任何用藥項目喵。</p>
+                        <p class="text-muted mb-0 small">目前尚未填寫任何用藥項目 。</p>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- ✅ 本處方實際扣庫存批次（放回左欄內，才不會跑版） -->
+            {% if dispense_batches %}
+            <div class="card app-card shadow-sm mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">本處方實際扣庫存批次</span>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border rounded-pill small px-2">
+                        {{ dispense_batches|length }} 筆
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>藥品</th>
+                                    <th style="width: 120px;">批號</th>
+                                    <th style="width: 120px;">效期</th>
+                                    <th class="text-end" style="width: 120px;">扣除數量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in dispense_batches %}
+                                <tr>
+                                    <td>{{ r.drug__name }}</td>
+                                    <td>{{ r.batch__batch_no|default:"-" }}</td>
+                                    <td>{{ r.batch__expiry_date|date:"Y-m-d" }}</td>
+                                    <td class="text-end">{{ r.total_change|floatformat:0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-muted small mt-2">
+                        * 只會在「已扣庫存」後出現，用於追溯實際使用到的批次 。
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
         </div>
 
         <!-- 右側：異動紀錄 / 稽核紀錄 -->
@@ -374,7 +414,7 @@
                             </table>
                         </div>
                     {% else %}
-                        <p class="text-muted mb-0 small">目前尚無異動紀錄喵。</p>
+                        <p class="text-muted mb-0 small">目前尚無異動紀錄 。</p>
                     {% endif %}
                 </div>
             </div>
@@ -424,7 +464,7 @@
                             </table>
                         </div>
                     {% else %}
-                        <p class="text-muted mb-0 small">目前尚無稽核紀錄喵。</p>
+                        <p class="text-muted mb-0 small">目前尚無稽核紀錄 。</p>
                     {% endif %}
                 </div>
             </div>
@@ -432,25 +472,33 @@
         </div>
     </div>
 
-    <!-- 底部返回說明 -->
+    <!-- ✅ 底部返回 -->
     <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            {% if request.user.doctor %}
-                <a href="{% url 'prescriptions:doctor_prescription_list' %}"
-                   class="btn btn-outline-secondary btn-sm">
-                    ⬅ 回醫師處方歷史
-                </a>
-            {% elif request.user.patient %}
-                <a href="{% url 'prescriptions:patient_history' %}"
-                   class="btn btn-outline-secondary btn-sm">
-                    ⬅ 回我的處方歷史
-                </a>
-            {% endif %}
-        </div>
-        <div class="small text-muted">
-            * 此頁面僅提供查詢，不可直接修改處方內容。
-        </div>
+    <div>
+        {% if is_doctor %}
+        <a href="{% url 'prescriptions:doctor_prescription_list' %}" class="btn btn-outline-secondary btn-sm">
+            ⬅ 回醫師處方歷史
+        </a>
+        {% elif is_patient %}
+        <a href="{% url 'prescriptions:patient_history' %}" class="btn btn-outline-secondary btn-sm">
+            ⬅ 回我的處方歷史
+        </a>
+        {% elif is_pharmacy %}
+        <a href="{% url 'prescriptions:pharmacy_panel' %}" class="btn btn-outline-secondary btn-sm">
+            ⬅ 回藥局面板
+        </a>
+        {% else %}
+        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm">
+            ⬅ 回首頁
+        </a>
+        {% endif %}
     </div>
+
+    <div class="small text-muted">
+        * 此頁面僅提供查詢，不可直接修改處方內容。
+    </div>
+    </div>
+
 
 </div>
 

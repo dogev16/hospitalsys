@@ -58,19 +58,19 @@
         </div>
     {% endif %}
 
-    {# 🆕 若處方被藥師退回，顯示醒目提醒喵 #}
+    {# 🆕 若處方被藥師退回，顯示醒目提醒  #}
     {% if prescription and prescription.verify_status == prescription.VERIFY_REJECTED %}
         <div class="alert alert-warning mb-3">
-            <strong>⚠ 藥師退回處方喵：</strong><br>
+            <strong>⚠ 藥師退回處方 ：</strong><br>
             {% if prescription.verify_note %}
                 {{ prescription.verify_note }}
             {% else %}
-                藥師退回此處方，請檢查藥品或劑量設定喵。
+                藥師退回此處方，請檢查藥品或劑量設定 。
             {% endif %}
         </div>
     {% endif %}
 
-    {# 病人資訊卡片：優先用 ticket.patient，沒有就用 prescription.patient 喵 #}
+    {# 病人資訊卡片：優先用 ticket.patient，沒有就用 prescription.patient   #}
     {% with p=ticket.patient|default:prescription.patient %}
     <div class="card mb-3">
         <div class="card-header card-header-between">
@@ -88,10 +88,10 @@
 
         <div class="card-body">
 
-            <!-- 上半部：基本資訊 + 聯絡資訊喵 -->
+            <!-- 上半部：基本資訊 + 聯絡資訊  -->
             <div class="patient-info-layout">
 
-                <!-- 左欄：基本資料喵 -->
+                <!-- 左欄：基本資料  -->
                 <div class="patient-info-column">
                     <div class="patient-info-section-title">基本資料</div>
                     <dl class="patient-info-list">
@@ -122,7 +122,7 @@
                     </dl>
                 </div>
 
-                <!-- 右欄：聯絡 / 緊急聯絡人喵 -->
+                <!-- 右欄：聯絡 / 緊急聯絡人  -->
                 <div class="patient-info-column">
                     <div class="patient-info-section-title">聯絡資訊</div>
                     <dl class="patient-info-list">
@@ -145,7 +145,7 @@
 
             </div>
 
-            <!-- 下半部：醫療風險區塊喵 -->
+            <!-- 下半部：醫療風險區塊  -->
             <div class="patient-risk-layout">
                 <div class="patient-info-section-title mb-1">醫療風險 / 病史</div>
 
@@ -229,8 +229,15 @@
                             <tr>
                                 <th>藥品</th>
                                 <th style="width: 120px;">數量</th>
+                                <th style="width: 120px;">用藥天數</th>
                                 <th style="width: 220px;">用法</th>
                                 <th style="width: 80px;">刪除</th>
+                                <td>
+                                    {{ item_form.treatment_days }}
+                                    {% if item_form.treatment_days.errors %}
+                                        <div class="form-error">{{ item_form.treatment_days.errors }}</div>
+                                    {% endif %}
+                                </td>
                             </tr>
                         </thead>
 
@@ -256,6 +263,13 @@
                                     </td>
 
                                     <td>
+                                        {{ item_form.treatment_days }}
+                                        {% if item_form.treatment_days.errors %}
+                                            <div class="form-error">{{ item_form.treatment_days.errors }}</div>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <td>
                                         {{ item_form.usage }}
                                         {% if item_form.usage.errors %}
                                             <div class="form-error">{{ item_form.usage.errors }}</div>
@@ -267,6 +281,8 @@
                                             {{ item_form.DELETE }}
                                         {% endif %}
                                     </td>
+                                    
+
                                 </tr>
                             {% endfor %}
                         </tbody>

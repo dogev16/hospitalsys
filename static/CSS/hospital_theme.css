@@ -382,7 +382,7 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* 依你的 Prescription 狀態自己對應顏色喵 */
+/* 依你的 Prescription 狀態自己對應顏色  */
 .status-badge.status_pending,
 .status-badge.status-待確認 {
     background-color: #fff7e6;
@@ -719,7 +719,7 @@ body {
     gap: 10px;
 }
 
-/* 列印時隱藏按鈕、導航列等喵 */
+/* 列印時隱藏按鈕、導航列等  */
 @media print {
     .no-print,
     .navbar,
@@ -869,7 +869,7 @@ body {
   gap: 8px;
 }
 
-/* 列印時隱藏按鈕與外框，只留藥單本體喵 */
+/* 列印時隱藏按鈕與外框，只留藥單本體  */
 @media print {
   body {
     background: #ffffff;
@@ -913,7 +913,7 @@ body {
     color: #6b7280; /* 跟你其他 subtitle 類似的灰色 */
     margin-bottom: 2px;
 }
-/* 病人資訊卡版面喵 ---------------------------------- */
+/* 病人資訊卡版面  ---------------------------------- */
 
 .patient-info-layout {
     display: grid;
@@ -963,7 +963,7 @@ body {
     color: #111827;
 }
 
-/* 醫療風險區塊喵 */
+/* 醫療風險區塊  */
 
 .patient-risk-layout {
     border-top: 1px dashed #e5e7eb;
@@ -988,3 +988,52 @@ body {
     color: #111827;
     white-space: pre-line;
 }
+
+.table-compact th, .table-compact td { padding: 10px 12px; vertical-align: top; }
+.strong { font-weight: 700; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+.filter-bar { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+.filter-left { display:flex; gap:8px; flex-wrap:wrap; }
+.filter-right { display:flex; gap:8px; align-items:center; }
+
+.chip {
+  display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px;
+  border:1px solid #ddd; text-decoration:none;
+}
+.chip.is-active { border-color:#999; font-weight:700; }
+
+.status-stack { display:flex; flex-direction:column; gap:6px; }
+.status-line { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.status-label { width:40px; color:#666; }
+
+.badge { display:inline-flex; padding:3px 8px; border-radius:999px; font-weight:700; border:1px solid transparent; }
+.badge-success { border-color:#a7d7b1; }
+.badge-warning { border-color:#f3d28a; }
+.badge-danger  { border-color:#f0a6a6; }
+
+.status-meta { color:#777; }
+
+.inline-details { display:inline-block; margin-left:6px; }
+.inline-details summary { cursor:pointer; display:inline; color:#555; }
+.problem-box { margin-top:6px; padding:8px 10px; border:1px dashed #ddd; border-radius:8px; }
+
+.row-warning { background: rgba(255, 193, 7, 0.08); }
+.rx-table th, .rx-table td { padding: 10px 12px; vertical-align: top; }
+.strong { font-weight: 700; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+.rx-status-block.compact { display:flex; flex-direction:column; gap:6px; }
+.rx-status-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.status-label { min-width: 40px; color:#666; font-weight:600; }
+
+.status-dot {
+  width: 8px; height: 8px; border-radius: 999px; display:inline-block;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+}
+
+.rx-details { display:inline-block; margin-left:6px; }
+.rx-details summary { cursor:pointer; display:inline; color:#555; }
+.rx-problems { margin-top:6px; padding:8px 10px; border:1px dashed #ddd; border-radius:8px; }
+
+.row-warning { background: rgba(255, 193, 7, 0.08); }

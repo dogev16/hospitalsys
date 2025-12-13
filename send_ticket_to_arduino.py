@@ -2,16 +2,16 @@ import time
 import requests
 import serial
 
-# ======== 這裡依照你的環境修改喵 ========
+# ======== 這裡依照你的環境修改  ========
 API_URL = "http://127.0.0.1:8000/queues/api/current_number/"
-DOCTOR_ID = 1          # 要顯示哪一個醫師的叫號，就填那個 Doctor.id 喵
-SERIAL_PORT = "COM3"   # 你的 Arduino 接在哪一個 COM Port，就改掉喵
+DOCTOR_ID = 1          # 要顯示哪一個醫師的叫號，就填那個 Doctor.id  
+SERIAL_PORT = "COM3"   # 你的 Arduino 接在哪一個 COM Port，就改掉 
 BAUDRATE = 9600
 POLL_INTERVAL = 3.0    # 幾秒抓一次資料
 # ====================================
 
 def fetch_numbers():
-    """呼叫 Django API，拿到 current / next 號碼喵"""
+    """呼叫 Django API，拿到 current / next 號碼 """
     try:
         resp = requests.get(
             API_URL,
@@ -35,14 +35,14 @@ def fetch_numbers():
 def main():
     print(f"[INFO] Connect serial: {SERIAL_PORT} @ {BAUDRATE}")
     ser = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=1)
-    time.sleep(2)  # 給 Arduino 一點時間重啟喵
+    time.sleep(2)  # 給 Arduino 一點時間重啟 
 
     last_sent = None
 
     while True:
         current_num, next_num = fetch_numbers()
 
-        # 如果沒有號碼，就用 0 代表「無」喵
+        # 如果沒有號碼，就用 0 代表「無」 
         if current_num is None:
             current_num = 0
         if next_num is None:

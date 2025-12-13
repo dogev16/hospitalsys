@@ -1,11 +1,10 @@
-from django import forms
+import csv
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import F, Q, Sum  
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required, permission_required
 
-from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from inventory.utils import adjust_stock
@@ -16,6 +15,9 @@ from .forms import DrugForm, StockAdjustForm, StockBatchForm
 from common.utils import group_required
 from .models import Drug, StockBatch, StockTransaction
 from django.core.paginator import Paginator 
+from inventory.utils import stock_in as stock_in_utils
+from inventory.utils import quarantine_batch, unquarantine_batch, destroy_batch
+from django.http import HttpResponse
 
 # ------------------------------
 # 儀表板
@@ -328,50 +330,91 @@ def stock_history(request):
 @login_required
 def stock_history_drug(request, drug_id):
     # 重導向到新版統一的 Stock History 頁面
-    return redirect(f"/inventory/history/?drug={drug_id}")
+    return redirect(f"{reverse('inventory:stock_history')}?drug={drug_id}")
 
 
 
-@group_required("PHARMACY")  # 只有藥局群組可以看這個頁面喵（沒設定群組就先暫時拿掉）
+
+@group_required("PHARMACY")
 def expiry_dashboard(request):
     """
     藥品效期管理儀表板：
-    - 列出所有「已過期」且尚有庫存的批次
-    - 列出「N 天內到期」且尚有庫存的批次
+    - 已過期（不可發藥）
+    - N 天內到期（提醒）
+    - 隔離批次（不可發藥，待藥師處理）
     """
     today = timezone.localdate()
-    warning_days = 30  # 你可以改成 60 / 90 之類喵
+    warning_days = 30
+    warn_date = today + timedelta(days=warning_days)
 
-    # 🔴 已過期（expiry_date < today 且 quantity > 0）
     expired_batches = (
         StockBatch.objects
         .select_related("drug")
         .filter(
+            status=StockBatch.STATUS_NORMAL,
             expiry_date__lt=today,
             quantity__gt=0,
         )
         .order_by("expiry_date", "drug__name", "batch_no")
     )
 
-    # 🟡 即將於 N 天內到期（today <= expiry_date <= today + N）
     near_expiry_batches = (
         StockBatch.objects
         .select_related("drug")
         .filter(
+            status=StockBatch.STATUS_NORMAL,
             expiry_date__gte=today,
-            expiry_date__lte=today + timedelta(days=warning_days),
+            expiry_date__lte=warn_date,
             quantity__gt=0,
         )
         .order_by("expiry_date", "drug__name", "batch_no")
     )
 
-    context = {
+    quarantined_batches = (
+        StockBatch.objects
+        .select_related("drug")
+        .filter(
+            status=StockBatch.STATUS_QUARANTINE,
+            quantity__gt=0,
+        )
+        .order_by("expiry_date", "drug__name", "batch_no")
+    )
+
+    q = (request.GET.get("q") or "").strip()
+    search_batches = StockBatch.objects.none()
+    if q:
+        search_batches = (
+            StockBatch.objects
+            .select_related("drug")
+            .filter(quantity__gt=0)
+            .filter(
+                Q(drug__code__icontains=q) |
+                Q(drug__name__icontains=q) |
+                Q(batch_no__icontains=q)
+            )
+            .order_by("expiry_date", "id")[:50]
+        )
+
+    expired_count = expired_batches.count()
+    near_expiry_count = near_expiry_batches.count()
+    quarantine_count = quarantined_batches.count()
+
+
+    return render(request, "inventory/expiry_dashboard.html", {
         "today": today,
         "warning_days": warning_days,
         "expired_batches": expired_batches,
         "near_expiry_batches": near_expiry_batches,
-    }
-    return render(request, "inventory/expiry_dashboard.html", context)
+        "quarantined_batches": quarantined_batches,
+
+        "expired_count": expired_count,
+        "near_expiry_count": near_expiry_count,
+        "quarantine_count": quarantine_count,
+
+        "q": q,
+        "search_batches": search_batches,
+    })
+
 
 @group_required("PHARMACY")
 @transaction.atomic
@@ -381,27 +424,187 @@ def stock_in(request, drug_id):
     if request.method == "POST":
         form = StockBatchForm(request.POST)
         if form.is_valid():
-            batch = form.save(commit=False)
-            batch.drug = drug
-            batch.save()
+            expiry_date = form.cleaned_data["expiry_date"]
+            quantity = form.cleaned_data["quantity"]
 
-            # 🔥 批次總和 → 寫回 Drug.stock_quantity
-            total_qty = drug.batches.aggregate(total=Sum("quantity"))["total"] or 0
-            drug.stock_quantity = total_qty
-            drug.save(update_fields=["stock_quantity"])
+            # 如果你表單有 note / supplier_batch_no 就拿出來，沒有也沒關係
+            note = form.cleaned_data.get("note", "") if hasattr(form, "cleaned_data") else ""
 
-            # 建立異動紀錄
-            StockTransaction.objects.create(
-                drug=drug,
-                change=batch.quantity,
-                reason="purchase",
-                note=f"進貨批號：{batch.batch_no}, 效期：{batch.expiry_date}",
-                operator=request.user,
-            )
+            try:
+                batch = stock_in_utils(
+                    drug=drug,
+                    quantity=quantity,
+                    expiry_date=expiry_date,
+                    operator=request.user,
+                    note=note,
+                )
+            except ValueError as e:
+                messages.error(request, str(e))
+                return redirect("inventory:stock_in", drug_id=drug.id)
 
-            messages.success(request, f"成功進貨 {batch.quantity} 喵！")
+            messages.success(request, f"成功進貨 {batch.quantity}  ！（批號 {batch.batch_no}）")
             return redirect("inventory:drug_list")
     else:
         form = StockBatchForm()
 
     return render(request, "inventory/stock_in.html", {"drug": drug, "form": form})
+
+
+# inventory/views.py
+
+@group_required("PHARMACY")
+@transaction.atomic
+def batch_quarantine(request, batch_id):
+    if request.method != "POST":
+        return redirect("inventory:expiry_dashboard")
+
+    batch = get_object_or_404(StockBatch.objects.select_for_update(), pk=batch_id)
+
+    if batch.quantity <= 0:
+        messages.warning(request, "此批次已無庫存，不需隔離 。")
+        return redirect("inventory:expiry_dashboard")
+
+    reason = (request.POST.get("reason") or "").strip()
+    note = (request.POST.get("note") or "").strip()
+
+    if not reason or not note:
+        messages.error(request, "隔離需要選原因，且備註必填 。")
+        return redirect("inventory:expiry_dashboard")
+
+    quarantine_batch(
+        batch,
+        operator=request.user,
+        reason=reason,
+        note=note,
+    )
+
+    messages.success(request, f"已將批次 {batch.batch_no or '-'} 設為隔離 。")
+    return redirect("inventory:quarantine_dashboard")
+
+
+
+
+
+
+@group_required("PHARMACY")
+@transaction.atomic
+def batch_destroy(request, batch_id):
+    if request.method != "POST":
+        return redirect("inventory:expiry_dashboard")
+
+    batch = get_object_or_404(StockBatch.objects.select_for_update(), pk=batch_id)
+
+    qty_str = (request.POST.get("quantity") or "").strip()
+    qty = None
+    if qty_str:
+        if not qty_str.isdigit():
+            messages.error(request, "報廢數量必須是整數 。")
+            return redirect("inventory:expiry_dashboard")
+        qty = int(qty_str)
+
+    reason = (request.POST.get("reason") or "").strip() or "藥師判斷報廢/銷毀"
+
+    try:
+        destroy_batch(batch, quantity=qty, operator=request.user, note=reason)
+    except ValueError as e:
+        messages.error(request, str(e))
+        return redirect("inventory:expiry_dashboard")
+
+    messages.success(request, f"已處理批次 {batch.batch_no or '-'} 的報廢/銷毀 。")
+    return redirect("inventory:expiry_dashboard")
+
+
+@group_required("PHARMACY")
+def quarantine_dashboard(request):
+    batches = (
+        StockBatch.objects
+        .select_related("drug")
+        .filter(status=StockBatch.STATUS_QUARANTINE, quantity__gt=0)
+        .order_by("expiry_date", "drug__name", "batch_no")
+    )
+    return render(request, "inventory/quarantine_dashboard.html", {"batches": batches})
+
+
+@group_required("PHARMACY")
+@transaction.atomic
+def batch_unquarantine(request, batch_id):
+    if request.method != "POST":
+        return redirect("inventory:quarantine_dashboard")
+
+    batch = get_object_or_404(StockBatch.objects.select_for_update(), pk=batch_id)
+
+    try:
+        unquarantine_batch(batch, operator=request.user, note="藥師解除隔離")
+    except ValueError as e:
+        messages.error(request, str(e))
+        return redirect("inventory:quarantine_dashboard")
+
+    messages.success(request, "已解除隔離，批次已回到正常庫存 。")
+    return redirect("inventory:quarantine_dashboard")
+
+@group_required("PHARMACY")
+def stock_history_export_csv(request):
+    qs = (
+        StockTransaction.objects
+        .select_related("drug", "batch", "operator", "prescription")
+        .order_by("-created_at")
+    )
+
+    drug_id = (request.GET.get("drug") or "").strip()
+    reason = (request.GET.get("reason") or "").strip()
+    q_operator = (request.GET.get("q_operator") or "").strip()
+    date_from = (request.GET.get("date_from") or "").strip()
+    date_to = (request.GET.get("date_to") or "").strip()
+    q_drug = (request.GET.get("q_drug") or "").strip()
+
+    if drug_id:
+        qs = qs.filter(drug_id=drug_id)
+    if reason:
+        qs = qs.filter(reason=reason)
+    if q_drug:
+        qs = qs.filter(drug__name__icontains=q_drug)
+    if q_operator:
+        qs = qs.filter(
+            Q(operator__username__icontains=q_operator)
+            | Q(operator__first_name__icontains=q_operator)
+            | Q(operator__last_name__icontains=q_operator)
+        )
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    resp = HttpResponse(content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = 'attachment; filename="stock_history.csv"'
+    resp.write("\ufeff")  # Excel 友善 BOM  
+
+    w = csv.writer(resp)
+    w.writerow([
+        "DateTime",
+        "DrugCode",
+        "DrugName",
+        "BatchNo",
+        "ExpiryDate",
+        "Reason",
+        "Change",
+        "Rx",
+        "Operator",
+        "Note",
+    ])
+
+    for tx in qs:
+        w.writerow([
+            tx.created_at.strftime("%Y-%m-%d %H:%M"),
+            tx.drug.code if tx.drug else "",
+            tx.drug.name if tx.drug else "",
+            (tx.batch.batch_no if tx.batch else ""),
+            (tx.batch.expiry_date.strftime("%Y-%m-%d") if tx.batch and tx.batch.expiry_date else ""),
+            tx.reason,
+            tx.change,
+            (tx.prescription.id if tx.prescription else ""),
+            (tx.operator.get_username() if tx.operator else ""),
+            tx.note or "",
+        ])
+
+    return resp
+
