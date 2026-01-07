@@ -1,0 +1,719 @@
+/* ================================
+   0) 全站基礎 Base
+================================ */
+
+:root {
+  --bg: #f5f7fb;
+  --text: #111827;
+  --muted: #6b7280;
+
+  --border: #e5e7eb;
+  --border-soft: #eef2f7;
+  --surface: #ffffff;
+  --surface-soft: #f9fafb;
+
+  --primary: #2563eb;
+  --primary-700: #1d4ed8;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+}
+
+body {
+  background-color: var(--bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+    "Microsoft JhengHei", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.main-container {
+  padding-top: 20px;
+  padding-bottom: 30px;
+}
+
+/* ================================
+   1) Page Header / Title
+================================ */
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-title,
+.page-header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #1f2933;
+}
+
+.page-subtitle,
+.page-header-subtitle {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.text-muted { color: var(--muted); }
+.text-muted-small { font-size: 12px; color: #888; }
+.text-nowrap { white-space: nowrap; }
+
+/* inline link */
+.link-inline {
+  color: #3f7bc1;
+  text-decoration: none;
+  font-weight: 500;
+}
+.link-inline:hover { text-decoration: underline; }
+
+/* ================================
+   2) Card
+================================ */
+
+.card {
+  background: var(--surface);
+  border-radius: 10px;
+  border: 1px solid #e2e6f0;
+}
+
+.card-header {
+  border-bottom: 1px solid #e5e7f2;
+  background-color: #f7f8fc;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.card + .card { margin-top: 10px; }
+
+.card-header-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ================================
+   3) Buttons (統一：一套就好)
+================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #d2d7e5;
+
+  background-color: #ffffff;
+  color: #1f2937;
+
+  font-size: 0.9rem;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.05s ease;
+}
+
+.btn:hover {
+  background-color: #eef2ff;
+  border-color: #9ca3db;
+  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08);
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.btn:disabled,
+.btn-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* sizes */
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+.btn-link-sm {
+  font-size: 0.85rem;
+  padding: 3px 9px;
+}
+
+.btn-icon-left { gap: 6px; }
+
+/* variants */
+.btn-main {
+  border-color: var(--primary);
+  background-image: linear-gradient(135deg, var(--primary), var(--primary-700));
+  color: #ffffff;
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.25);
+  font-weight: 500;
+}
+.btn-main:hover {
+  background-image: linear-gradient(135deg, var(--primary-700), #1e40af);
+  border-color: var(--primary-700);
+}
+
+.btn-secondary {
+  background-color: #f3f4ff;
+  color: #111827;
+  border-color: #d2d7e5;
+}
+.btn-secondary:hover {
+  background-color: #e5edff;
+  border-color: #9ca3db;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--primary);
+  border-color: #cbd5f5;
+}
+.btn-outline:hover {
+  background-color: #e5edff;
+  border-color: var(--primary);
+}
+
+.btn-danger {
+  background: #fff;
+  border-color: #ef4444;
+  color: #b91c1c;
+}
+.btn-danger:hover { background: #fff5f5; }
+
+/* soft */
+.btn-soft {
+  background-color: #eef3ff;
+  border-color: #d3ddff;
+  color: #445;
+}
+
+/* ================================
+   4) Status dot / pills / badges
+================================ */
+
+/* 小燈號 */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+
+.status-dot-ok   { background-color: #22c55e; }
+.status-dot-warn { background-color: #eab308; }
+.status-dot-bad  { background-color: #ef4444; }
+.status-dot-muted{ background-color: #d1d5db; }
+
+/* 通用 badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: #374151;
+  white-space: nowrap;
+}
+
+.badge.ok   { background: #e6f6ea; border-color:#a7f3d0; color: #16803c; }
+.badge.warn { background: #fff4e5; border-color:#fde68a; color: #8a5a00; }
+.badge.bad  { background: #fdecea; border-color:#fecaca; color: #b71c1c; }
+
+/* 舊的狀態 badge 系列（保留給處方/掛號那種） */
+.badge-status { border-radius: 999px; font-size: 11px; padding: 3px 8px; }
+.badge-status-primary { background-color: #e2ebff; color: #2055a5; }
+.badge-status-success { background-color: #e0f4ea; color: #1c7b4d; }
+.badge-status-warning { background-color: #fff4d6; color: #a26b02; }
+.badge-status-danger  { background-color: #ffe0e0; color: #b3261e; }
+.badge-status-muted   { background-color: #eef0f4; color: #666; }
+
+/* ================================
+   5) Tables
+================================ */
+
+.table-hospital { font-size: 13px; }
+.table-hospital thead { background-color: #f3f4fa; }
+.table-hospital thead th { border-bottom-width: 1px; }
+.table-hospital tbody tr:nth-child(even) { background-color: #fafbff; }
+
+.table-hospital .cell-label {
+  font-weight: 600;
+  color: #555;
+}
+
+/* compact table helper */
+.table-compact th,
+.table-compact td { padding: 10px 12px; vertical-align: top; }
+
+.rx-table th,
+.rx-table td { padding: 10px 12px; vertical-align: top; }
+
+/* row highlight */
+.row-warning { background: rgba(255, 193, 7, 0.08); }
+
+/* ================================
+   6) Form helpers
+================================ */
+
+.form-section-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ================================
+   7) Small blocks / status text
+================================ */
+
+.status-block {
+  text-align: left;
+  line-height: 1.4;
+  font-size: 12px;
+}
+.status-block-row + .status-block-row { margin-top: 3px; }
+
+.status-label {
+  font-weight: 600;
+  color: #555;
+  margin-right: 2px;
+}
+
+/* ================================
+   8) Filters / chips
+================================ */
+
+.filter-bar { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+.filter-left { display:flex; gap:8px; flex-wrap:wrap; }
+.filter-right { display:flex; gap:8px; align-items:center; }
+
+.chip {
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid #ddd;
+  text-decoration:none;
+}
+.chip.is-active { border-color:#999; font-weight:700; }
+
+/* ================================
+   9) Utility
+================================ */
+
+.strong { font-weight: 700; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+/* ================================
+   10) Pharmacy Dispense Page
+================================ */
+
+.pharmacy-dispense-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dispense-header {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 20px;
+  font-size: 14px;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #444;
+}
+
+/* 狀態膠囊 */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.status-success { background: #e6f5ec; color: #16803c; }
+.status-warning { background: #fff7e6; color: #b7791f; }
+.status-danger  { background: #fdecea; color: #c53030; }
+
+/* 備註框 */
+.notes-box {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+/* 用藥表格 */
+.rx-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  margin-top: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rx-items-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.rx-items-table th,
+.rx-items-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.usage-col { text-align: left; }
+
+.stock-ok  { color: var(--success); font-weight: 600; }
+.stock-low { color: var(--danger);  font-weight: 600; }
+
+.actions-row { display: flex; gap: 12px; margin-top: 15px; }
+
+/* ================================
+   11) RX Print Page (列印)
+================================ */
+
+/* 外框頁 */
+.rx-print-page {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 40px;
+}
+
+.rx-print-card {
+  width: 820px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  padding: 24px 32px 28px;
+  font-size: 14px;
+}
+
+.rx-print-header { text-align: center; margin-bottom: 18px; }
+.rx-print-title { font-size: 20px; font-weight: 700; letter-spacing: 0.25em; margin-bottom: 4px; }
+.rx-print-subtitle { font-size: 13px; color: var(--muted); }
+
+.rx-print-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 32px;
+  margin-bottom: 16px;
+}
+
+.rx-print-label { color: var(--muted); margin-right: 4px; }
+.rx-print-value { font-weight: 500; color: var(--text); }
+
+.rx-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+.rx-print-table th,
+.rx-print-table td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.rx-print-table th { background: #f9fafb; font-weight: 600; }
+.rx-print-usage { text-align: left; }
+.rx-print-empty { color: #9ca3af; text-align: center; }
+
+.rx-print-note-block { display: flex; margin-bottom: 10px; }
+.rx-print-note-label { flex: 0 0 80px; color: #374151; font-weight: 600; }
+.rx-print-note-body {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.rx-print-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.rx-print-disclaimer { max-width: 520px; line-height: 1.4; }
+.rx-print-sign { white-space: nowrap; }
+.rx-print-sign-line {
+  display: inline-block;
+  min-width: 150px;
+  border-bottom: 1px solid #111827;
+  margin-left: 4px;
+}
+
+.rx-print-actions { margin-top: 18px; display: flex; gap: 8px; }
+
+/* 列印模式 */
+@media print {
+  body { background: #ffffff !important; }
+
+  .no-print,
+  .navbar,
+  .top-nav,
+  .page-header,
+  .rx-print-actions,
+  .footer {
+    display: none !important;
+  }
+
+  .rx-print-page { padding: 0; }
+  .rx-print-card {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    width: 100%;
+  }
+}
+
+/* ================================
+   12) Patient page layout
+================================ */
+
+.patient-info-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.patient-info-column {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.patient-info-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.patient-info-list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.patient-info-row {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  column-gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.patient-info-row dt {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: right;
+}
+
+.patient-info-row dd {
+  margin: 0;
+  color: var(--text);
+}
+
+/* risk block */
+.patient-risk-layout {
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.patient-risk-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 16px;
+  font-size: 13px;
+}
+
+.patient-risk-item .info-label {
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.patient-risk-item .info-value {
+  color: var(--text);
+  white-space: pre-line;
+}
+
+/* ================================
+   13) Misc
+================================ */
+
+.badge-count {
+  background-color: #f4f4f8;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 2px 7px;
+}
+
+/* ================================
+   Patient detail page
+================================ */
+
+.patient-detail .dot-sep { margin: 0 8px; color: #cbd5e1; }
+
+.patient-head {
+  align-items: flex-start;
+}
+
+.patient-meta strong {
+  font-weight: 700;
+}
+
+.patient-actions .btn {
+  box-shadow: none; /* header 上不要太浮誇 */
+}
+
+.patient-grid {
+  margin-bottom: 14px;
+}
+
+.patient-card {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+}
+
+.patient-card .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.patient-card .card-title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hint-list {
+  display: grid;
+  gap: 10px;
+}
+
+.hint-item {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 10px 10px;
+  border: 1px solid #eef2f7;
+  background: #fbfdff;
+  border-radius: 12px;
+}
+
+.hint-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f3f4ff;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.hint-text {
+  color: #374151;
+  line-height: 1.5;
+}
+
+.table-wrap {
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.table .col-actions {
+  width: 200px;
+  text-align: left;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  padding: 22px 10px;
+  text-align: center;
+  border: 1px dashed #e5e7eb;
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.empty-emoji {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+.app-link{
+  color:#2563eb;
+  text-decoration:none;
+  font-weight:600;
+}
+.app-link:hover{ text-decoration:underline; }

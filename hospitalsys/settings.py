@@ -130,6 +130,12 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/internal/"
 LOGOUT_REDIRECT_URL = "/internal/"
