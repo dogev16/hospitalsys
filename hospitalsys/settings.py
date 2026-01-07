@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "prescriptions",
     "inventory",
     "public",
+    "whitenoise.runserver_nostatic"
 ]
 
 
