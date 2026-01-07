@@ -1,0 +1,71 @@
+{% extends "public/_base_public_v1.html" %}
+
+{% block title %}醫師介紹{% endblock %}
+
+{% block hero %}
+<section class="pub-hero">
+  <h1>醫師介紹</h1>
+  <p>可依科別篩選醫師，掛號請前往門診掛號頁。</p>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<section class="pub-card pub-card-pad pub-section">
+  <div class="pub-section-title">科別</div>
+
+  <div class="pub-chips">
+    {# 全部：當 selected_department 沒有值時視為選中 #}
+    <a href="{% url 'public:doctor_list' %}"
+       class="pub-chip {% if not selected_department %}is-active{% endif %}">
+      全部
+    </a>
+
+    {% for dep in departments %}
+      <a href="{% url 'public:doctor_list' %}?department={{ dep|urlencode }}"
+         class="pub-chip {% if selected_department == dep %}is-active{% endif %}">
+        {{ dep }}
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if doctors %}
+<section class="pub-section">
+  <div class="pub-grid">
+    {% for d in doctors %}
+      <article class="pub-card pub-card-pad pub-doc-card">
+
+        <header class="pub-doc-head">
+          <div class="pub-doc-name">
+            {% if d.name %}{{ d.name }}{% else %}{{ d }}{% endif %}
+          </div>
+
+          {% if d.department %}
+            <span class="pub-badge">{{ d.department }}</span>
+          {% endif %}
+        </header>
+
+        <div class="pub-doc-body">
+          {% if d.room %}
+            <div class="pub-doc-meta">診間：{{ d.room }}</div>
+          {% endif %}
+          <div class="pub-doc-note">實際看診順序以現場叫號為準。</div>
+        </div>
+
+        <footer class="pub-doc-foot">
+          <a class="pub-btn pub-btn-primary"
+             href="{% url 'public:register' %}?department={{ d.department|urlencode }}&doctor_id={{ d.id }}">
+            直接掛號
+          </a>
+        </footer>
+
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+  <div class="pub-help pub-section">目前沒有符合條件的醫師。</div>
+{% endif %}
+
+{% endblock %}

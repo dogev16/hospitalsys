@@ -1,53 +1,92 @@
 {% extends "base.html" %}
 
+{% block title %}病人列表{% endblock %}
+
 {% block content %}
-<h1>病人列表 </h1>
+<div class="app-container">
+  <div class="app-toolbar">
+    <div>
+      <div class="app-page-title">病人列表</div>
+      <div class="app-muted">查詢、查看與維護病人基本資料</div>
+    </div>
 
-<form method="get" style="margin-bottom: 1rem;">
-  <label>
-    關鍵字搜尋：
-    <input type="text" name="q" value="{{ query }}" placeholder="姓名 / 身分證 / 電話 / 病歷號">
-  </label>
-  <button type="submit">搜尋</button>
-  {% if query %}
-    <a href="{% url 'patients:patient_list' %}">清除搜尋</a>
-  {% endif %}
-</form>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <a class="app-btn app-btn-primary" href="{% url 'patients:patient_create' %}">
+        ＋ 新增病人
+      </a>
+    </div>
+  </div>
 
-<p>
-  <!-- 這裡的 URL 名稱請換成你實際的「新增病人」路由  -->
-  <a href="{% url 'patients:patient_create' %}">＋ 新增病人</a>
-</p>
+  <div class="app-card app-section" style="margin-top:12px;">
+    <div class="app-section-title">搜尋</div>
+    <div class="app-section-help">支援姓名 / 身分證 / 電話 / 病歷號</div>
 
-<table border="1" cellpadding="5" cellspacing="0">
-  <thead>
-    <tr>
-      <th>病歷號</th>
-      <th>姓名</th>
-      <th>身分證</th>
-      <th>電話</th>
-      <th>生日</th>
-      <th>動作</th>
-    </tr>
-  </thead>
-   <tbody>
-    {% for p in patients %}
-      <tr>
-        <td>{{ p.chart_no }}</td>
-        <td>{{ p.full_name }}</td>
-        <td>{{ p.national_id }}</td>
-        <td>{{ p.phone }}</td>
-        <td>{{ p.birth_date }}</td>
-        <td>
-          <a href="{% url 'patients:patient_detail' p.id %}">查看</a> |
-          <a href="{% url 'patients:patient_update' p.id %}">編輯</a>
-        </td>
-      </tr>
-    {% empty %}
-      <tr>
-        <td colspan="6">目前沒有資料 ～</td>
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    <form method="get" style="margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <input
+        class="app-input"
+        type="text"
+        name="q"
+        value="{{ query }}"
+        placeholder="輸入關鍵字（姓名 / 身分證 / 電話 / 病歷號）"
+        style="min-width: 280px; flex:1;"
+      >
+
+      <button class="app-btn app-btn-secondary" type="submit">搜尋</button>
+
+      {% if query %}
+        <a class="app-btn app-btn-ghost" href="{% url 'patients:patient_list' %}">清除</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="app-card app-section" style="margin-top:14px;">
+    <div class="app-section-title">搜尋結果</div>
+    <div class="app-section-help">
+      {% if query %}
+        目前關鍵字：<span style="font-weight:700;">{{ query }}</span>
+      {% else %}
+        顯示全部病人
+      {% endif %}
+    </div>
+
+    <div class="app-table-wrap" style="margin-top:12px;">
+      <table class="app-table">
+        <thead>
+          <tr>
+            <th style="width:110px;">病歷號</th>
+            <th>姓名</th>
+            <th style="width:150px;">身分證</th>
+            <th style="width:140px;">電話</th>
+            <th style="width:120px;">生日</th>
+            <th style="width:140px;">動作</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for p in patients %}
+            <tr>
+              <td><span class="app-mono">{{ p.chart_no }}</span></td>
+              <td style="font-weight:700;">{{ p.full_name }}</td>
+              <td class="app-mono">{{ p.national_id }}</td>
+              <td class="app-mono">{{ p.phone }}</td>
+              <td>{{ p.birth_date }}</td>
+              <td>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                  <a class="app-link" href="{% url 'patients:patient_detail' p.id %}">查看</a>
+                  <a class="app-link" href="{% url 'patients:patient_update' p.id %}">編輯</a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="app-muted" style="padding:16px;">
+                目前沒有資料～
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -169,12 +169,25 @@
                                                 bg-secondary
                                             {% endif %}
                                         ">
-                                            {{ tx.get_reason_display }}
+                                            {{ tx.get_reason_display }}     
                                         </span>
                                     </td>
-                                    <td class="text-end">
-                                        {% if tx.change > 0 %}+{% endif %}{{ tx.change }}
+                                    <td>
+                                    {% if tx.change > 0 %}
+                                        <span style="color:#16a34a; font-weight:600;">
+                                        +{{ tx.change }}
+                                        </span>
+                                    {% elif tx.change < 0 %}
+                                        <span style="color:#dc2626; font-weight:600;">
+                                        {{ tx.change }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color:#6b7280;">
+                                        0
+                                        </span>
+                                    {% endif %}
                                     </td>
+
                                     <td>
                                         {% if tx.prescription %}
                                             Rx #{{ tx.prescription.id }}

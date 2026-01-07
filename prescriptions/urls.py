@@ -36,4 +36,8 @@ urlpatterns = [
     ),
     path("print/<int:pk>/", views.prescription_print, name="prescription_print"),
 
+    path("public-requests/", views.public_request_list, name="public_request_list"),
+    path("public-requests/<int:pk>/approve/", views.public_request_approve, name="public_request_approve"),
+    path("public-requests/<int:pk>/reject/", views.public_request_reject, name="public_request_reject"),
+
 ]

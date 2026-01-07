@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-e-@ke@lb#0d41l5n^l0()(h_jcv&(^)27b-l#3gacnjc)l*hbs'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1","localhost",".onrender.com",]
 
 
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "queues",
     "prescriptions",
     "inventory",
+    "public",
 ]
 
 
@@ -57,6 +58,7 @@ MIDDLEWARE = [
     #"common.middleware.LoginRequiredMiddleware",  
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 
@@ -127,8 +129,8 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/internal/"
+LOGOUT_REDIRECT_URL = "/internal/"
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

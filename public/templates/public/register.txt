@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>門診掛號</title>
+</head>
+<body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC, Arial; margin: 0;">
+
+  <div style="padding: 14px 18px; border-bottom: 1px solid #eee; display:flex; gap:14px; align-items:center;">
+    <div style="font-weight:700;">
+      {% if profile and profile.name %}{{ profile.name }}{% else %}本院{% endif %}
+    </div>
+    <div style="margin-left:auto; display:flex; gap:14px;">
+      <a href="{% url 'public:home' %}" style="text-decoration:none;">首頁</a>
+      <a href="{% url 'public:register' %}" style="text-decoration:none;">門診掛號</a>
+      <a href="{% url 'public:home' %}#contact" style="text-decoration:none;">聯絡我們</a>
+    </div>
+  </div>
+
+  <div style="padding: 22px 18px; max-width: 760px; margin: 0 auto;">
+    <h1 style="margin:0 0 10px 0;">門診掛號</h1>
+    <div style="color:#666; margin-bottom:14px;">
+      不需登入；請填寫正確資料，實際看診順序以現場叫號為準。
+    </div>
+
+    {% if messages %}
+      <div style="margin-bottom:14px;">
+        {% for message in messages %}
+          <div style="border:1px solid #f1c; padding:10px; border-radius:10px; margin-bottom:8px;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" style="border:1px solid #eee; border-radius:14px; padding:14px;">
+      {% csrf_token %}
+
+      <div style="display:grid; gap:12px;">
+
+        <!-- 科別 -->
+        <label>
+          科別
+          <select id="department" name="department" required
+                  style="display:block; width:100%; padding:10px; margin-top:6px;">
+            <option value="">請先選擇科別</option>
+            {% for dep in departments %}
+              <option value="{{ dep }}" {% if selected_department == dep %}selected{% endif %}>
+                {{ dep }}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+        <div style="font-size:12px; color:#666; margin-top:-6px;">
+          先選科別後，系統會顯示該科醫師。
+        </div>
+
+        <!-- 醫師 -->
+        <label>
+          醫師
+          <select name="doctor_id" required
+                  {% if not selected_department %}disabled{% endif %}
+                  style="display:block; width:100%; padding:10px; margin-top:6px;">
+
+            <option value="">
+              {% if selected_department %}請選擇醫師{% else %}請先選科別{% endif %}
+            </option>
+
+            {% for d in doctors %}
+              <option value="{{ d.id }}"{% if posted.doctor_id == d.id|stringformat:"s" or selected_doctor_id == d.id|stringformat:"s" %} selected{% endif %}>
+                {% if d.department %}
+                  {{ d.name }}（{{ d.department }}）
+                {% else %}
+                  {{ d.name }}
+                {% endif %}
+              </option>
+            {% endfor %}
+
+          </select>
+        </label>
+
+        <div style="font-size:12px; color:#666; margin-top:-6px;">
+          如遇門診調整請以公告為準。
+        </div>
+
+        {% if doctor_leave_info %}
+          <div style="margin-top:6px; font-size:12px; color:#c00;">
+            ⚠ 該醫師於 {{ doctor_leave_info.start_date }} ～ {{ doctor_leave_info.end_date }} 停診，請改選其他日期或醫師。
+            {% if doctor_leave_info.reason %}
+              <div style="margin-top:4px; color:#a00;">原因：{{ doctor_leave_info.reason }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+
+
+        <!-- 日期/時段 -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <label>
+            日期
+            <input type="date" name="date" required
+                    value="{{ posted.date|default:selected_date_str|default:'' }}"
+                    min="{{ min_date }}" max="{{ max_date }}"
+                    style="display:block; width:100%; padding:10px; margin-top:6px;">
+            <div style="font-size:12px; color:#666; margin-top:6px;">
+              僅提供今天起未來 30 天內掛號。
+            </div>
+          </label>
+
+          <label>
+            時間
+            <select name="time" required
+                    style="display:block; width:100%; padding:10px; margin-top:6px;">
+              <option value="">請選擇時間</option>
+
+              {% for t in available_slots %}
+                <option value="{{ t }}"
+                  {% if posted.time == t|stringformat:"s" %}selected{% endif %}>
+                  {{ t }}
+                </option>
+              {% endfor %}
+            </select>
+
+            {% if available_slots|length == 0 %}
+              <div style="font-size:12px; color:#c00; margin-top:6px;">
+                此日期目前沒有可掛號時段
+              </div>
+            {% endif %}
+          </label>
+
+
+        <hr style="border:none; border-top:1px solid #eee; margin:6px 0;">
+
+        <!-- 基本資料 -->
+        <label>
+          姓名
+          <input type="text" name="name" required value="{{ posted.name|default:'' }}"
+                 style="display:block; width:100%; padding:10px; margin-top:6px;">
+        </label>
+
+        <label>
+          身分證字號
+          <input type="text" name="national_id" required value="{{ posted.national_id|default:'' }}"
+                 style="display:block; width:100%; padding:10px; margin-top:6px;">
+        </label>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <label>
+            生日
+            <input type="date" name="birth_date" required value="{{ posted.birth_date|default:'' }}"
+                   style="display:block; width:100%; padding:10px; margin-top:6px;">
+          </label>
+
+          <label>
+            聯絡電話
+            <input type="text" name="phone" required value="{{ posted.phone|default:'' }}"
+                   style="display:block; width:100%; padding:10px; margin-top:6px;">
+          </label>
+        </div>
+
+        {% if doctor_leave_info %}
+          <button type="submit" disabled
+            style="padding:10px 14px; border:1px solid #ccc; border-radius:12px; background:#f5f5f5; color:#999; cursor:not-allowed;">
+            停診中，無法掛號
+          </button>
+
+          <div style="margin-top:6px; font-size:12px; color:#a00;">
+            請更換日期或醫師後再嘗試掛號。
+          </div>
+        {% else %}
+          <button type="submit"
+            style="padding:10px 14px; border:1px solid #222; border-radius:12px; background:#fff; cursor:pointer;">
+            送出掛號
+          </button>
+        {% endif %}
+        
+        <div style="font-size:12px; color:#666;">
+          取消/改期請電話或現場櫃台處理。
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function updateQueryAndReload(opts) {
+      const url = new URL(window.location.href);
+
+      // 讀目前頁面的欄位
+      const depEl = document.getElementById("department");
+      const docEl = document.querySelector('select[name="doctor_id"]');
+      const dateEl = document.querySelector('input[name="date"]');
+
+      const dep = depEl ? depEl.value : "";
+      const doc = docEl ? docEl.value : "";
+      const date = dateEl ? dateEl.value : "";
+
+      // department
+      if (dep) url.searchParams.set("department", dep);
+      else url.searchParams.delete("department");
+
+      // doctor_id
+      if (opts && opts.clearDoctor) {
+        url.searchParams.delete("doctor_id");
+      } else {
+        if (doc) url.searchParams.set("doctor_id", doc);
+        else url.searchParams.delete("doctor_id");
+      }
+
+      // date
+      if (opts && opts.clearDate) {
+        url.searchParams.delete("date");
+      } else {
+        if (date) url.searchParams.set("date", date);
+        else url.searchParams.delete("date");
+      }
+
+      window.location.href = url.toString();
+    }
+
+    // ✅ 科別改變：刷新 + 清掉 doctor/date（避免跨科別殘留）
+    const dept = document.getElementById("department");
+    if (dept) {
+      dept.addEventListener("change", () => {
+        updateQueryAndReload({ clearDoctor: true, clearDate: true });
+      });
+    }
+
+    // ✅ 醫師改變：刷新（讓停診提示能即時出現）
+    const docSel = document.querySelector('select[name="doctor_id"]');
+    if (docSel) {
+      docSel.addEventListener("change", () => {
+        updateQueryAndReload({ clearDate: false });
+      });
+    }
+
+    // ✅ 日期改變：刷新（doctor_id + date 都在 URL 才能算出 doctor_leave_info）
+    const dateInput = document.querySelector('input[name="date"]');
+    if (dateInput) {
+      dateInput.addEventListener("change", () => {
+        updateQueryAndReload({});
+      });
+    }
+
+    // ✅ 如果一開始就已選科別，讓畫面更快聚焦到醫師選擇
+    (function () {
+      const hasDept = "{{ selected_department|default:'' }}".trim().length > 0;
+      if (hasDept) {
+        const doctorSelect = document.querySelector('select[name="doctor_id"]');
+        if (doctorSelect) doctorSelect.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    })();
+  </script>
+
+
+</body>
+</html>

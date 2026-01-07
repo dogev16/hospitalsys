@@ -1,0 +1,190 @@
+{% extends "public/_base_public_v1.html " %}
+
+{% block title %}
+  {% if profile and profile.name %}{{ profile.name }}{% else %}中小型醫院{% endif %}
+{% endblock %}
+
+{% block hero %}
+<section class="pub-hero">
+  <h1>
+    {% if profile and profile.name %}{{ profile.name }}{% else %}哈基米全人醫療中心{% endif %}
+  </h1>
+
+  <p>
+    {% if profile and profile.description %}
+      {{ profile.description }}
+    {% else %}
+      提供門診掛號與公告資訊，實際看診請依現場叫號與櫃台作業為準。
+    {% endif %}
+  </p>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+    <a class="pub-btn pub-btn-primary" href="{% url 'public:register' %}">門診掛號</a>
+    <a class="pub-btn pub-btn-ghost" href="#hours">門診時間</a>
+    <a class="pub-btn pub-btn-ghost" href="#contact">聯絡我們</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<!-- About -->
+<section id="about" class="pub-card pub-card-pad pub-section">
+  <div class="pub-section-title">醫院介紹</div>
+
+  <div class="pub-help" style="line-height:1.7;">
+    <div style="font-weight:900; margin-bottom:6px;">
+      {% if profile and profile.name %}{{ profile.name }}{% else %}本院{% endif %}
+    </div>
+
+    <div>
+      {% if profile and profile.description %}
+        {{ profile.description }}
+      {% else %}
+        本院提供一般門診服務與基本檢查，並提供線上門診掛號。
+        如有特殊狀況（停診、門診調整）請以公告為準。
+      {% endif %}
+    </div>
+
+    <div class="pub-help" style="margin-top:10px; font-size:12px;">
+      溫馨提醒：初診或回診請攜帶健保卡與相關資料。
+    </div>
+  </div>
+</section>
+
+<!-- Registration Entry -->
+<section id="registration" class="pub-card pub-card-pad pub-section">
+  <div class="pub-section-title">門診掛號</div>
+  <div class="pub-help" style="margin-bottom:12px;">
+    不需登入；請填寫正確資料。實際看診順序以現場叫號為準。
+  </div>
+  <a class="pub-btn pub-btn-primary" href="{% url 'public:register' %}">前往門診掛號</a>
+</section>
+
+<!-- Departments Quick Links -->
+<section class="pub-card pub-card-pad pub-section">
+  <div class="pub-section-title">科別掛號</div>
+  <div class="pub-help" style="margin-bottom:10px;">點選科別後，會直接帶入掛號頁面。</div>
+
+  {% if homepage_departments %}
+    <div class="pub-chips">
+      {% for dep in homepage_departments %}
+        <a class="pub-chip" href="{% url 'public:register' %}?department={{ dep|urlencode }}">
+          {{ dep }}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="pub-help">目前尚未設定科別。</div>
+  {% endif %}
+</section>
+
+<!-- Doctors -->
+<section class="pub-section">
+  <div class="pub-section-title">門診醫師</div>
+  <div class="pub-help" style="margin-bottom:8px;">
+    掛號請依科別與醫師選擇；如遇門診調整請以公告為準。
+  </div>
+  <a class="pub-btn pub-btn-ghost" href="{% url 'public:doctor_list' %}">查看更多 →</a>
+
+  {% if homepage_doctors %}
+    <div class="pub-grid" style="margin-top:12px;">
+      {% for d in homepage_doctors %}
+        <article class="pub-card pub-card-pad pub-doc-card">
+          <header class="pub-doc-head">
+            <div class="pub-doc-name">
+              {% if d.name %}{{ d.name }}{% else %}{{ d }}{% endif %}
+            </div>
+            {% if d.department %}
+              <span class="pub-badge">{{ d.department }}</span>
+            {% endif %}
+          </header>
+
+          <div class="pub-doc-body">
+            {% if d.room %}
+              <div class="pub-doc-meta">診間：{{ d.room }}</div>
+            {% endif %}
+            <div class="pub-doc-note">初診請攜帶健保卡與相關資料。</div>
+          </div>
+
+          <footer class="pub-doc-foot" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="pub-btn pub-btn-primary"
+               href="{% url 'public:register' %}?department={{ d.department|urlencode }}&doctor_id={{ d.id }}">
+              直接掛號
+            </a>
+            <a class="pub-btn pub-btn-ghost" href="#hours">看門診時間</a>
+          </footer>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="pub-help" style="margin-top:10px;">目前尚未設定門診醫師資訊。</div>
+  {% endif %}
+</section>
+
+<!-- Announcements -->
+<section class="pub-section">
+  <div class="pub-section-title">最新公告</div>
+
+  {% if announcements %}
+    <div class="pub-grid" style="grid-template-columns: 1fr; gap: 12px; margin-top:12px;">
+      {% for a in announcements %}
+        <article class="pub-card pub-card-pad">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div style="font-weight:900;">{{ a.title }}</div>
+            {% if a.is_pinned %}
+              <span class="pub-badge" style="border-color: rgba(239,68,68,0.25); color:#991b1b; background: rgba(239,68,68,0.08);">
+                置頂
+              </span>
+            {% endif %}
+            <div class="pub-help" style="margin-left:auto; font-size:12px;">
+              {{ a.start_date }} ～ {{ a.end_date }}
+            </div>
+          </div>
+          <div class="pub-help" style="margin-top:8px; white-space:pre-wrap; line-height:1.7;">
+            {{ a.content }}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="pub-help" style="margin-top:10px;">目前沒有公告。</div>
+  {% endif %}
+</section>
+
+<!-- Hours -->
+<section id="hours" class="pub-card pub-card-pad pub-section">
+  <div class="pub-section-title">門診時間</div>
+  <div class="pub-help" style="white-space:pre-wrap; line-height:1.7;">
+    {% if profile and profile.opening_hours %}
+      {{ profile.opening_hours }}
+    {% else %}
+週一～週五：上午 / 下午
+週六：上午
+週日：休診
+（請依公告與現場狀況為準）
+    {% endif %}
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact" class="pub-card pub-card-pad pub-section" style="margin-bottom:22px;">
+  <div class="pub-section-title">聯絡我們</div>
+
+  <div class="pub-help" style="line-height:1.8;">
+    <div>電話：{% if profile %}{{ profile.phone }}{% else %}（尚未設定）{% endif %}</div>
+    <div>地址：{% if profile %}{{ profile.address }}{% else %}（尚未設定）{% endif %}</div>
+
+    {% if profile and profile.map_url %}
+      <div>
+        地圖：<a href="{{ profile.map_url }}" target="_blank" rel="noreferrer">開啟地圖</a>
+      </div>
+    {% endif %}
+
+    <div class="pub-help" style="margin-top:10px; font-size:12px;">
+      急症請就近急診或撥打 119。
+    </div>
+  </div>
+</section>
+
+{% endblock %}

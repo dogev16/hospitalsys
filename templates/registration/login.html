@@ -1,100 +1,130 @@
 {% extends "base.html" %}
-{% block title %}登入{% endblock %}
+{% block title %}內部登入{% endblock %}
 
 {% block content %}
-<h1>登入 </h1>
+<div class="app-container">
+  <div class="app-card" style="max-width:520px; margin: 36px auto; padding: 18px;">
+    <div class="app-section-title">內部系統登入</div>
+    <div class="app-section-help">限授權人員使用（管理員 / 醫師 / 櫃台 / 藥師）</div>
 
-<!-- 錯誤訊息美化  -->
-{% if form.errors %}
-<div style="
-    background:#ffe5e5;
-    border-left:5px solid #ff4d4d;
-    padding:10px 15px;
-    margin-bottom:15px;
-    border-radius:5px;
-    color:#b30000;
-">
-    <strong>登入失敗 ！</strong><br>
-    帳號或密碼可能輸入錯誤 。
+    {% if form.errors %}
+      <div class="app-alert app-alert-danger" style="margin-top:12px;">
+        <div style="font-weight:700; margin-bottom:6px;">登入失敗</div>
+
+        {# 非欄位錯誤：帳密不對、人機驗證不對常會出現在這裡 #}
+        {% if form.non_field_errors %}
+          {% for e in form.non_field_errors %}
+            <div>{{ e }}</div>
+          {% endfor %}
+        {% else %}
+          <div>帳號或密碼可能輸入錯誤。</div>
+        {% endif %}
+
+        {# 欄位錯誤：保險起見也顯示 captcha 欄位錯誤 #}
+        {% if form.captcha.errors %}
+          {% for e in form.captcha.errors %}
+            <div>{{ e }}</div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <form method="post" style="margin-top:14px;">
+      {% csrf_token %}
+
+      <div class="app-form-grid">
+        <div class="app-form-field">
+          <label class="app-label" for="id_username">帳號</label>
+          <input
+            id="id_username"
+            name="username"
+            type="text"
+            class="app-input"
+            autocomplete="username"
+            placeholder="輸入帳號"
+            value="{{ form.username.value|default_if_none:'' }}"
+            required
+          >
+        </div>
+
+        <div class="app-form-field">
+          <label class="app-label" for="id_password">密碼</label>
+
+          <div class="app-input-group">
+            <input
+              id="id_password"
+              name="password"
+              type="password"
+              class="app-input"
+              autocomplete="current-password"
+              placeholder="輸入密碼"
+              required
+            >
+            <button
+              type="button"
+              class="app-btn app-btn-secondary"
+              id="togglePassword"
+              style="padding:8px 10px; min-width: 42px;"
+              aria-label="顯示或隱藏密碼"
+              title="顯示/隱藏"
+            >👁️</button>
+          </div>
+
+          <div id="capsWarning" class="app-muted" style="display:none; margin-top:6px;">
+            ⚠️ CapsLock 已開啟
+          </div>
+        </div>
+
+        {# Simple Captcha（你說只要 A 就好，所以保留很輕量） #}
+        <div class="app-form-field">
+          <label class="app-label" for="id_captcha">人機驗證</label>
+
+          <div class="app-muted" style="margin-bottom:8px;">
+            題目：<strong>{{ request.session.login_captcha_question }}</strong>
+          </div>
+
+          <input
+            id="id_captcha"
+            name="captcha"
+            type="text"
+            inputmode="numeric"
+            class="app-input"
+            placeholder="輸入答案"
+            value="{{ form.captcha.value|default_if_none:'' }}"
+            required
+          >
+          <div class="app-muted" style="margin-top:6px;">（輸入上面算式答案）</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+        <a class="app-btn app-btn-secondary" href="/">返回外部網站</a>
+        <button class="app-btn app-btn-primary" type="submit">登入</button>
+      </div>
+    </form>
+  </div>
 </div>
-{% endif %}
 
-<form method="post" style="max-width: 350px;">
-  {% csrf_token %}
-
-  <!-- Username -->
-  <div style="margin-bottom: 15px;">
-    <label for="id_username">帳號 </label><br>
-    {{ form.username }}
-  </div>
-
-  <!-- Password with toggle + CapsLock -->
-  <div style="margin-bottom: 15px;">
-    <label for="id_password">密碼 </label><br>
-
-    <div style="position: relative;">
-      {{ form.password }}
-
-      <!-- 👁️ toggle -->
-      <span
-        id="togglePassword"
-        style="
-          position:absolute;
-          right:10px;
-          top:50%;
-          transform:translateY(-50%);
-          cursor:pointer;
-          user-select:none;
-          color:#555;
-        "
-      >👁️</span>
-    </div>
-
-    <!-- CapsLock 提醒  -->
-    <small id="capsWarning" style="color:red; display:none;">
-      ⚠️ CapsLock  ！
-    </small>
-  </div>
-
-  <button type="submit">登入 </button>
-</form>
-
-<!-- JS for toggle + CapsLock warning -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+  const pwd = document.getElementById("id_password");
+  const toggle = document.getElementById("togglePassword");
+  const capsWarning = document.getElementById("capsWarning");
 
-    // ===== 顯示 / 隱藏密碼  =====
-    const pwd = document.getElementById("id_password");
-    const toggle = document.getElementById("togglePassword");
+  if (toggle && pwd) {
+    toggle.addEventListener("click", function () {
+      const isPwd = pwd.type === "password";
+      pwd.type = isPwd ? "text" : "password";
+      toggle.textContent = isPwd ? "🙈" : "👁️";
+    });
 
-    toggle.onclick = function () {
-        if (pwd.type === "password") {
-            pwd.type = "text";
-            toggle.textContent = "🙈";
-        } else {
-            pwd.type = "password";
-            toggle.textContent = "👁️";
-        }
+    const checkCaps = (event) => {
+      const on = event.getModifierState && event.getModifierState("CapsLock");
+      capsWarning.style.display = on ? "block" : "none";
     };
-
-    // ===== CapsLock 檢測  =====
-    const capsWarning = document.getElementById("capsWarning");
-
-    pwd.addEventListener("keyup", function (event) {
-        if (event.getModifierState("CapsLock")) {
-            capsWarning.style.display = "block";
-        } else {
-            capsWarning.style.display = "none";
-        }
-    });
-
-    pwd.addEventListener("keydown", function (event) {
-        if (event.getModifierState("CapsLock")) {
-            capsWarning.style.display = "block";
-        } else {
-            capsWarning.style.display = "none";
-        }
-    });
+    pwd.addEventListener("keyup", checkCaps);
+    pwd.addEventListener("keydown", checkCaps);
+  }
 });
 </script>
 {% endblock %}

@@ -1,0 +1,91 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}哈基米全人醫療中心{% endblock %}</title>
+
+  <link rel="stylesheet" href="{% static 'public/public.css' %}">
+  {% block extra_css %}{% endblock %}
+
+</head>
+
+<body class="pub-body">
+
+
+  <a class="pub-skip" href="#main">跳到主要內容</a>
+
+  <header class="pub-topbar">
+    <div class="pub-container pub-topbar-inner">
+
+      <div class="pub-brand">
+        <a class="pub-brand-link" href="{% url 'public:home' %}">哈基米全人醫療中心</a>
+        <span class="pub-brand-sub">門診掛號與看診資訊</span>
+      </div>
+
+      <nav class="pub-nav" aria-label="主要導覽">
+        <a class="pub-nav-link {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}"
+           href="{% url 'public:home' %}">
+          首頁
+        </a>
+
+        <a class="pub-nav-link {% if request.resolver_match.url_name == 'doctor_list' %}is-active{% endif %}"
+           href="{% url 'public:doctor_list' %}">
+          醫師介紹
+        </a>
+
+        <a class="pub-nav-link pub-nav-link-cta {% if request.resolver_match.url_name == 'register' %}is-active{% endif %}"
+           href="{% url 'public:register' %}">
+          門診掛號
+        </a>
+
+        <a class="pub-nav-link"
+           href="{% url 'public:home' %}#contact">
+          聯絡我們
+        </a>
+
+        <a class="pub-nav-link pub-nav-link-ghost"
+           href="{% url 'index' %}">
+          內部系統
+        </a>
+      </nav>
+
+    </div>
+  </header>
+
+  {% if messages %}
+    <div class="pub-container pub-flash">
+      {% for message in messages %}
+        <div class="pub-alert pub-alert-{{ message.tags|default:'info' }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main id="main" class="pub-main">
+    <div class="pub-container">
+      {% block hero %}{% endblock %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <footer class="pub-footer">
+    <div class="pub-container pub-footer-inner">
+      <div>
+        <div class="pub-footer-title">哈基米全人醫療中心</div>
+        <div class="pub-footer-sub">© {% now "Y" %} All rights reserved.</div>
+      </div>
+
+      <div class="pub-footer-right">
+        <a class="pub-footer-link" href="{% url 'public:home' %}">首頁</a>
+        <a class="pub-footer-link" href="{% url 'public:doctor_list' %}">醫師介紹</a>
+        <a class="pub-footer-link" href="{% url 'public:register' %}">掛號</a>
+      </div>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

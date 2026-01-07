@@ -3,20 +3,70 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}門診系統{% endblock %}</title>
+
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <link rel="stylesheet" href="{% static 'css/hospital_theme.css' %}">
+  {% block extra_css %}{% endblock %}
 </head>
+
 <body>
-  <div>
-    <a href="/">首頁</a>
-    {% if user.is_authenticated %}
-      ｜ {{ user.username }} ｜ <a href="/logout/">登出</a>
-    {% else %}
-      ｜ <a href="/login/">登入</a>
-    {% endif %}
+  <!-- Top Bar -->
+  <header class="app-topbar">
+    <div class="app-topbar-inner">
+      <div class="app-brand">
+        <a class="app-brand-link" href="{% url 'index' %}">門診系統</a>
+        <span class="app-brand-dot">·</span>
+        <span class="app-brand-sub">Internal</span>
+      </div>
+
+      <nav class="app-nav">
+        <a class="app-nav-link" href="{% url 'index' %}">內部首頁</a>
+        <a class="app-nav-link" href="{% url 'public:home' %}">外部首頁</a>
+        {% if user.is_authenticated %}
+          <span class="app-nav-sep">｜</span>
+          <span class="app-user">👤 {{ user.username }}</span>
+          <span class="app-nav-sep">｜</span>
+          <a class="app-nav-link" href="{% url 'logout' %}">登出</a>
+        {% else %}
+          <span class="app-nav-sep">｜</span>
+          <a class="app-nav-link" href="{% url 'login' %}">登入</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <!-- App Shell -->
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="app-sidebar" aria-label="功能選單">
+      {% block sidebar %}
+        <div class="app-side-title">功能選單</div>
+        <div class="app-muted" style="margin-top:6px;">
+          （此頁未設定 sidebar）
+        </div>
+      {% endblock %}
+    </aside>
+
+    <!-- Content -->
+    <main class="app-main">
+      <div class="app-page">
+        {% if messages %}
+          <div class="app-card app-flash">
+            {% for message in messages %}
+              <div class="app-alert app-alert-{{ message.tags|default:'info' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+
+      {% block extra_js %}{% endblock %}
+    </main>
   </div>
-  <hr>
-  {% block content %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}前台掛號申請審核{% endblock %}
+
+{% block content %}
+<div class="app-container">
+  <div class="app-toolbar">
+    <div>
+      <div class="app-page-title">前台掛號申請審核</div>
+      <div class="app-muted">顯示所有待審核的前台掛號申請，請櫃台確認後核准或拒絕</div>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span class="app-badge app-badge-warn">
+        待審核：{{ requests|length }}
+      </span>
+    </div>
+  </div>
+
+  <div class="app-card app-section" style="margin-top:12px;">
+    <div class="app-section-title">待審核清單</div>
+    <div class="app-section-help">核准會進入正式掛號流程；拒絕會退回申請</div>
+
+    <div class="app-table-wrap" style="margin-top:12px;">
+      <table class="app-table">
+        <thead>
+          <tr>
+            <th style="width:70px;">ID</th>
+            <th style="width:120px;">姓名</th>
+            <th style="width:160px;">身分證</th>
+            <th>醫師</th>
+            <th style="width:120px;">日期</th>
+            <th style="width:90px;">時段</th>
+            <th style="width:90px;">時間</th>
+            <th style="width:180px;">操作</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for r in requests %}
+          <tr>
+            <td><span class="app-mono">{{ r.id }}</span></td>
+            <td style="font-weight:700;">{{ r.name }}</td>
+            <td class="app-mono">{{ r.national_id }}</td>
+            <td>{{ r.doctor }}</td>
+            <td>{{ r.date }}</td>
+            <td><span class="app-badge">{{ r.period }}</span></td>
+            <td class="app-mono">{{ r.time }}</td>
+            <td>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <form method="post"
+                      action="{% url 'prescriptions:public_request_approve' r.id %}"
+                      style="display:inline; margin:0;">
+                  {% csrf_token %}
+                  <button type="submit" class="app-btn app-btn-primary">核准</button>
+                </form>
+
+                <a class="app-btn app-btn-danger"
+                   href="{% url 'prescriptions:public_request_reject' r.id %}">
+                  拒絕
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="app-muted" style="padding:16px;">
+              目前沒有待審核申請喵
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

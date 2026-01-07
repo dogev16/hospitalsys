@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>醫師介紹</title>
+</head>
+<body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans TC, Arial; margin: 0;">
+
+  <div style="padding: 14px 18px; border-bottom: 1px solid #eee; display:flex; gap:14px; align-items:center;">
+    <div style="font-weight:700;">
+      {% if profile and profile.name %}{{ profile.name }}{% else %}本院{% endif %}
+    </div>
+    <div style="margin-left:auto; display:flex; gap:14px;">
+      <a href="{% url 'public:home' %}" style="text-decoration:none;">首頁</a>
+      <a href="{% url 'public:register' %}" style="text-decoration:none;">門診掛號</a>
+      <a href="{% url 'public:doctor_list' %}" style="text-decoration:none;">醫師介紹</a>
+      <a href="{% url 'public:home' %}#contact" style="text-decoration:none;">聯絡我們</a>
+    </div>
+  </div>
+
+  <div style="padding: 22px 18px; max-width: 980px; margin: 0 auto;">
+    <h1 style="margin:0 0 10px 0;">醫師介紹</h1>
+    <div style="color:#666; margin-bottom:14px;">
+      可依科別篩選，掛號請前往門診掛號頁。
+    </div>
+
+    <!-- 科別篩選 -->
+    <div style="border:1px solid #eee; border-radius:14px; padding:14px; margin-bottom:14px;">
+      <div style="font-weight:700; margin-bottom:10px;">科別</div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="{% url 'public:doctor_list' %}"
+           style="text-decoration:none; border:1px solid #eee; padding:8px 12px; border-radius:999px; display:inline-block; color:#444;">
+          全部
+        </a>
+
+        {% for dep in departments %}
+        {% if selected_department == dep %}
+                <a href="{% url 'public:doctor_list' %}?department={{ dep|urlencode }}"
+                    style="text-decoration:none; border:1px solid #222; padding:8px 12px; border-radius:999px; display:inline-block; color:#444;">
+                    {{ dep }}
+                </a>
+            {% else %}
+                <a href="{% url 'public:doctor_list' %}?department={{ dep|urlencode }}"
+                    style="text-decoration:none; border:1px solid #eee; padding:8px 12px; border-radius:999px; display:inline-block; color:#444;">
+                    {{ dep }}
+                </a>
+            {% endif %}
+        {% endfor %}    
+      </div>
+    </div>
+
+    <!-- 醫師列表 -->
+    {% if doctors %}
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:10px;">
+        {% for d in doctors %}
+          <div style="border:1px solid #eee; border-radius:14px; padding:14px;">
+            <div style="display:flex; gap:10px; align-items:baseline;">
+              <div style="font-weight:800; font-size:16px;">
+                {% if d.name %}{{ d.name }}{% else %}{{ d }}{% endif %}
+              </div>
+              {% if d.department %}
+                <span style="font-size:12px; color:#666; border:1px solid #eee; padding:2px 8px; border-radius:999px;">
+                  {{ d.department }}
+                </span>
+              {% endif %}
+            </div>
+
+            {% if d.room %}
+              <div style="margin-top:8px; color:#444;">診間：{{ d.room }}</div>
+            {% endif %}
+
+            <div style="margin-top:12px;">
+                <a href="{% url 'public:register' %}?department={{ d.department|urlencode }}&doctor_id={{ d.id }}"
+                    style="text-decoration:none; border:1px solid #222; padding:8px 12px; border-radius:12px; display:inline-block;">
+                    直接掛號
+                </a>
+            </div>
+
+            <div style="margin-top:10px; font-size:12px; color:#666;">
+              實際看診順序以現場叫號為準。
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="color:#666;">目前沒有符合條件的醫師。</div>
+    {% endif %}
+  </div>
+
+</body>
+</html>

@@ -5,7 +5,6 @@ from doctors.models import Doctor
 from appointments.models import Appointment
 
 class VisitTicket(models.Model):
-    # 狀態常數（統一用全大寫，比較不會混淆 ）
     STATUS_WAITING   = "WAITING"   # 候診
     STATUS_CALLING   = "CALLING"   # 叫號中
     STATUS_IN_ROOM   = "IN_ROOM"   # 看診中

@@ -1,0 +1,207 @@
+{% extends "public/_base_public_v1.html" %}
+
+{% block title %}門診掛號{% endblock %}
+
+{% block hero %}
+<section class="pub-hero">
+  <h1>門診掛號</h1>
+  <p>不需登入；請填寫正確資料，實際看診順序以現場叫號為準。</p>
+</section>
+{% endblock %}
+
+{% block content %}
+
+
+<form method="post" class="pub-card pub-card-pad pub-section">
+  {% csrf_token %}
+
+  <!-- 科別 -->
+  <div class="pub-section">
+    <label class="pub-label" for="department">科別</label>
+    <select id="department" name="department" required class="pub-select">
+      <option value="">請先選擇科別</option>
+      {% for dep in departments %}
+        <option value="{{ dep }}" {% if selected_department == dep %}selected{% endif %}>
+          {{ dep }}
+        </option>
+      {% endfor %}
+    </select>
+    <div class="pub-help" style="margin-top:8px;">先選科別後，系統會顯示該科醫師。</div>
+  </div>
+
+  <!-- 醫師 -->
+  <div class="pub-section">
+    <label class="pub-label">醫師</label>
+    <select name="doctor_id" required class="pub-select" {% if not selected_department %}disabled{% endif %}>
+      <option value="">
+        {% if selected_department %}請選擇醫師{% else %}請先選科別{% endif %}
+      </option>
+
+      {% for d in doctors %}
+        <option value="{{ d.id }}"
+          {% if posted.doctor_id == d.id|stringformat:"s" or selected_doctor_id == d.id|stringformat:"s" %}selected{% endif %}>
+          {% if d.department %}
+            {{ d.name }}（{{ d.department }}）
+          {% else %}
+            {{ d.name }}
+          {% endif %}
+        </option>
+      {% endfor %}
+    </select>
+    <div class="pub-help" style="margin-top:8px;">如遇門診調整請以公告為準。</div>
+
+    {% if doctor_leave_info %}
+      <div class="pub-alert pub-alert-warning" style="margin-top:12px;">
+        ⚠ 該醫師於 {{ doctor_leave_info.start_date }} ～ {{ doctor_leave_info.end_date }} 停診，請改選其他日期或醫師。
+        {% if doctor_leave_info.reason %}
+          <div class="pub-help" style="margin-top:6px;">原因：{{ doctor_leave_info.reason }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- 日期 / 看診時間 -->
+  <div class="pub-section pub-row">
+    <div class="pub-col">
+      <label class="pub-label">日期</label>
+      <input type="date"
+             name="date"
+             required
+             class="pub-input"
+             value="{{ posted.date|default:selected_date_str|default:'' }}"
+             min="{{ min_date }}" max="{{ max_date }}">
+      <div class="pub-help" style="margin-top:8px;">僅提供今天起未來 30 天內掛號。</div>
+    </div>
+
+    <div class="pub-col">
+      <label class="pub-label">看診時間</label>
+      <select name="time" required class="pub-select">
+        <option value="">請選擇時間</option>
+
+        {% for block in time_slots %}
+          <optgroup label="{{ block.session_label }}（剩餘 {{ block.remaining }}）">
+            {% for s in block.slots %}
+              {% with v=block.session|add:"|"|add:s.time %}
+                {% if s.available %}
+                  <option value="{{ v }}" {% if posted.time == v %}selected{% endif %}>{{ s.time }}</option>
+                {% else %}
+                  <option disabled>{{ s.time }}（已滿）</option>
+                {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </optgroup>
+        {% endfor %}
+
+        {% if selected_doctor_id and selected_date_str and time_slots|length == 0 %}
+          <option disabled>(此日期目前沒有可掛號時段)</option>
+        {% endif %}
+      </select>
+    </div>
+  </div>
+
+  <hr style="border:none; border-top:1px solid var(--pub-border); margin:16px 0;">
+
+  <!-- 基本資料 -->
+  <div class="pub-section pub-row">
+    <div class="pub-col">
+      <label class="pub-label">姓名</label>
+      <input type="text" name="name" required class="pub-input" value="{{ posted.name|default:'' }}">
+    </div>
+
+    <div class="pub-col">
+      <label class="pub-label">身分證字號</label>
+      <input type="text" name="national_id" required class="pub-input" value="{{ posted.national_id|default:'' }}">
+    </div>
+  </div>
+
+  <div class="pub-section pub-row">
+    <div class="pub-col">
+      <label class="pub-label">生日</label>
+      <input type="date" name="birth_date" required class="pub-input" value="{{ posted.birth_date|default:'' }}">
+    </div>
+
+    <div class="pub-col">
+      <label class="pub-label">聯絡電話</label>
+      <input type="text" name="phone" required class="pub-input" value="{{ posted.phone|default:'' }}">
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="pub-section">
+    {% if doctor_leave_info %}
+      <button type="submit" class="pub-btn pub-btn-ghost" disabled
+              style="opacity:.55; cursor:not-allowed;">
+        停診中，無法掛號
+      </button>
+      <div class="pub-help" style="margin-top:8px;">請更換日期或醫師後再嘗試掛號。</div>
+    {% else %}
+      <button type="submit" class="pub-btn pub-btn-primary">送出掛號</button>
+    {% endif %}
+
+    <div class="pub-help" style="margin-top:10px;">取消/改期請電話或現場櫃台處理。</div>
+  </div>
+</form>
+
+<script>
+  function updateQueryAndReload(opts) {
+    const url = new URL(window.location.href);
+
+    const depEl = document.getElementById("department");
+    const docEl = document.querySelector('select[name="doctor_id"]');
+    const dateEl = document.querySelector('input[name="date"]');
+
+    const dep = depEl ? depEl.value : "";
+    const doc = docEl ? docEl.value : "";
+    const date = dateEl ? dateEl.value : "";
+
+    if (dep) url.searchParams.set("department", dep);
+    else url.searchParams.delete("department");
+
+    if (opts && opts.clearDoctor) {
+      url.searchParams.delete("doctor_id");
+    } else {
+      if (doc) url.searchParams.set("doctor_id", doc);
+      else url.searchParams.delete("doctor_id");
+    }
+
+    if (opts && opts.clearDate) {
+      url.searchParams.delete("date");
+    } else {
+      if (date) url.searchParams.set("date", date);
+      else url.searchParams.delete("date");
+    }
+
+    window.location.href = url.toString();
+  }
+
+  const dept = document.getElementById("department");
+  if (dept) {
+    dept.addEventListener("change", () => {
+      updateQueryAndReload({ clearDoctor: true, clearDate: true });
+    });
+  }
+
+  const docSel = document.querySelector('select[name="doctor_id"]');
+  if (docSel) {
+    docSel.addEventListener("change", () => {
+      updateQueryAndReload({ clearDate: false });
+    });
+  }
+
+  const dateInput = document.querySelector('input[name="date"]');
+  if (dateInput) {
+    dateInput.addEventListener("change", () => {
+      updateQueryAndReload({});
+    });
+  }
+
+  (function () {
+    const hasDept = "{{ selected_department|default:'' }}".trim().length > 0;
+    if (hasDept) {
+      const doctorSelect = document.querySelector('select[name="doctor_id"]');
+      if (doctorSelect) doctorSelect.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  })();
+</script>
+
+{% endblock %}

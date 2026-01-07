@@ -2,34 +2,91 @@
 {% load roles %}
 
 {% block title %}門診系統首頁{% endblock %}
+
+{% block sidebar %}
+  <div class="app-side-title">功能選單</div>
+
+  <div class="app-side-group">系統總覽</div>
+  <a class="app-side-link is-active" href="{% url 'index' %}">Dashboard</a>
+
+  <div class="app-side-group">病患與掛號</div>
+  <a class="app-side-link" href="{% url 'appointments:book' %}">我要掛號（櫃台）</a>
+  <a class="app-side-link" href="{% url 'patients:patient_list' %}">病人管理</a>
+
+  <div class="app-side-group">叫號</div>
+  <a class="app-side-link" href="/queues/board/">叫號看板</a>
+
+  <div class="app-side-group">角色面板</div>
+  {% if user|has_group:"RECEPTION" %}
+    <a class="app-side-link" href="{% url 'queues:reception_panel' %}">櫃台面板</a>
+    <a class="app-side-link" href="{% url 'queues:reception_call' %}">櫃台叫號畫面</a>
+    <a class="app-side-link" href="{% url 'prescriptions:public_request_list' %}">公眾掛號審核</a>
+  {% endif %}
+
+  {% if user|has_group:"DOCTOR" %}
+    <a class="app-side-link" href="{% url 'queues:doctor_panel' %}">醫師面板</a>
+  {% endif %}
+
+  {% if user|has_group:"PHARMACY" %}
+    <a class="app-side-link" href="{% url 'prescriptions:pharmacy_panel' %}">藥局面板</a>
+    <a class="app-side-link" href="{% url 'inventory:dashboard' %}">藥品庫存</a>
+  {% endif %}
+{% endblock %}
+
 {% block content %}
-  <h1>門診系統首頁</h1>
 
-  <h3>功能入口</h3>
-  <ul>
-    <li><a href="{% url 'appointments:book' %}">我要掛號（櫃台使用）</a></li>
-    <li><a href="/queues/board/">叫號看板</a></li>
-    <li><a href="{% url 'patients:patient_list' %}">病人管理</a></li>
-  </ul>
+<div class="app-toolbar">
+  <div>
+    <div class="app-h1">門診系統首頁</div>
+    <div class="app-subtitle">功能入口與角色面板</div>
+  </div>
+</div>
 
-  <h3>角色面板</h3>
-  <ul>
-    {% if user|has_group:"RECEPTION" %}
-      <li><a href="{% url 'queues:reception_panel' %}">櫃台面板</a></li>
-      <li><a href="{% url 'queues:reception_call' %}">櫃台叫號畫面</a></li>
-    {% endif %}
+<div class="app-grid app-grid-3">
+  <section class="app-card app-section">
+    <div class="app-section-title">功能入口</div>
+    <div class="app-section-help">常用操作</div>
 
-    {% if user|has_group:"DOCTOR" %}
-      <li><a href="{% url 'queues:doctor_panel' %}">醫師面板</a></li>
-    {% endif %}
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <a class="app-btn app-btn-primary" href="{% url 'appointments:book' %}">我要掛號（櫃台）</a>
+      <a class="app-btn app-btn-secondary" href="/queues/board/">叫號看板</a>
+      <a class="app-btn app-btn-secondary" href="{% url 'patients:patient_list' %}">病人管理</a>
+    </div>
+  </section>
 
-    {% if user|has_group:"PHARMACY" %}
-      <li><a href="{% url 'prescriptions:pharmacy_panel' %}">藥局面板</a></li>
-      <li><a href="{% url 'inventory:dashboard' %}">藥品庫存</a></li>
-    {% endif %}
-  </ul>
+  <section class="app-card app-section">
+    <div class="app-section-title">角色面板</div>
+    <div class="app-section-help">依登入身分顯示</div>
 
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      {% if user|has_group:"RECEPTION" %}
+        <a class="app-btn app-btn-secondary" href="{% url 'queues:reception_panel' %}">櫃台面板</a>
+        <a class="app-btn app-btn-secondary" href="{% url 'queues:reception_call' %}">櫃台叫號</a>
+        <a class="app-btn app-btn-secondary" href="{% url 'prescriptions:public_request_list' %}">公眾掛號審核</a>
+      {% endif %}
 
-  <h3>最新訊息</h3>
-  <p>目前沒有公告</p>
+      {% if user|has_group:"DOCTOR" %}
+        <a class="app-btn app-btn-secondary" href="{% url 'queues:doctor_panel' %}">醫師面板</a>
+      {% endif %}
+
+      {% if user|has_group:"PHARMACY" %}
+        <a class="app-btn app-btn-secondary" href="{% url 'prescriptions:pharmacy_panel' %}">藥局面板</a>
+        <a class="app-btn app-btn-secondary" href="{% url 'inventory:dashboard' %}">藥品庫存</a>
+      {% endif %}
+
+      {% if not user|has_group:"RECEPTION" and not user|has_group:"DOCTOR" and not user|has_group:"PHARMACY" %}
+        <div class="app-muted">目前帳號未被分配到面板群組。</div>
+      {% endif %}
+        
+    </div>
+  </section>
+
+  <section class="app-card app-section">
+    <div class="app-section-title">最新訊息</div>
+    <div class="app-section-help">公告 / 系統提醒</div>
+
+    <div class="app-muted" style="margin-top:12px;">目前沒有公告</div>
+  </section>
+</div>
+
 {% endblock %}

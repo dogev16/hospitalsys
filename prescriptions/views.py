@@ -1,10 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
+
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 
+from appointments.models import Appointment
 from common.utils import group_required
+from public.models import PublicRegistrationRequest
+
+from django.db.models import Max
 
 from .models import (
     Prescription,
@@ -845,3 +851,82 @@ def prescription_print(request, pk):
         # 可以順便放診所名稱、地址，如果有設定 
     }
     return render(request, "prescriptions/prescription_print.html", context)
+
+
+@group_required("PHARMACY")
+def public_request_list(request):
+    qs = (
+        PublicRegistrationRequest.objects
+        .select_related("doctor")
+        .filter(status=PublicRegistrationRequest.STATUS_PENDING)
+        .order_by("date", "time", "id")
+    )
+    return render(request, "prescriptions/public_request_list.html", {"requests": qs})
+
+
+@require_POST
+@transaction.atomic
+def public_request_approve(request, pk):
+    req = get_object_or_404(PublicRegistrationRequest.objects.select_for_update(), pk=pk)
+
+    if req.status != "PENDING":
+        messages.info(request, "這筆已處理過了喵")
+        return redirect("prescriptions:public_request_list")
+
+    # ✅ Patient 欄位用你系統有的：full_name, national_id, birth_date, phone
+    patient, _ = Patient.objects.get_or_create(
+        national_id=req.national_id,
+        defaults={
+            "full_name": req.name,
+            "birth_date": req.birth_date,
+            "phone": req.phone,
+        }
+    )
+
+    # ✅ Appointment 你的 model 只有 patient/doctor/date/time/status（不要 period/source）
+    appointment = Appointment.objects.create(
+        patient=patient,
+        doctor=req.doctor,
+        date=req.date,
+        time=req.time,
+        status="SCHEDULED",  # 你系統用什麼就填什麼
+    )
+
+    # ✅ 產生 VisitTicket（沿用你 appointments 的邏輯）
+    today = timezone.localdate()
+    next_no = (
+        VisitTicket.objects.filter(doctor=req.doctor, date=req.date).count() + 1
+    )
+
+    VisitTicket.objects.create(
+        appointment=appointment,
+        date=req.date,
+        doctor=req.doctor,
+        patient=patient,
+        number=next_no,
+        status="WAITING",
+    )
+
+    # ✅ 最後再把 req 標成 APPROVED 並綁 appointment（如果你的 req 有 appointment FK）
+    req.status = "APPROVED"
+    req.status = "APPROVED"
+    req.appointment = appointment
+    req.save(update_fields=["status", "appointment"])
+
+    messages.success(request, "核准成功喵")
+    return redirect("prescriptions:public_request_list")
+
+
+@group_required("PHARMACY")
+@transaction.atomic
+def public_request_reject(request, pk):
+    req = get_object_or_404(PublicRegistrationRequest, pk=pk)
+
+    if req.status != PublicRegistrationRequest.STATUS_PENDING:
+        messages.warning(request, "此申請單已處理過了喵")
+        return redirect("prescriptions:public_request_list")
+
+    req.status = PublicRegistrationRequest.STATUS_REJECTED
+    req.save()
+    messages.success(request, "已拒絕此申請喵")
+    return redirect("prescriptions:public_request_list")

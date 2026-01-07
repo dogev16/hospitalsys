@@ -8,6 +8,7 @@ class Doctor(models.Model):
     user = models.OneToOneField(
         User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="使用者帳號"
     )
+    department = models.CharField("科別", max_length=50, blank=True) 
     is_active = models.BooleanField("啟用", default=True)
 
     def __str__(self):
@@ -32,7 +33,6 @@ class DoctorSchedule(models.Model):
     SESSION_CHOICES = [
         ("AM", "上午門診（09:00–12:00）"),
         ("PM", "下午門診（14:00–17:00）"),
-        ("PM", "下午門診（18:00–23:00）"),
     ]
 
     doctor = models.ForeignKey(
@@ -57,3 +57,26 @@ class DoctorSchedule(models.Model):
 
     def __str__(self):
         return f"{self.doctor} - {self.get_weekday_display()} {self.get_session_display()}"
+    
+class DoctorLeave(models.Model):
+    doctor = models.ForeignKey("doctors.Doctor", on_delete=models.CASCADE, related_name="leaves")
+    start_date = models.DateField("請假開始日")
+    end_date = models.DateField("請假結束日")
+    reason = models.CharField("原因", max_length=200, blank=True)
+    is_active = models.BooleanField("啟用", default=True)
+    created_at = models.DateTimeField("建立時間", auto_now_add=True)
+
+    class Meta:
+        ordering = ("-start_date", "-end_date", "doctor_id")
+        indexes = [
+            models.Index(fields=["doctor", "start_date", "end_date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.doctor} 停診 {self.start_date}~{self.end_date}"
+
+    def clean(self):
+        # 讓 end_date >= start_date
+        from django.core.exceptions import ValidationError
+        if self.end_date < self.start_date:
+            raise ValidationError("結束日不可早於開始日")

@@ -1,0 +1,78 @@
+{% extends "public/_base_public_v1.html" %}
+
+{% block title %}掛號成功{% endblock %}
+
+{% block hero %}
+<section class="pub-hero">
+  <h1>掛號成功</h1>
+  <p>已收到您的掛號資料，請依現場叫號與櫃台作業為準。</p>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+    <a class="pub-btn pub-btn-primary" href="{% url 'public:register' %}">再掛一筆</a>
+    <a class="pub-btn pub-btn-ghost" href="{% url 'public:home' %}">回首頁</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+<section class="pub-card pub-card-pad pub-section">
+  <div class="pub-section-title">掛號資訊</div>
+
+  <div class="pub-row">
+    <div class="pub-col">
+      <div class="pub-label">醫師</div>
+      <div class="pub-help" style="margin-top:6px; font-size:1rem; color: var(--pub-text); font-weight:900;">
+        {{ req.doctor }}
+      </div>
+    </div>
+
+    <div class="pub-col">
+      <div class="pub-label">日期</div>
+      <div class="pub-help" style="margin-top:6px; font-size:1rem; color: var(--pub-text); font-weight:900;">
+        {{ req.date }}
+      </div>
+    </div>
+
+    <div class="pub-col">
+      <div class="pub-label">時段</div>
+      <div class="pub-help" style="margin-top:6px; font-size:1rem; color: var(--pub-text); font-weight:900;">
+        {{ period_label }}
+      </div>
+    </div>
+  </div>
+
+  <hr style="border:none; border-top:1px solid var(--pub-border); margin:16px 0;">
+
+  <div class="pub-section-title">基本資料</div>
+
+  <div class="pub-row">
+    <div class="pub-col">
+      <div class="pub-label">姓名</div>
+      <div class="pub-help" style="margin-top:6px; font-weight:900; color: var(--pub-text);">
+        {{ req.name }}
+      </div>
+    </div>
+
+    <div class="pub-col">
+      <div class="pub-label">身分證末四碼</div>
+      <div class="pub-help" style="margin-top:6px; font-weight:900; color: var(--pub-text);">
+        ****{{ req.national_id|slice:"-4:" }}
+      </div>
+    </div>
+
+    <div class="pub-col">
+      <div class="pub-label">聯絡電話</div>
+      <div class="pub-help" style="margin-top:6px; font-weight:900; color: var(--pub-text);">
+        {{ req.phone }}
+      </div>
+    </div>
+  </div>
+
+  <div class="pub-alert pub-alert-info" style="margin-top:16px;">
+    實際看診順序以現場叫號為準，請依現場指示等候。<br>
+    取消/改期請電話或現場櫃台處理。
+  </div>
+</section>
+
+{% endblock %}

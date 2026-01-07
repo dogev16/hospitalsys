@@ -3,93 +3,157 @@
 {% block title %}病人詳細資料{% endblock %}
 
 {% block content %}
-<h1>病人詳細資料 </h1>
+<div class="page-wrap patient-detail">
 
-<p>
-  <a href="{% url 'patients:patient_list' %}">← 回病人列表</a>
-  |
-  <a href="{% url 'patients:patient_update' patient.id %}">編輯此病人</a>
-  |
-  <a href="{% url 'appointments:new_for_patient' patient.id %}">＋ 替此病人新增掛號 </a>
-</p>
+  <!-- Header -->
+  <div class="page-head patient-head">
+    <div class="patient-head-left">
+      <h1 class="page-title">病人詳細資料</h1>
+      <div class="muted patient-meta">
+        病歷號：<strong class="mono">{{ patient.chart_no }}</strong>
+        <span class="dot-sep">•</span>
+        姓名：<strong>{{ patient.full_name }}</strong>
+      </div>
+    </div>
 
-{# 👉 先顯示病人基本資料 #}
-<table border="1" cellpadding="5" cellspacing="0">
-  <tr>
-    <th>病歷號</th>
-    <td>{{ patient.chart_no }}</td>
-  </tr>
-  <tr>
-    <th>姓名</th>
-    <td>{{ patient.full_name }}</td>
-  </tr>
-  <tr>
-    <th>身分證</th>
-    <td>{{ patient.national_id }}</td>
-  </tr>
-  <tr>
-    <th>電話</th>
-    <td>{{ patient.phone }}</td>
-  </tr>
-  <tr>
-    <th>生日</th>
-    <td>{{ patient.birth_date }}</td>
-  </tr>
-  <tr>
-    <th>過敏</th>
-    <td>尚未記錄（之後資料表加欄位再補）</td>
-  </tr>
-</table>
+    <div class="toolbar patient-actions">
+      <a class="btn btn-secondary" href="{% url 'patients:patient_list' %}">← 回病人列表</a>
+      <a class="btn btn-outline" href="{% url 'patients:patient_update' patient.id %}">編輯</a>
+      <a class="btn btn-main" href="{% url 'appointments:new_for_patient' patient.id %}">＋ 新增掛號</a>
+    </div>
+  </div>
 
-{# 👉 再顯示掛號 / 看診紀錄 #}
-<h2 style="margin-top: 1.5rem;">掛號 / 看診紀錄 </h2>
-{% if appointments %}
-  <table border="1" cellpadding="5" cellspacing="0">
-    <thead>
-      <tr>
-        <th>日期</th>
-        <th>時間</th>
-        <th>醫師</th>
-        <th>狀態</th>
-        <th>操作</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for appt in appointments %}
-    <tr>
-      <td>{{ appt.date }}</td>
-      <td>{{ appt.time|time:"H:i" }}</td>
-      <td>{{ appt.doctor.name }}</td>
-      <td>{{ appt.get_status_display }}</td>
-    
-      <!-- ⭐ 狀態操作按鈕  ⭐ -->
-      <td>
-        <!-- 標記為已完成 -->
-        <form method="post"
-              action="{% url 'appointments:appointment_update_status' appt.pk %}"
-              style="display:inline;">
-          {% csrf_token %}
-          <input type="hidden" name="status" value="DONE">
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit">完成</button>
-        </form>
+  <!-- Top grid -->
+  <div class="grid patient-grid">
 
-        <!-- 取消掛號 -->
-        <form method="post"
-              action="{% url 'appointments:appointment_update_status' appt.pk %}"
-              style="display:inline;">
-          {% csrf_token %}
-          <input type="hidden" name="status" value="CANCELLED">
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit">取消</button>
-        </form>
-      </td>
-    </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% else %}
-  <p>目前沒有掛號或看診紀錄 ～</p>
-{% endif %}
+    <!-- 基本資料 -->
+    <section class="card patient-card">
+      <div class="card-head">
+        <h2 class="card-title">基本資料</h2>
+      </div>
 
+      <table class="kv">
+        <tr>
+          <th>病歷號</th>
+          <td><strong class="mono">{{ patient.chart_no }}</strong></td>
+        </tr>
+        <tr>
+          <th>姓名</th>
+          <td>{{ patient.full_name }}</td>
+        </tr>
+        <tr>
+          <th>身分證</th>
+          <td class="mono">{{ patient.national_id }}</td>
+        </tr>
+        <tr>
+          <th>電話</th>
+          <td class="mono">{{ patient.phone }}</td>
+        </tr>
+        <tr>
+          <th>生日</th>
+          <td>{{ patient.birth_date }}</td>
+        </tr>
+        <tr>
+          <th>過敏</th>
+          <td class="muted">尚未記錄（之後資料表加欄位再補）</td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- 快速資訊 -->
+    <aside class="card patient-card">
+      <div class="card-head">
+        <h2 class="card-title">快速資訊</h2>
+      </div>
+
+      <div class="chip-row">
+        <span class="badge">📌 內部作業頁面</span>
+        <span class="badge warn">🧾 可在下方管理狀態</span>
+      </div>
+
+      <div class="hint-list">
+        <div class="hint-item">
+          <span class="hint-icon">✅</span>
+          <div class="hint-text">「完成」會將狀態設為 <span class="mono">DONE</span></div>
+        </div>
+        <div class="hint-item">
+          <span class="hint-icon">⛔</span>
+          <div class="hint-text">「取消」會將狀態設為 <span class="mono">CANCELLED</span></div>
+        </div>
+        <div class="hint-item">
+          <span class="hint-icon">📍</span>
+          <div class="hint-text">操作後會留在此頁（使用 <span class="mono">next</span> 參數）</div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Appointments -->
+  <section class="card patient-card">
+    <div class="card-head card-head-between">
+      <h2 class="card-title">掛號 / 看診紀錄</h2>
+      <div class="muted">
+        {% if appointments %}共 {{ appointments|length }} 筆{% else %}目前 0 筆{% endif %}
+      </div>
+    </div>
+
+    {% if appointments %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>時間</th>
+              <th>醫師</th>
+              <th>狀態</th>
+              <th class="col-actions">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+              <tr>
+                <td>{{ appt.date }}</td>
+                <td class="mono">{{ appt.time|time:"H:i" }}</td>
+                <td>{{ appt.doctor.name }}</td>
+                <td>
+                  {% if appt.status == "DONE" %}
+                    <span class="badge ok">✅ {{ appt.get_status_display }}</span>
+                  {% elif appt.status == "CANCELLED" %}
+                    <span class="badge bad">⛔ {{ appt.get_status_display }}</span>
+                  {% else %}
+                    <span class="badge warn">⏳ {{ appt.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="actions">
+                    <form class="inline-form" method="post" action="{% url 'appointments:appointment_update_status' appt.pk %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="status" value="DONE">
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <button class="btn btn-main btn-sm" type="submit">完成</button>
+                    </form>
+
+                    <form class="inline-form" method="post" action="{% url 'appointments:appointment_update_status' appt.pk %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="status" value="CANCELLED">
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <button class="btn btn-danger btn-sm" type="submit">取消</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-emoji">🗂️</div>
+        <div class="muted">目前沒有掛號或看診紀錄 ～</div>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
 {% endblock %}

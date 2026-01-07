@@ -1,75 +1,105 @@
 {% extends "base.html" %}
-
 {% block title %}門診掛號（櫃台）{% endblock %}
 
 {% block content %}
-<h1>門診掛號（櫃台）</h1>
-
-{% if messages %}
-  <ul style="color: red;">
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-
-{% if form.errors %}
-  <div style="color: red; margin-bottom: 1rem;">
-    <p>表單有點小問題 ：</p>
-    <ul>
-      {% for field_name, errors in form.errors.items %}
-        <li>
-          {{ field_name }}：
-          {{ errors|striptags }}
-        </li>
-      {% endfor %}
-    </ul>
+<div class="app-container">
+  <div class="app-toolbar">
+    <div>
+      <div class="app-page-title">門診掛號（櫃台）</div>
+      <div class="app-muted">建立新掛號並載入可約時段</div>
+    </div>
   </div>
-{% endif %}
 
-<form method="post">
-  {% csrf_token %}
-  <table>
-    <tr>
-      <th>{{ form.chart_no.label_tag }}</th>
-      <td>{{ form.chart_no }}</td>
-    </tr>
-    <tr>
-      <th>{{ form.doctor.label_tag }}</th>
-      <td>{{ form.doctor }}</td>
-    </tr>
-    <tr>
-      <th>{{ form.appt_date.label_tag }}</th>
-      <td>{{ form.appt_date }}</td>
-    </tr>
-    <tr>
-      <th>{{ form.appt_time.label_tag }}</th>
-      <td>
-        {{ form.appt_time }}
-        {% if not slots %}
-          <div style="font-size: 0.9em; color: #666;">
-            請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間。
-          </div>
-        {% endif %}
-      </td>
-    </tr>
-  </table>
+  {# Django messages #}
+  {% if messages %}
+    <div style="margin-top:12px;">
+      {% for message in messages %}
+        <div class="app-alert app-alert-warning" style="margin-bottom:10px;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-  <button type="submit" name="action" value="load_slots">
-    載入可約時段
-  </button>
+  {# Form errors #}
+  {% if form.errors %}
+    <div class="app-alert app-alert-danger" style="margin-top:12px;">
+      <div style="font-weight:700; margin-bottom:6px;">表單有點小問題</div>
+      <ul style="margin:0; padding-left:18px;">
+        {% for field_name, errors in form.errors.items %}
+          <li>
+            <span style="font-weight:600;">{{ field_name }}</span>：
+            {{ errors|striptags }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
 
-  <button type="submit" name="action" value="confirm">
-    確認掛號
-  </button>
-</form>
+  <div class="app-card app-section" style="margin-top:14px;">
+    <div class="app-section-title">掛號資料</div>
+    <div class="app-section-help">依序填寫 → 載入時段 → 確認掛號</div>
 
-{% if slots %}
-  <h3>本次載入的可掛號時段</h3>
-  <ul>
-    {% for t in slots %}
-      <li>{{ t|time:"H:i" }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+    <form method="post" style="margin-top:12px;">
+      {% csrf_token %}
+
+      <div class="app-form-grid">
+        <div class="app-form-field">
+          <label class="app-label">{{ form.chart_no.label }}</label>
+          <div>{{ form.chart_no }}</div>
+          <div class="app-muted" style="margin-top:6px;">輸入病患病歷號（Chart No）</div>
+        </div>
+
+        <div class="app-form-field">
+          <label class="app-label">{{ form.doctor.label }}</label>
+          <div>{{ form.doctor }}</div>
+          <div class="app-muted" style="margin-top:6px;">選擇看診醫師</div>
+        </div>
+
+        <div class="app-form-field">
+          <label class="app-label">{{ form.appt_date.label }}</label>
+          <div>{{ form.appt_date }}</div>
+          <div class="app-muted" style="margin-top:6px;">選擇看診日期</div>
+        </div>
+
+        <div class="app-form-field">
+          <label class="app-label">{{ form.appt_time.label }}</label>
+          <div>{{ form.appt_time }}</div>
+
+          {% if not slots %}
+            <div class="app-muted" style="margin-top:6px;">
+              請先選擇醫師與日期，按「載入可約時段」後才會出現可選時間。
+            </div>
+          {% else %}
+            <div class="app-muted" style="margin-top:6px;">
+              已載入可約時段，請從下拉選單挑選時間後再按「確認掛號」。
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+        <button class="app-btn app-btn-secondary" type="submit" name="action" value="load_slots">
+          載入可約時段
+        </button>
+        <button class="app-btn app-btn-primary" type="submit" name="action" value="confirm">
+          確認掛號
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if slots %}
+    <div class="app-card app-section" style="margin-top:14px;">
+      <div class="app-section-title">本次載入的可掛號時段</div>
+      <div class="app-section-help">僅顯示清單，實際選擇請用上方「時間」欄位</div>
+
+      <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;">
+        {% for t in slots %}
+          <span class="app-badge">{{ t|time:"H:i" }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}
