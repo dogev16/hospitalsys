@@ -4,7 +4,7 @@ import re
 from django.utils import timezone
 
 class Patient(models.Model):
-    # 性別選項
+   
     GENDER_MALE = "M"
     GENDER_FEMALE = "F"
     GENDER_OTHER = "O"
@@ -27,7 +27,7 @@ class Patient(models.Model):
         (BLOOD_UNKNOWN, "未知"),
     ]
 
-    # ─── 基本資料 ───
+   
     full_name = models.CharField("姓名", max_length=50)
     national_id = models.CharField("身分證", max_length=10, unique=True)
     nhi_no = models.CharField("健保卡號", max_length=20, blank=True)
@@ -46,12 +46,12 @@ class Patient(models.Model):
         blank=True,
     )
 
-    # ─── 聯絡資料 ───
+    
     phone = models.CharField("電話", max_length=20, blank=True)
     email = models.EmailField("Email", max_length=100, blank=True)
     address = models.CharField("地址", max_length=200, blank=True)
 
-    # ─── 身體狀況 ───
+    
     height_cm = models.PositiveIntegerField("身高（cm）", null=True, blank=True)
     weight_kg = models.DecimalField(
         "體重（kg）",
@@ -83,7 +83,7 @@ class Patient(models.Model):
     )
 
 
-    # ─── 緊急聯絡資訊 ───
+    
     emergency_contact_name = models.CharField("緊急聯絡人姓名", max_length=50, blank=True)
     emergency_contact_phone = models.CharField("緊急聯絡人電話", max_length=20, blank=True)
     emergency_contact_relation = models.CharField(
@@ -93,8 +93,8 @@ class Patient(models.Model):
         help_text="例如：父、母、配偶、子女、朋友",
     )
 
-    # ─── 系統欄位 ───
-    # ✅ 病歷號：不讓表單編輯，新增時自動產生
+    
+    
     chart_no = models.CharField(
         "病歷號",
         max_length=20,
@@ -115,20 +115,20 @@ class Patient(models.Model):
     def __str__(self):
         return f"{self.chart_no} {self.full_name}"
 
-    # 統一計算年齡
+    
     @property
     def age(self):
         if not self.birth_date:
             return None
         today = timezone.localdate()
         years = today.year - self.birth_date.year
-        # 還沒過生日就 -1
+       
         if (today.month, today.day) < (self.birth_date.month, self.birth_date.day):
             years -= 1
         return years
 
     def save(self, *args, **kwargs):
-        # 只在「沒有病歷號」的情況下自動產生（避免已存在的被改掉 ）
+       
         if not self.chart_no:
             self.chart_no = self._generate_chart_no()
         super().save(*args, **kwargs)
@@ -147,6 +147,6 @@ class Patient(models.Model):
             if m:
                 num = int(m.group(1)) + 1
             else:
-                # 如果舊資料沒有數字，就保險用 id + 1  
+                
                 num = (last.id or 0) + 1
         return f"P{num:03d}"

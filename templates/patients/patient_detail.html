@@ -54,8 +54,40 @@
           <td>{{ patient.birth_date }}</td>
         </tr>
         <tr>
-          <th>過敏</th>
-          <td class="muted">尚未記錄（之後資料表加欄位再補）</td>
+          <th>性別</th>
+          <td>{{ patient.gender|default:"—" }}</td>
+        </tr>
+        <tr>
+          <th>血型</th>
+          <td>{{ patient.blood_type|default:"—" }}</td>
+        </tr>
+        <tr>
+          <th>身高 / 體重</th>
+          <td class="mono">
+            {% if patient.height_cm %}{{ patient.height_cm }} cm{% else %}—{% endif %}
+            /
+            {% if patient.weight_kg %}{{ patient.weight_kg }} kg{% else %}—{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>過敏史</th>
+          <td>
+            {% if patient.allergies %}
+              {{ patient.allergies }}
+            {% else %}
+              <span class="muted">尚未記錄</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>慢性病</th>
+          <td>
+            {% if patient.chronic_diseases %}
+              {{ patient.chronic_diseases }}
+            {% else %}
+              <span class="muted">尚未記錄</span>
+            {% endif %}
+          </td>
         </tr>
       </table>
     </section>

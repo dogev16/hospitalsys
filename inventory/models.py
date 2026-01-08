@@ -1,4 +1,3 @@
-# C:\project\hospitalsys\inventory\models.py
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -14,7 +13,7 @@ class Drug(models.Model):
     strength = models.CharField("規格", max_length=50, blank=True)
     unit = models.CharField("單位", max_length=20, default="顆")
 
-    # ⚠️ 切換到批次庫存後：這個欄位只當快取/顯示用，請不要再用它做真實扣庫存 
+    
     stock_quantity = models.PositiveIntegerField("目前庫存量", default=0)
     reorder_level = models.PositiveIntegerField("安全存量", default=0)
 
@@ -38,7 +37,6 @@ class Drug(models.Model):
 
     @property
     def non_expired_quantity(self):
-        """回傳「未過期 + 正常可用」批次的庫存總和 """
         today = timezone.localdate()
         return (
             self.batches.filter(
@@ -107,12 +105,12 @@ class StockBatch(models.Model):
         return f"{self.drug.name} / 批號 {self.batch_no or '-'} / 效期 {self.expiry_date} / 庫存 {self.quantity}"
 
     def save(self, *args, **kwargs):
-        # 🆕 自動產生批號（只有在 batch_no 為空時）
+        
         if not self.batch_no:
             today = timezone.localdate()
             date_prefix = today.strftime("%Y%m%d")
 
-            # 找出同一天、同一藥品、同前綴批號的最大批號
+            
             last_batch_no = (
                 StockBatch.objects
                 .filter(drug=self.drug, batch_no__startswith=date_prefix)

@@ -8,13 +8,13 @@ from appointments.models import Appointment
 
 @login_required
 def patient_list(request):
-    # 取得搜尋關鍵字，例如 ?q=doge
+    
     query = request.GET.get("q", "").strip()
 
-    # 先抓出所有病人
+    
     patients = Patient.objects.all().order_by("id")
 
-    # 如果有輸入關鍵字，就用姓名 / 身分證 / 電話 / 病歷號來搜尋
+    
     if query:
         patients = patients.filter(
             Q(name__icontains=query) |
@@ -23,7 +23,7 @@ def patient_list(request):
             Q(medical_record_number__icontains=query)
         )
 
-    # 丟到 template
+    
     context = {
         "patients": patients,
         "query": query,
@@ -36,12 +36,12 @@ def patient_list(request):
 def patient_detail(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
 
-    # 把這個病人的掛號 / 看診紀錄抓出來 
+    
     appointments = (
         Appointment.objects
         .filter(patient=patient)
-        .select_related("doctor")          # 連 doctor 一起查，模板用 appt.doctor.name
-        .order_by("-date", "-time")        # 讓最新的在最上面 
+        .select_related("doctor")          
+        .order_by("-date", "-time")        
     )
 
     context = {

@@ -1,4 +1,3 @@
-# C:\project\hospitalsys\inventory\utils.py
 
 from __future__ import annotations
 
@@ -10,19 +9,15 @@ from django.db.models import Sum
 from .models import Drug, StockBatch, StockTransaction
 
 
+
 def refresh_stock_quantity(drug: Drug) -> int:
-    """重新整理 Drug.stock_quantity（只加總未過期或全部？這裡用全部批次 quantity 總和） """
     total = drug.batches.aggregate(total=Sum("quantity"))["total"] or 0
     drug.stock_quantity = total
     drug.save(update_fields=["stock_quantity"])
     return total
 
 
-# ---------------------------------------------------------------------
-# ✅ 保留：舊系統/其他模組可能還有 import adjust_stock
-#   但在「完全批次庫存」模式下，建議不要再用它做進貨/發藥，
-#   改用 stock_in / use_drug_from_prescription_item / adjust_batch_stock  
-# ---------------------------------------------------------------------
+
 @transaction.atomic
 def adjust_stock(
     drug: Drug,
@@ -32,10 +27,7 @@ def adjust_stock(
     prescription=None,
     operator=None,
 ):
-    """
-    舊版「以 Drug.stock_quantity 為主」的調整工具。
-    為了相容保留；批次模式下你應該改用 adjust_batch_stock  
-    """
+
     new_stock = (drug.stock_quantity or 0) + change
     if new_stock < 0:
         raise ValueError(f"{drug.name} 庫存不足，無法扣除 {abs(change)}  ")
@@ -64,11 +56,7 @@ def adjust_batch_stock(
     prescription=None,
     operator=None,
 ):
-    """
-    ✅ 批次層級的庫存調整：
-    - change 正數=加回（例如盤點補回/退藥入庫）
-    - change 負數=扣除（例如報廢/盤點扣除）
-    """
+
     new_qty = (batch.quantity or 0) + change
     if new_qty < 0:
         raise ValueError(f"批次 {batch.batch_no} 庫存不足，無法扣除 {abs(change)}  ")
@@ -99,20 +87,16 @@ def stock_in(
     note: str = "",
     supplier_batch_no: str = "",
 ):
-    """
-    ✅ 進貨：建立「新批次」 
-    - 不讓人輸入系統批號 batch_no（由 StockBatch.save() 自動生成）
-    - supplier_batch_no 若你想留「廠商批號」就放 note 或你之後加欄位
-    """
+
     if quantity <= 0:
         raise ValueError("quantity 必須是正數 ")
 
-    # 每次進貨建立新批次，方便追蹤 
+    
     batch = StockBatch.objects.create(
         drug=drug,
         expiry_date=expiry_date,
         quantity=quantity,
-        # batch_no 留空 -> 交給 model.save() 自動產生
+        
         batch_no="",
     )
 
@@ -136,11 +120,7 @@ def destroy_batch(
     operator=None,
     note: str = "藥師判斷報廢/銷毀",
 ):
-    """
-    ✅ 銷毀/報廢批次庫存（藥師決定）
-    - quantity=None => 全部報廢
-    - quantity=數字 => 部分報廢
-    """
+
     if quantity is None:
         qty = batch.quantity
     else:
@@ -153,10 +133,10 @@ def destroy_batch(
 
     batch.quantity -= qty
 
-    # ✅ 若歸零就標記 DESTROYED
+    
     if batch.quantity == 0:
         batch.status = StockBatch.STATUS_DESTROYED
-        batch.save(update_fields=["quantity", "status"])  # ✅ 一定要一起存 
+        batch.save(update_fields=["quantity", "status"])  
     else:
         batch.save(update_fields=["quantity"])
 
@@ -164,7 +144,7 @@ def destroy_batch(
         drug=batch.drug,
         batch=batch,
         change=-qty,
-        reason="destroy",  # ✅ 這裡改成 destroy  
+        reason="destroy", 
         note=note,
         operator=operator,
     )
@@ -173,9 +153,7 @@ def destroy_batch(
     return batch
 
 
-# ---------------------------------------------------------------------
-# ✅ 發藥（批次扣庫存）：FEFO + 快過期限制
-# ---------------------------------------------------------------------
+
 @transaction.atomic
 def use_drug_from_prescription_item(
     item,
@@ -184,15 +162,7 @@ def use_drug_from_prescription_item(
     *,
     min_valid_days: int = 0,
 ):
-    """
-    從單一處方明細扣庫存 （FEFO + 快過期限制 + 可選療程天數）
 
-    - min_valid_days: 最低還要能放幾天才允許發（例如 7 天）
-    - item.treatment_days 若存在且 >0：代表需要效期至少覆蓋療程天數
-      會以 max(treatment_days, min_valid_days) 作為最低需求天數 
-
-    若庫存/效期不足：raise ValueError（讓 view 顯示訊息 & 回滾） 
-    """
     drug = item.drug
     qty = int(item.quantity or 0)
     if qty <= 0:
@@ -201,20 +171,20 @@ def use_drug_from_prescription_item(
     today = timezone.localdate()
     presc = prescription or getattr(item, "prescription", None)
 
-    # 需要覆蓋的天數：療程 vs 最低有效天數，取最大 
+    
     treatment_days = getattr(item, "treatment_days", None)
     need_days = 0
     if treatment_days and int(treatment_days) > 0:
         need_days = int(treatment_days)
     need_days = max(need_days, int(min_valid_days or 0))
 
-    # 最低可接受效期：today + need_days
-    # need_days=0 => 只要未過期即可 
+    
+    
     min_expiry_date = today + timedelta(days=need_days)
 
     remain = qty
 
-    # ✅ 注意：expiry_date__gte 只能出現一次 （你之前 SyntaxError 就是因為重複寫）
+    
     batches = (
     StockBatch.objects
         .select_for_update()
@@ -277,8 +247,8 @@ def can_dispense_item(item, *, min_valid_days=0) -> tuple[bool, str, int]:
         StockBatch.objects
         .filter(
             drug=drug,
-            status=StockBatch.STATUS_NORMAL,   # ✅ 關鍵：排除隔離/報廢
-            expiry_date__gte=min_expiry_date,  # ✅ 覆蓋療程/最低天數
+            status=StockBatch.STATUS_NORMAL,   
+            expiry_date__gte=min_expiry_date,  
             quantity__gt=0,
         )
         .order_by("expiry_date", "id")
@@ -301,21 +271,13 @@ def preview_use_drug_from_prescription_item(
     *,
     min_valid_days: int = 0,
 ):
-    """
-    ✅ 預檢查用（不扣庫存、不寫入）：
-    - 檢查是否有「足夠可用庫存」
-    - 檢查是否有「效期足以覆蓋療程 / 最低天數」
-    - 不鎖、不扣庫存，只做計算 
-    - 若不足：raise ValueError
-    """
-    from datetime import timedelta
-    from django.utils import timezone
-    from inventory.models import StockBatch
+
+
 
     drug = item.drug
     qty = int(item.quantity or 0)
     if qty <= 0:
-        return  # 不需要發藥就直接過 
+        return  
 
     today = timezone.localdate()
 
@@ -330,7 +292,7 @@ def preview_use_drug_from_prescription_item(
     batches = (
         drug.batches
         .filter(
-            status=StockBatch.STATUS_NORMAL,   # ✅ 跟正式扣庫存一致 
+            status=StockBatch.STATUS_NORMAL, 
             expiry_date__gte=min_expiry_date,
             quantity__gt=0,
         )
@@ -344,7 +306,7 @@ def preview_use_drug_from_prescription_item(
         if remain <= 0:
             return
 
-    # 走到這裡代表不足 
+    
     raise ValueError(
         f"藥品「{drug.name}」可用庫存/效期不足：仍缺 {remain}{getattr(drug, 'unit', '')}  "
     )
@@ -376,7 +338,7 @@ def unquarantine_batch(batch: StockBatch,*,operator=None,note: str = "解除隔�
         return batch
 
     batch.status = StockBatch.STATUS_NORMAL
-    # ✅ 解除隔離就清空原因/備註 
+    
     batch.quarantine_reason = ""
     batch.quarantine_note = ""
     batch.save(update_fields=["status", "quarantine_reason", "quarantine_note"])

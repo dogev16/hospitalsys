@@ -76,7 +76,7 @@ class DoctorLeave(models.Model):
         return f"{self.doctor} 停診 {self.start_date}~{self.end_date}"
 
     def clean(self):
-        # 讓 end_date >= start_date
+        
         from django.core.exceptions import ValidationError
         if self.end_date < self.start_date:
             raise ValidationError("結束日不可早於開始日")

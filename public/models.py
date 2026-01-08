@@ -1,7 +1,6 @@
 from django.db import models
 
-# Create your models here.
-# public/models.py
+
 from django.db import models
 from doctors.models import Doctor
 
@@ -12,7 +11,6 @@ class ClinicProfile(models.Model):
     phone = models.CharField("聯絡電話", max_length=20)
     address = models.CharField("地址", max_length=255)
 
-    # 門診時間（簡單文字就好）
     opening_hours = models.TextField(
         "門診時間",
         help_text="例如：週一至週五 08:30-12:00 / 13:30-17:00",
@@ -79,20 +77,17 @@ class PublicRegistrationRequest(models.Model):
     )
 
 
-    # 掛號內容
     department = models.CharField("科別", max_length=50)
     doctor = models.ForeignKey(Doctor, on_delete=models.PROTECT, verbose_name="醫師")
     date = models.DateField("日期")
     period = models.CharField("時段", max_length=2, choices=[("AM", "上午"), ("PM", "下午")])
     time = models.TimeField("時間", null=True, blank=True)
 
-    # 病人填寫資料
     name = models.CharField("姓名", max_length=50)
     national_id = models.CharField("身分證字號", max_length=10)
     birth_date = models.DateField("生日")
     phone = models.CharField("電話", max_length=20)
 
-    # 流程狀態
     status = models.CharField("狀態", max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
     reject_reason = models.CharField("駁回原因", max_length=200, blank=True)
 

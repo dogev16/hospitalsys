@@ -26,7 +26,6 @@ urlpatterns = [
     ),
     path("logout/", logout_view, name="logout"),
 
-    # 各 app        
     path("queues/", include("queues.urls")),
     path("prescriptions/", include("prescriptions.urls")),
     path("inventory/", include("inventory.urls")),

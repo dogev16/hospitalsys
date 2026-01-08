@@ -48,7 +48,6 @@ def register(request):
     today = timezone.localdate()
     max_date = today + timedelta(days=30)
 
-    # ---------- 科別 ----------
     dept_qs = (
         Doctor.objects
         .exclude(department__isnull=True)
@@ -58,7 +57,6 @@ def register(request):
     )
     departments = sorted(set(dept_qs))
 
-    # ---------- 回填（GET/POST 都支援） ----------
     selected_department = (request.POST.get("department") if request.method == "POST" else request.GET.get("department"))
     selected_department = (selected_department or "").strip()
 
@@ -72,7 +70,6 @@ def register(request):
     if selected_department:
         doctors_qs = doctors_qs.filter(department=selected_department)
 
-    # ---------- 日期解析 ----------
     selected_date = None
     if selected_date_str:
         try:
@@ -80,7 +77,6 @@ def register(request):
         except ValueError:
             selected_date = None
 
-    # ---------- 停診提示 ----------
     doctor_leave_info = None
     if selected_doctor_id and selected_date:
         try:
@@ -100,7 +96,6 @@ def register(request):
         except Doctor.DoesNotExist:
             pass
 
-    # ---------- 依班表動態產生時間清單（給 template 用） ----------
     time_slots = []
     slot_map = {}  # {"AM": {"slots":[...], "remaining": n}, "PM": {...}}
 
@@ -143,7 +138,6 @@ def register(request):
         except Doctor.DoesNotExist:
             pass
 
-    # ---------- POST ----------
     if request.method == "POST":
         department = selected_department
         doctor_id = selected_doctor_id
@@ -171,7 +165,6 @@ def register(request):
         if not phone:
             errors.append("請輸入聯絡電話")
 
-        # doctor exists + dept match
         doctor_obj = None
         if doctor_id:
             try:
@@ -181,7 +174,6 @@ def register(request):
             except Doctor.DoesNotExist:
                 errors.append("所選醫師不存在")
 
-        # date parse + range
         appt_date = None
         if date_str:
             try:
@@ -195,7 +187,6 @@ def register(request):
             if appt_date > max_date:
                 errors.append("日期僅提供未來 30 天內掛號")
 
-        # birth_date parse
         birth_date = None
         if birth_date_str:
             try:
@@ -203,7 +194,6 @@ def register(request):
             except ValueError:
                 errors.append("生日格式不正確")
 
-        # 停診檢查（POST 再檢一次防呆）
         if doctor_obj and appt_date:
             leave = (
                 DoctorLeave.objects
@@ -219,7 +209,6 @@ def register(request):
                     "reason": leave.reason,
                 }
 
-        # time value 會長得像 "AM|09:10"
         time_value = (request.POST.get("time") or "").strip()
         period = ""
         time_str = ""
@@ -233,7 +222,6 @@ def register(request):
         if period not in {"AM", "PM"}:
             errors.append("時段不正確")
 
-        # 轉成 time 物件（存 TimeField 用）
         appt_time = None
         if time_str:
             try:
@@ -243,8 +231,6 @@ def register(request):
         else:
             errors.append("請選擇時間")
 
-        # ✅ 必須是該時段允許的 slot，且必須有剩餘名額
-        # ✅ 必須是該時段允許的 slot，且必須有剩餘名額
         if doctor_obj and appt_date and not doctor_leave_info:
             allowed = slot_map.get(period, {}).get("slots", [])
             remaining = slot_map.get(period, {}).get("remaining", 0)
@@ -256,7 +242,6 @@ def register(request):
             if remaining <= 0:
                 errors.append("該時段已額滿，請改選其他時間")
 
-            # 🔒【就在這裡】再用 DB 檢查一次
             sch = DoctorSchedule.objects.filter(
                 doctor=doctor_obj,
                 weekday=appt_date.weekday(),
@@ -283,10 +268,9 @@ def register(request):
                 "selected_doctor_id": selected_doctor_id,
                 "doctor_leave_info": doctor_leave_info,
                 "selected_date_str": date_str,
-                "time_slots": time_slots,  # ✅
+                "time_slots": time_slots, 
             })
 
-        # ✅ 建立申請單（含 period + time）
         req = PublicRegistrationRequest.objects.create(
             department=department,
             doctor=doctor_obj,
@@ -300,7 +284,6 @@ def register(request):
         )
         return redirect("public:register_success", pk=req.pk)
 
-    # ---------- GET ----------
     return render(request, "public/register.html", {
         "profile": profile,
         "departments": departments,
@@ -312,7 +295,7 @@ def register(request):
         "selected_doctor_id": selected_doctor_id,
         "doctor_leave_info": doctor_leave_info,
         "selected_date_str": selected_date_str,
-        "time_slots": time_slots,  # ✅
+        "time_slots": time_slots,  
     })
 
 
@@ -362,16 +345,13 @@ def register_confirm(request):
         messages.error(request, "找不到掛號資料，請重新填寫")
         return redirect("public:register")
 
-    # 防重複：如果已經建立過，就直接去成功頁
     if request.session.get("public_register_appt_id"):
         return redirect("public:register_success")
 
-    # 解析資料
     doctor = Doctor.objects.get(id=data["doctor_id"])
     appt_date = timezone.datetime.fromisoformat(data["date"]).date()
     period = data["period"]
 
-    # GET：顯示確認頁
     if request.method == "GET":
         period_label = "上午" if period == "AM" else "下午"
         return render(request, "public/register_confirm.html", {
@@ -382,7 +362,6 @@ def register_confirm(request):
             "period_label": period_label,
         })
 
-    # POST：最後防呆檢查（停診）
     leave = DoctorLeave.objects.filter(
         doctor=doctor,
         is_active=True,
@@ -393,11 +372,8 @@ def register_confirm(request):
         messages.error(request, f"該醫師於 {leave.start_date} ～ {leave.end_date} 停診，請改選其他日期或醫師")
         return redirect("public:register")
 
-    # ✅ TODO：在這裡建立 Patient / Appointment
     with transaction.atomic():
-        # patient = Patient.objects.get_or_create(...)
-        # appt = Appointment.objects.create(...)
-        # request.session["public_register_appt_id"] = appt.id
+
         pass
 
     request.session.modified = True
@@ -406,9 +382,7 @@ def register_confirm(request):
 from datetime import datetime, timedelta
 
 def generate_time_slots(schedule):
-    """
-    回傳 ['09:00', '09:10', ...]
-    """
+
     slots = []
 
     start = datetime.combine(datetime.today(), schedule.start_time)
@@ -444,7 +418,6 @@ def get_occupied_count(schedule, date):
 
 
 def get_occupied_count_by_time(schedule, date, appt_time):
-    # appt_time 是 datetime.time
     appt_count = Appointment.objects.filter(
         doctor=schedule.doctor,
         date=date,
@@ -455,7 +428,7 @@ def get_occupied_count_by_time(schedule, date, appt_time):
         doctor=schedule.doctor,
         date=date,
         period=schedule.session,
-        time=appt_time,  # ✅ 如果你的 PublicRegistrationRequest.time 是 TimeField
+        time=appt_time,  
         status__in=[
             PublicRegistrationRequest.STATUS_PENDING,
             PublicRegistrationRequest.STATUS_APPROVED,

@@ -14,9 +14,7 @@ from patients.models import Patient
 from appointments.models import Appointment
 from .models import PublicRegistrationRequest
 
-# ----------------------------
-# ClinicProfile (單例式管理)
-# ----------------------------
+
 @admin.register(ClinicProfile)
 class ClinicProfileAdmin(admin.ModelAdmin):
     list_display = ("name_display", "phone", "address", "updated_at")
@@ -34,15 +32,12 @@ class ClinicProfileAdmin(admin.ModelAdmin):
     name_display.short_description = "醫院名稱"
 
     def has_add_permission(self, request):
-        # 只允許一筆 ClinicProfile
         if ClinicProfile.objects.exists():
             return False
         return super().has_add_permission(request)
 
 
-# ----------------------------
-# Announcement (公告)
-# ----------------------------
+
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = (
@@ -78,13 +73,7 @@ class AnnouncementAdmin(admin.ModelAdmin):
         return format_html('<span style="color: #999;">已過期/未開始</span>')
     
 def _pick_first_slot_time(doctor, appt_date, period: str):
-    """
-    把 AM/PM 轉成一個「符合 DoctorSchedule + slot_minutes」的 time
-    - AM: 00:00 ~ 12:00
-    - PM: 12:00 ~ 23:59:59
-    回傳: datetime.time
-    找不到就 raise ValueError
-    """
+
     weekday = appt_date.weekday()  # Mon=0
     schedules = DoctorSchedule.objects.filter(doctor=doctor, weekday=weekday).order_by("start_time")
 
@@ -99,14 +88,12 @@ def _pick_first_slot_time(doctor, appt_date, period: str):
     best = None
 
     for s in schedules:
-        # 取排班與視窗交集
         start = max(s.start_time, win_start)
         end = min(s.end_time, win_end)
 
         if start >= end:
             continue
 
-        # 將 start 對齊 slot_minutes（相對於 s.start_time）
         base = datetime.combine(appt_date, s.start_time)
         cur = datetime.combine(appt_date, start)
 
@@ -146,7 +133,7 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
         ).select_related("doctor")
 
         if not qs.exists():
-            self.message_user(request, "沒有待審核的申請喵", level=messages.WARNING)
+            self.message_user(request, "沒有待審核的申請 ", level=messages.WARNING)
             return
 
         created = 0
@@ -156,7 +143,6 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
         for req in qs:
             try:
                 with transaction.atomic():
-                    # 0) 停診擋掉（避免核准到請假期間）
                     if DoctorLeave.objects.filter(
                         doctor=req.doctor,
                         is_active=True,
@@ -166,12 +152,11 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
                         skipped += 1
                         self.message_user(
                             request,
-                            f"停診期間：{req.name} / {req.doctor} / {req.date} 喵",
+                            f"停診期間：{req.name} / {req.doctor} / {req.date}  ",
                             level=messages.WARNING,
                         )
                         continue
 
-                    # 1) 找或建 Patient
                     patient, _ = Patient.objects.get_or_create(
                         national_id=req.national_id,
                         defaults={
@@ -181,20 +166,17 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
                         }
                     )
 
-                    #appt_time = _pick_first_slot_time(req.doctor, req.date, req.period)
 
-                   # 2) 直接用申請單的 time（前台選的）喵
                     appt_time = req.time
                     if not appt_time:
                         skipped += 1
                         self.message_user(
                             request,
-                            f"申請單沒有時間：{req.name} / {req.doctor} / {req.date} 喵",
+                            f"申請單沒有時間：{req.name} / {req.doctor} / {req.date}  ",
                             level=messages.WARNING,
                         )
                         continue
 
-                    # 3) 防衝突：同醫師同日同時間已被占用就跳過喵
                     if Appointment.objects.filter(
                         doctor=req.doctor,
                         date=req.date,
@@ -203,12 +185,11 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
                         skipped += 1
                         self.message_user(
                             request,
-                            f"時段已滿：{req.doctor} / {req.date} {appt_time}（{req.name}）喵",
+                            f"時段已滿：{req.doctor} / {req.date} {appt_time}（{req.name}） ",
                             level=messages.WARNING,
                         )
                         continue
 
-                    # 4) 建立 Appointment（一定要存到 appointment 變數）喵
                     appointment = Appointment.objects.create(
                         patient=patient,
                         doctor=req.doctor,
@@ -217,7 +198,6 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
                     )
 
 
-                    # 5) 更新申請狀態
                     req.status = PublicRegistrationRequest.STATUS_APPROVED
                     req.reviewed_at = timezone.now()
                     req.save(update_fields=["status", "reviewed_at"])
@@ -228,13 +208,13 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
                 failed += 1
                 self.message_user(
                     request,
-                    f"建立失敗：{req.name} / {req.doctor} / {req.date}（{e}）喵",
+                    f"建立失敗：{req.name} / {req.doctor} / {req.date}（{e}） ",
                     level=messages.ERROR,
                 )
 
         self.message_user(
             request,
-            f"已成功建立 {created} 筆；跳過 {skipped} 筆；失敗 {failed} 筆喵",
+            f"已成功建立 {created} 筆；跳過 {skipped} 筆；失敗 {failed} 筆 ",
             level=messages.SUCCESS if failed == 0 else messages.WARNING,
         )
 
@@ -245,7 +225,7 @@ class PublicRegistrationRequestAdmin(admin.ModelAdmin):
             status=PublicRegistrationRequest.STATUS_REJECTED,
             reviewed_at=timezone.now()
         )
-        self.message_user(request, f"已駁回 {updated} 筆喵", level=messages.SUCCESS)
+        self.message_user(request, f"已駁回 {updated} 筆 ", level=messages.SUCCESS)
 
 
     

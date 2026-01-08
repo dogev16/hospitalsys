@@ -41,9 +41,8 @@ class VisitTicket(models.Model):
     called_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
-    # 🔽 為了「過號系統」新增的欄位 
-    is_skipped = models.BooleanField(default=False)      # 是否已過號
-    call_count = models.PositiveIntegerField(default=0)  # 被叫了幾次
+    is_skipped = models.BooleanField(default=False)      
+    call_count = models.PositiveIntegerField(default=0)  
 
     class Meta:
         unique_together = [("doctor", "date", "number")]
@@ -52,32 +51,23 @@ class VisitTicket(models.Model):
     def __str__(self):
         return f"{self.date} {self.doctor} #{self.number} {self.patient}"
 
-    # ➤ 叫號
     def mark_called(self):
-        """
-        將狀態標記為 CALLING，呼叫次數 +1，更新 called_at  
-        """
+
         self.status = self.STATUS_CALLING
         self.call_count += 1
         if not self.called_at:
             self.called_at = timezone.now()
         self.save(update_fields=["status", "call_count", "called_at"])
 
-    # ➤ 看診完成
     def mark_finished(self):
-        """
-        將狀態標記為 DONE，更新 finished_at  
-        """
+
         self.status = self.STATUS_DONE
         if not self.finished_at:
             self.finished_at = timezone.now()
         self.save(update_fields=["status", "finished_at"])
 
-    # ➤ 過號 / 未到
     def mark_no_show(self):
-        """
-        將病人標記為未到 / 過號 
-        """
+
         self.status = self.STATUS_NO_SHOW
         self.is_skipped = True
         if not self.finished_at:

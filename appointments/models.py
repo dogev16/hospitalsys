@@ -10,17 +10,11 @@ from doctors.models import Doctor, DoctorSchedule, DoctorLeave
 
 class AppointmentManager(models.Manager):
     def get_available_slots(self, doctor, date_):
-        """
-        doctor : Doctor instance
-        date_  : date object 或 'YYYY-MM-DD' 字串
-        回傳   : list[datetime.time]
-        """
 
-        # ✅ 字串轉 date 物件（要先轉，下面會用到）
+
         if isinstance(date_, str):
             date_ = datetime.strptime(date_, "%Y-%m-%d").date()
 
-        # ✅ 停診就直接沒時段
         if DoctorLeave.objects.filter(
             doctor=doctor,
             is_active=True,
@@ -30,6 +24,7 @@ class AppointmentManager(models.Manager):
             return []
 
         weekday = date_.weekday()  # Monday = 0
+
 
         schedules = (
             DoctorSchedule.objects
@@ -54,11 +49,9 @@ class AppointmentManager(models.Manager):
             cursor = start_dt
             count_for_this_schedule = 0
 
-            # 用 < end_dt 避免把 end_time 那一刻也算成可掛號
             while cursor < end_dt:
                 t = cursor.time()
 
-                # 如果是今天，就略過太接近現在的時段（例如 30 分鐘內）
                 if date_ == now.date() and cursor <= now + timedelta(minutes=30):
                     cursor += timedelta(minutes=schedule.slot_minutes)
                     continue
@@ -103,7 +96,6 @@ class Appointment(models.Model):
         unique_together = [("doctor", "date", "time")]
 
     def clean(self):
-        # ✅ 停診（請假）檢查
         leave = DoctorLeave.objects.filter(
             doctor=self.doctor,
             is_active=True,
@@ -130,7 +122,7 @@ class Appointment(models.Model):
 
         ok = False
         for s in schedules:
-            # [start, end) 比較合理
+            
             if s.start_time <= self.time < s.end_time:
                 delta = (
                     datetime.combine(date_cls.min, self.time)

@@ -7,7 +7,6 @@ from queues.models import VisitTicket
 from django.conf import settings
 
 class Prescription(models.Model):
-    # －－－ 醫師端狀態 －－－
     STATUS_DRAFT = "draft"
     STATUS_FINAL = "final"
     STATUS_CHOICES = [
@@ -15,10 +14,9 @@ class Prescription(models.Model):
         (STATUS_FINAL, "已完成"),
     ]
 
-    # －－－ 藥局端狀態 －－－
-    PHARMACY_PENDING   = "pending"    # 醫師已送出，等待領藥
-    PHARMACY_DONE      = "done"       # 已領藥
-    PHARMACY_CANCELLED = "cancelled"  # 退藥 / 作廢
+    PHARMACY_PENDING   = "pending"    
+    PHARMACY_DONE      = "done"       
+    PHARMACY_CANCELLED = "cancelled" 
 
     PHARMACY_STATUS_CHOICES = [
         (PHARMACY_PENDING,   "待領藥"),
@@ -26,7 +24,6 @@ class Prescription(models.Model):
         (PHARMACY_CANCELLED, "已作廢"),
     ]
 
-    # －－－ 藥師審核狀態 －－－
     VERIFY_PENDING  = "pending"
     VERIFY_APPROVED = "approved"
     VERIFY_REJECTED = "rejected"
@@ -39,7 +36,6 @@ class Prescription(models.Model):
         (VERIFY_QUERY,    "需澄清"),
     ]
 
-    # －－－ 基本欄位 －－－
     patient = models.ForeignKey("patients.Patient", on_delete=models.PROTECT)
     doctor  = models.ForeignKey("doctors.Doctor", on_delete=models.PROTECT)
     date    = models.DateField(default=timezone.now)
@@ -59,7 +55,6 @@ class Prescription(models.Model):
         default=STATUS_DRAFT,
     )
 
-    # －－－ 藥局領藥相關欄位 －－－
     pharmacy_status = models.CharField(
         max_length=20,
         choices=PHARMACY_STATUS_CHOICES,
@@ -76,7 +71,6 @@ class Prescription(models.Model):
         verbose_name="領藥藥師",
     )
 
-    # －－－ 藥師審核相關欄位 －－－
     verify_status = models.CharField(
         "審核狀態",
         max_length=20,
@@ -95,7 +89,6 @@ class Prescription(models.Model):
     )
     verified_at = models.DateTimeField("審核時間", null=True, blank=True)
 
-    # －－－ 系統用欄位 －－－
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -126,12 +119,7 @@ class PrescriptionItem(models.Model):
         return f"{self.drug} x {self.quantity}"
     
 class PrescriptionLog(models.Model):
-    """
-    處方異動紀錄:
-    - 醫師儲存處方
-    - 藥局完成領藥
-    - 作廢、退藥等
-    """
+
     ACTION_CREATE   = "create"
     ACTION_UPDATE   = "update"
     ACTION_DISPENSE = "dispense"

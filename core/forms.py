@@ -1,4 +1,3 @@
-# core/forms.py
 from __future__ import annotations
 
 import random
@@ -11,9 +10,7 @@ CAPTCHA_QUESTION_KEY = "login_captcha_question"
 
 
 class CaptchaAuthenticationForm(AuthenticationForm):
-    """
-    簡易人機驗證：顯示算術題（存在 session），使用者輸入正確才允許登入。
-    """
+
 
     captcha = forms.CharField(
         label="人機驗證",
@@ -29,11 +26,11 @@ class CaptchaAuthenticationForm(AuthenticationForm):
     def __init__(self, request=None, *args, **kwargs):
         super().__init__(request, *args, **kwargs)
 
-        # 統一加上基本 attrs（可配合你 app.css 的樣式）
+       
         self.fields["username"].widget.attrs.update({"autocomplete": "username"})
         self.fields["password"].widget.attrs.update({"autocomplete": "current-password"})
 
-        # 產生題目（只在 session 沒有題目時）
+        
         if request is not None:
             sess = request.session
             if CAPTCHA_SESSION_KEY not in sess or CAPTCHA_QUESTION_KEY not in sess:
@@ -54,7 +51,7 @@ class CaptchaAuthenticationForm(AuthenticationForm):
         got = (self.cleaned_data.get("captcha") or "").strip()
 
         if not expected or got != str(expected):
-            # 答錯就重生新題目（避免一直猜同一題）
+           
             a = random.randint(2, 9)
             b = random.randint(1, 9)
             request.session[CAPTCHA_SESSION_KEY] = str(a + b)

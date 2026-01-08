@@ -28,20 +28,17 @@ def reception_call(request):
     today = timezone.localdate()
     doctors = Doctor.objects.all().order_by("name")
 
-    # 先看看有沒有 doctor 參數 
     doctor_id = request.GET.get("doctor") or request.POST.get("doctor")
     selected_doctor = None
     tickets_qs = VisitTicket.objects.none()
     current_ticket = None
 
-    # 沒選就預設第一位醫師 
     if not doctor_id and doctors.exists():
         selected_doctor = doctors.first()
         doctor_id = selected_doctor.id
     elif doctor_id:
         selected_doctor = get_object_or_404(Doctor, pk=doctor_id)
 
-    # 讀取目前醫師的叫號資料 
     if selected_doctor:
         tickets_qs = (
             VisitTicket.objects
@@ -51,9 +48,7 @@ def reception_call(request):
         )
         current_ticket = tickets_qs.filter(status="CALLING").first()
 
-    # ──────────────────────
-    # 處理櫃台按鈕 
-    # ──────────────────────
+
     if request.method == "POST" and selected_doctor:
         action = request.POST.get("action")
 
@@ -66,23 +61,16 @@ def reception_call(request):
             )
             current_ticket = tickets.filter(status="CALLING").first()
 
-            # ▶ 開始 / 下一號
             if action == "start_next":
-                # 1. 如果現在有在 CALLING 的號碼，先當作處理完成 
                 if current_ticket:
                     current_ticket.status = "DONE"
                     current_ticket.finished_at = timezone.now()
                     fields = ["status", "finished_at"]
 
-                    # 如果你也想同步 Appointment，就打開這幾行 
-                    # if current_ticket.appointment_id:
-                    #     appt = current_ticket.appointment
-                    #     appt.status = Appointment.STATUS_DONE
-                    #     appt.save(update_fields=["status"])
+
 
                     current_ticket.save(update_fields=fields)
 
-                # 2. 找下一個 WAITING
                 next_ticket = tickets.filter(status="WAITING").first()
                 if not next_ticket:
                     messages.info(request, "目前沒有下一位候診中的病人 。")
@@ -93,7 +81,6 @@ def reception_call(request):
                     next_ticket.save(update_fields=["status", "call_count", "called_at"])
                     messages.success(request, f"已叫號：第 {next_ticket.number} 號 。")
 
-            # 🔄 重叫一次（同一個號碼再叫一次）
             elif action == "repeat":
                 if not current_ticket:
                     messages.warning(request, "目前沒有正在叫的號碼 。")
@@ -106,7 +93,6 @@ def reception_call(request):
                         f"已重新叫號：第 {current_ticket.number} 號 。"
                     )
 
-            # ⏭ 櫃台過號 + 下一號
             elif action == "skip":
                 if not current_ticket:
                     messages.warning(request, "目前沒有可以過號的病人 。")
@@ -124,7 +110,6 @@ def reception_call(request):
                         fields.append("finished_at")
                     current_ticket.save(update_fields=fields)
 
-                    # 找下一位 WAITING
                     next_ticket = tickets.filter(status="WAITING").first()
                     if next_ticket:
                         next_ticket.status = "CALLING"
@@ -143,7 +128,6 @@ def reception_call(request):
                             "已標記過號，目前沒有下一位候診病人 。"
                         )
 
-            # 🆕 從列表叫回某一個已過號病人 
             elif action == "recall_ticket":
                 ticket_id = request.POST.get("ticket_id")
                 target = tickets.filter(pk=ticket_id).first()
@@ -153,7 +137,6 @@ def reception_call(request):
                 elif target.status != "NO_SHOW":
                     messages.warning(request, "只能叫回已標記為未到（NO_SHOW）的號碼 。")
                 else:
-                    # 如果現在已經在叫別人，就先還原回 WAITING  
                     if current_ticket and current_ticket.id != target.id:
                         current_ticket.status = "WAITING"
                         current_ticket.save(update_fields=["status"])
@@ -168,15 +151,12 @@ def reception_call(request):
                         f"已叫回第 {target.number} 號 。"
                     )
 
-        # POST 完後 redirect，避免重新整理重送表單 
         url = reverse("queues:reception_call")
         if selected_doctor:
             url += f"?doctor={selected_doctor.id}"
         return redirect(url)
 
-    # ──────────────────────
-    # GET → 顯示畫面 
-    # ──────────────────────
+
     context = {
         "today": today,
         "doctors": doctors,
@@ -198,7 +178,6 @@ def doctor_panel(request):
 
     today = timezone.localdate()
 
-    # 叫號列表
     tickets_qs = (
         VisitTicket.objects
         .filter(date=today, doctor=doctor)
@@ -217,14 +196,11 @@ def doctor_panel(request):
         .order_by("time")
     )
 
-    # =============================
-    # POST：醫師操作區塊
-    # =============================
+
     if request.method == "POST":
         action = request.POST.get("action")
         ticket_id = request.POST.get("ticket_id")
 
-        # ▶ 叫下一位
         if action == "call_next":
             next_ticket = tickets_qs.filter(status="WAITING").first()
 
@@ -232,7 +208,6 @@ def doctor_panel(request):
                 messages.warning(request, "沒有候診中的病人 。")
                 return redirect("queues:doctor_panel")
 
-            # 把舊 CALLING 的退回 WAITING
             tickets_qs.filter(status="CALLING").update(status="WAITING")
 
             next_ticket.status = "CALLING"
@@ -243,7 +218,6 @@ def doctor_panel(request):
             messages.success(request, f"已叫號：第 {next_ticket.number} 號 。")
             return redirect("queues:doctor_panel")
 
-        # ▶ 看診完成
         elif action == "finish":
             ticket = get_object_or_404(tickets_qs, pk=ticket_id)
 
@@ -251,7 +225,6 @@ def doctor_panel(request):
             ticket.finished_at = timezone.now()
             ticket.save(update_fields=["status", "finished_at"])
 
-            # 同步 Appointment
             if ticket.appointment_id:
                 appt = ticket.appointment
                 appt.status = Appointment.STATUS_DONE
@@ -260,20 +233,17 @@ def doctor_panel(request):
             messages.success(request, f"{ticket.number} 號看診完成 。")
             return redirect("queues:doctor_panel")
 
-        # ▶ 過號 → NO_SHOW + 叫下一位
         elif action == "skip":
             if current_ticket:
                 current_ticket.status = "NO_SHOW"
                 current_ticket.finished_at = timezone.now()
                 current_ticket.save(update_fields=["status", "finished_at"])
 
-                # 同步 Appointment
                 if current_ticket.appointment_id:
                     appt = current_ticket.appointment
                     appt.status = Appointment.STATUS_NO_SHOW
                     appt.save(update_fields=["status"])
 
-            # 找下一位
             next_ticket = tickets_qs.filter(status="WAITING").first()
 
             if next_ticket:
@@ -287,11 +257,9 @@ def doctor_panel(request):
 
             return redirect("queues:doctor_panel")
 
-        # ▶ 叫回（NO_SHOW → CALLING）
         elif action == "recall":
             ticket = get_object_or_404(tickets_qs, pk=ticket_id)
 
-            # 其他 CALLING 的退回 WAITING
             tickets_qs.exclude(pk=ticket.pk).filter(status="CALLING").update(status="WAITING")
 
             ticket.status = "CALLING"
@@ -302,9 +270,7 @@ def doctor_panel(request):
             messages.success(request, f"已重新叫號：第 {ticket.number} 號 。")
             return redirect("queues:doctor_panel")
 
-    # =============================
-    # 🆕 今天被藥師退回的處方
-    # =============================
+
     rejected_prescriptions = (
         Prescription.objects
         .filter(
@@ -316,12 +282,7 @@ def doctor_panel(request):
         .order_by("-date", "-id")
     )
 
-    # debug 想看的話可以暫時打開這行 ：
-    # print("REJECTED:", list(rejected_prescriptions.values_list("id", flat=True)))
 
-    # =============================
-    # GET / 最後組 context
-    # =============================
     context = {
         "doctor": doctor,
         "today": today,
@@ -333,7 +294,6 @@ def doctor_panel(request):
 
         "today_appointments": today_appointments,
 
-        # 🆕 丟進 template 給你顯示提醒 
         "rejected_prescriptions": rejected_prescriptions,
     }
 
@@ -344,16 +304,13 @@ def doctor_panel(request):
 
 @group_required("DOCTOR")
 def doctor_action(request, pk, act):
-    # 之後你再補真正的功能
     return HttpResponse(f"Doctor action: id={pk}, action={act}")
 
 def board(request):
     today = timezone.localdate()
 
-    # 1️⃣ 先把所有啟用中的醫師抓出來，給前端下拉選單用 
     doctors = Doctor.objects.filter(is_active=True).order_by("name")
 
-    # 2️⃣ 看 URL 有沒有帶 ?doctor=ID
     doctor_id = request.GET.get("doctor")
     selected_doctor = None
 
@@ -364,14 +321,11 @@ def board(request):
     )
 
     if doctor_id:
-        # 如果指定醫師，就只看那一位 
         selected_doctor = get_object_or_404(Doctor, pk=doctor_id, is_active=True)
         tickets_today = tickets_today.filter(doctor=selected_doctor)
 
-    # 排序（就算只一位醫師也沒關係 ）
     tickets_today = tickets_today.order_by("doctor__name", "number")
 
-    # 3️⃣ 一樣用原本的分組邏輯
     grouped = {}
     for t in tickets_today:
         info = grouped.setdefault(
@@ -403,19 +357,7 @@ def board(request):
     return render(request, "queues/board.html", context)
 
 def api_current_number(request):
-    """
-    回傳指定醫師今天的叫號資訊，給 Python → Arduino 用 
-    GET 參數：
-      - doctor_id: 醫師 ID (Doctor.pk)
-    回傳 JSON：
-      {
-        "doctor": {...},
-        "current": {...} 或 null,
-        "next": {...} 或 null,
-        "last_done": {...} 或 null,
-        "timestamp": "ISO 時間"
-      }
-    """
+
     doctor_id = request.GET.get("doctor_id")
     if not doctor_id:
         return JsonResponse({"error": "doctor_id is required"}, status=400)

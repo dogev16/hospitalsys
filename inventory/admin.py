@@ -1,4 +1,3 @@
-# C:\project\hospitalsys\inventory\admin.py
 from django.contrib import admin
 from .models import Drug, StockTransaction
 from .models import StockBatch
@@ -22,8 +21,8 @@ class DrugAdmin(admin.ModelAdmin):
 class StockTransactionAdmin(admin.ModelAdmin):
     list_display = (
         "drug",
-        "reason",     # purchase / dispense / adjust
-        "change",     # 正負數
+        "reason",     
+        "change",     
         "note",
         "created_at",
     )

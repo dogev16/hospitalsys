@@ -1,11 +1,10 @@
-# C:\project\hospitalsys\patients\admin.py
 from django.contrib import admin
 from .models import Patient
 
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    # list view 顯示欄位
+    
     list_display = (
         "chart_no",
         "full_name",
@@ -71,7 +70,7 @@ class PatientAdmin(admin.ModelAdmin):
         }),
     )
 
-    # ── admin 顯示用小工具 ──
+   
 
     def gender_display(self, obj):
         return obj.get_gender_display() or "-"
