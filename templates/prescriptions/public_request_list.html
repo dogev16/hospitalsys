@@ -54,10 +54,15 @@
                   <button type="submit" class="app-btn app-btn-primary">核准</button>
                 </form>
 
-                <a class="app-btn app-btn-danger"
-                   href="{% url 'prescriptions:public_request_reject' r.id %}">
-                  拒絕
-                </a>
+                <form method="post"
+                      action="{% url 'prescriptions:public_request_reject' r.id %}"
+                      style="display:inline; margin:0;"
+                      onsubmit="return confirm('確定要拒絕這筆申請嗎？');">
+                  {% csrf_token %}
+                  <button type="submit" class="app-btn app-btn-danger">
+                    拒絕
+                  </button>
+                </form>
               </div>
             </td>
           </tr>

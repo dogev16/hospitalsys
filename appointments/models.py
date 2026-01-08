@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from patients.models import Patient
 from doctors.models import Doctor, DoctorSchedule, DoctorLeave
+from django.db.models import Q
 
 
 class AppointmentManager(models.Manager):
@@ -35,8 +36,11 @@ class AppointmentManager(models.Manager):
             return []
 
         taken_times = set(
-            self.filter(doctor=doctor, date=date_).values_list("time", flat=True)
+            self.filter(doctor=doctor, date=date_)
+                .exclude(status=Appointment.STATUS_CANCELLED)
+                .values_list("time", flat=True)
         )
+
 
         now = timezone.localtime()
         tz = timezone.get_current_timezone()
@@ -93,7 +97,13 @@ class Appointment(models.Model):
     objects = AppointmentManager()
 
     class Meta:
-        unique_together = [("doctor", "date", "time")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["doctor", "date", "time"],
+                condition=~Q(status="CANCELLED"),
+                name="uniq_active_doctor_date_time",
+            )
+        ]
 
     def clean(self):
         leave = DoctorLeave.objects.filter(

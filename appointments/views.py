@@ -43,70 +43,8 @@ class AppointmentForm(forms.Form):
 
 
 def _get_available_slots(doctor, appt_date):
+    return Appointment.objects.get_available_slots(doctor, appt_date)
 
-    weekday = appt_date.weekday()  # Monday = 0
-
-   
-    schedules = (
-        DoctorSchedule.objects.filter(
-            doctor=doctor,
-            weekday=weekday,
-            is_active=True,
-        )
-        .order_by("start_time")
-    )
-    if not schedules:
-        return []
-
-    
-    taken_times = set(
-        Appointment.objects.filter(
-            doctor=doctor,
-            date=appt_date,
-        ).values_list("time", flat=True)
-    )
-
-    now = timezone.localtime()
-    tz = timezone.get_current_timezone()
-
-    slots: list[time] = []
-
-    
-    for schedule in schedules:
-        start_dt = datetime.combine(appt_date, schedule.start_time)
-        end_dt = datetime.combine(appt_date, schedule.end_time)
-
-       
-        if timezone.is_naive(start_dt):
-            start_dt = timezone.make_aware(start_dt, tz)
-        if timezone.is_naive(end_dt):
-            end_dt = timezone.make_aware(end_dt, tz)
-
-        cursor = start_dt
-        count_for_this_schedule = 0  
-
-        while cursor <= end_dt:
-            t = cursor.time()
-
-            
-            if appt_date == now.date():
-                if cursor <= now + timedelta(minutes=30):
-                    cursor += timedelta(minutes=schedule.slot_minutes)
-                    continue
-
-         
-            if t not in taken_times:
-                slots.append(t)
-                count_for_this_schedule += 1
-
-       
-            if count_for_this_schedule >= schedule.max_patients:
-                break
-
-            cursor += timedelta(minutes=schedule.slot_minutes)
-
-    
-    return slots
 
 def _renumber_visit_tickets(doctor, appt_date):
 

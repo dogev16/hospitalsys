@@ -790,13 +790,8 @@ def public_request_approve(request, pk):
         }
     )
 
-    appointment = Appointment.objects.create(
-        patient=patient,
-        doctor=req.doctor,
-        date=req.date,
-        time=req.time,
-        status="SCHEDULED",  
-    )
+    appointment = req.appointment 
+    patient = appointment.patient
 
     today = timezone.localdate()
     next_no = (
@@ -813,7 +808,6 @@ def public_request_approve(request, pk):
     )
 
     req.status = "APPROVED"
-    req.status = "APPROVED"
     req.appointment = appointment
     req.save(update_fields=["status", "appointment"])
 
@@ -821,16 +815,26 @@ def public_request_approve(request, pk):
     return redirect("prescriptions:public_request_list")
 
 
+@require_POST
 @group_required("PHARMACY")
 @transaction.atomic
 def public_request_reject(request, pk):
-    req = get_object_or_404(PublicRegistrationRequest, pk=pk)
+    req = get_object_or_404(
+        PublicRegistrationRequest.objects.select_for_update(),
+        pk=pk
+    )
 
     if req.status != PublicRegistrationRequest.STATUS_PENDING:
         messages.warning(request, "此申請單已處理過了 ")
         return redirect("prescriptions:public_request_list")
 
+    if req.appointment_id:
+        appt = req.appointment
+        appt.status = "CANCELLED"
+        appt.save(update_fields=["status"])
+
     req.status = PublicRegistrationRequest.STATUS_REJECTED
-    req.save()
-    messages.success(request, "已拒絕此申請 ")
+    req.save(update_fields=["status"])
+
+    messages.success(request, "已拒絕此申請（時段已釋放）")
     return redirect("prescriptions:public_request_list")

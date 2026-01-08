@@ -5,12 +5,15 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db import transaction
 
+from patients.models import Patient
+
 from .models import ClinicProfile, Announcement, PublicRegistrationRequest
 
 from doctors.models import Doctor, DoctorLeave, DoctorSchedule
 from datetime import timedelta
 
 from appointments.models import Appointment
+from django.db import IntegrityError
 
 def home(request):
     today = timezone.localdate()
@@ -270,19 +273,78 @@ def register(request):
                 "selected_date_str": date_str,
                 "time_slots": time_slots, 
             })
+        
+        if Appointment.objects.filter(
+            doctor=doctor_obj, date=appt_date, time=appt_time
+        ).exclude(status="CANCELLED").exists():
+            messages.error(request, "所選時間已被預約，請重新選擇")
+            return render(request, "public/register.html", {
+                "profile": profile,
+                "departments": departments,
+                "selected_department": selected_department,
+                "doctors": doctors_qs,
+                "posted": request.POST,
+                "min_date": str(today),
+                "max_date": str(max_date),
+                "selected_doctor_id": selected_doctor_id,
+                "doctor_leave_info": doctor_leave_info,
+                "selected_date_str": date_str,
+                "time_slots": time_slots,
+            })
 
-        req = PublicRegistrationRequest.objects.create(
-            department=department,
-            doctor=doctor_obj,
-            date=appt_date,
-            period=period,
-            time=appt_time,
-            name=name,
-            national_id=national_id,
-            birth_date=birth_date,
-            phone=phone,
-        )
-        return redirect("public:register_success", pk=req.pk)
+        try:
+            with transaction.atomic():
+                patient, _ = Patient.objects.get_or_create(
+                    national_id=national_id,
+                    defaults={
+                        "full_name": name,
+                        "birth_date": birth_date,
+                        "phone": phone,
+                    }
+                )
+
+                appointment = Appointment.objects.create(
+                    patient=patient,
+                    doctor=doctor_obj,
+                    date=appt_date,
+                    time=appt_time,
+                    status=Appointment.STATUS_BOOKED,
+                )
+
+
+                req = PublicRegistrationRequest.objects.create(
+                    department=department,
+                    doctor=doctor_obj,
+                    date=appt_date,
+                    period=period,
+                    time=appt_time,
+                    name=name,
+                    national_id=national_id,
+                    birth_date=birth_date,
+                    phone=phone,
+                    appointment=appointment,
+                    status=PublicRegistrationRequest.STATUS_PENDING,
+                )
+
+            return redirect("public:register_success", pk=req.pk)
+
+        except IntegrityError:
+            messages.error(request, "所選時間已被預約，請重新選擇")
+            return render(request, "public/register.html", {
+                "profile": profile,
+                "departments": departments,
+                "selected_department": selected_department,
+                "doctors": doctors_qs,
+                "posted": request.POST,
+                "min_date": str(today),
+                "max_date": str(max_date),
+                "selected_doctor_id": selected_doctor_id,
+                "doctor_leave_info": doctor_leave_info,
+                "selected_date_str": date_str,
+                "time_slots": time_slots,
+            })
+
+
 
     return render(request, "public/register.html", {
         "profile": profile,
@@ -397,42 +459,21 @@ def generate_time_slots(schedule):
 
 
 def get_occupied_count(schedule, date):
-    appt_count = Appointment.objects.filter(
+    return Appointment.objects.filter(
         doctor=schedule.doctor,
         date=date,
         time__gte=schedule.start_time,
         time__lt=schedule.end_time,
+    ).exclude(
+        status="CANCELLED"
     ).count()
-
-    req_count = PublicRegistrationRequest.objects.filter(
-        doctor=schedule.doctor,
-        date=date,
-        period=schedule.session,
-        status__in=[
-            PublicRegistrationRequest.STATUS_PENDING,
-            PublicRegistrationRequest.STATUS_APPROVED,
-        ],
-    ).count()
-
-    return appt_count + req_count
 
 
 def get_occupied_count_by_time(schedule, date, appt_time):
-    appt_count = Appointment.objects.filter(
+    return Appointment.objects.filter(
         doctor=schedule.doctor,
         date=date,
         time=appt_time,
+    ).exclude(
+        status="CANCELLED"
     ).count()
-
-    req_count = PublicRegistrationRequest.objects.filter(
-        doctor=schedule.doctor,
-        date=date,
-        period=schedule.session,
-        time=appt_time,  
-        status__in=[
-            PublicRegistrationRequest.STATUS_PENDING,
-            PublicRegistrationRequest.STATUS_APPROVED,
-        ],
-    ).count()
-
-    return appt_count + req_count
