@@ -207,7 +207,7 @@ def doctor_panel(request):
     )
 
     current_ticket = tickets_qs.filter(status="CALLING").first()
-    waiting_tickets = tickets_qs.filter(status__in=["WAITING", "NO_SHOW"])
+    WAITING_tickets = tickets_qs.filter(status__in=["WAITING", "NO_SHOW"])
     done_tickets = tickets_qs.filter(status="DONE")
 
     today_appointments = (
@@ -328,7 +328,7 @@ def doctor_panel(request):
 
         "tickets": tickets_qs,
         "current_ticket": current_ticket,
-        "waiting_tickets": waiting_tickets,
+        "WAITING_tickets": WAITING_tickets,
         "done_tickets": done_tickets,
 
         "today_appointments": today_appointments,

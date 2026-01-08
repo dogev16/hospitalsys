@@ -3,7 +3,7 @@ import requests
 import serial
 
 # ======== 這裡依照你的環境修改  ========
-API_URL = "http://127.0.0.1:8000/queues/api/current_number/"
+API_URL = "https://hospitalsys.onrender.com/queues/api/current_number/"
 DOCTOR_ID = 1          # 要顯示哪一個醫師的叫號，就填那個 Doctor.id  
 SERIAL_PORT = "COM3"   # 你的 Arduino 接在哪一個 COM Port，就改掉 
 BAUDRATE = 9600

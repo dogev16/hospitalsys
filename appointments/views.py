@@ -302,7 +302,7 @@ def appointment_new_for_patient(request, patient_id):
     """
     patient = get_object_or_404(Patient, pk=patient_id)
 
-    slots = []    # 可約時段列表，改成 [] 比較直覺 
+    slots = []    
     doctor = None
 
     if request.method == "POST":
@@ -375,14 +375,14 @@ def appointment_new_for_patient(request, patient_id):
                             or 0
                         ) + 1
 
-                        # 2. 建立新的號碼牌，預設狀態 waiting  
+                        # 2. 建立新的號碼牌，預設狀態 WAITING  
                         VisitTicket.objects.create(
                             appointment=appt,
                             date=appt_date,
                             doctor=doctor,
                             patient=patient,
                             number=next_no,
-                            status="waiting",
+                            status="WAITING",
                         )
 
                         # 3. 重新整理這位醫師當天的叫號順序 

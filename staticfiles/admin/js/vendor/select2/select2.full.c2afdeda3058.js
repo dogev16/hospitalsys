@@ -55,7 +55,7 @@ var requirejs, require, define;
 (function (undef) {
     var main, req, makeMap, handlers,
         defined = {},
-        waiting = {},
+        WAITING = {},
         config = {},
         defining = {},
         hasOwn = Object.prototype.hasOwnProperty,
@@ -214,9 +214,9 @@ var requirejs, require, define;
     }
 
     function callDep(name) {
-        if (hasProp(waiting, name)) {
-            var args = waiting[name];
-            delete waiting[name];
+        if (hasProp(WAITING, name)) {
+            var args = WAITING[name];
+            delete WAITING[name];
             defining[name] = true;
             main.apply(undef, args);
         }
@@ -349,7 +349,7 @@ var requirejs, require, define;
                     //CommonJS module spec 1.1
                     cjsModule = args[i] = handlers.module(name);
                 } else if (hasProp(defined, depName) ||
-                           hasProp(waiting, depName) ||
+                           hasProp(WAITING, depName) ||
                            hasProp(defining, depName)) {
                     args[i] = callDep(depName);
                 } else if (map.p) {
@@ -468,8 +468,8 @@ var requirejs, require, define;
             deps = [];
         }
 
-        if (!hasProp(defined, name) && !hasProp(waiting, name)) {
-            waiting[name] = [name, deps, callback];
+        if (!hasProp(defined, name) && !hasProp(WAITING, name)) {
+            WAITING[name] = [name, deps, callback];
         }
     };
 

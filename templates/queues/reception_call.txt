@@ -189,7 +189,7 @@
 }
 
 /* 狀態顏色 */
-.status-waiting { background: #dfe6e9; }
+.status-WAITING { background: #dfe6e9; }
 .status-calling { background: #ffeaa7; }
 .status-done    { background: #badc58; }
 .status-no_show { background: #ff7675; }
@@ -256,7 +256,7 @@
 /* 動態列背景 */
 .row-calling  { background: #fff6d1; }
 .row-done     { background: #e5ffd6; }
-.row-waiting  { background: #f7f7f7; }
+.row-WAITING  { background: #f7f7f7; }
 .row-no_show  { background: #ffe0e0; }
 
 .btn-small {
